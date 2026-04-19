@@ -158,12 +158,19 @@ export const processScan = createServerFn({ method: "POST" })
 
     // ── 5. Allocate location to the item ─────────────────────────────
     if (location) {
-      const { error: locErr } = await supabaseAdmin
+      const { data: currentItem, error: currentItemErr } = await supabaseAdmin
         .from("items")
-        .update({ warehouse_location: location })
+        .select("warehouse_location")
         .eq("id", itemId)
-        .neq("warehouse_location", location);
-      if (!locErr) result.locationApplied = true;
+        .maybeSingle();
+
+      if (!currentItemErr && currentItem?.warehouse_location !== location) {
+        const { error: locErr } = await supabaseAdmin
+          .from("items")
+          .update({ warehouse_location: location })
+          .eq("id", itemId);
+        if (!locErr) result.locationApplied = true;
+      }
     }
 
     return result;

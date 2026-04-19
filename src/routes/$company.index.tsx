@@ -148,8 +148,13 @@ function ScannerPage() {
   });
 
   const handleSaveAll = async () => {
-    const unsaved = Array.from(tags.values()).filter((t) => !t.saved);
-    if (unsaved.length === 0) {
+    const selectedLocation = location.trim();
+    const allTags = Array.from(tags.values());
+    const tagsToProcess = selectedLocation
+      ? allTags
+      : allTags.filter((t) => !t.saved);
+
+    if (tagsToProcess.length === 0) {
       toast.info("All tags already saved");
       return;
     }
@@ -169,16 +174,12 @@ function ScannerPage() {
     const errors: string[] = [];
 
     try {
-      // Process each tag through the full pipeline:
-      //  rfid_scans upsert + SGTIN decode + item find/create + tag_items link +
-      //  items.warehouse_location allocation. Bypasses the per-EPC cooldown
-      //  used by auto-process so the user always gets a fresh save on demand.
       const results = await Promise.allSettled(
-        unsaved.map((t) =>
+        tagsToProcess.map((t) =>
           processScanFn({
             data: {
               epc: t.epc.toUpperCase(),
-              location: location || null,
+              location: selectedLocation || null,
               scanCount: t.count,
               lastSeen: t.lastSeen.toISOString(),
             },
@@ -188,7 +189,7 @@ function ScannerPage() {
 
       for (let i = 0; i < results.length; i++) {
         const r = results[i];
-        const tag = unsaved[i];
+        const tag = tagsToProcess[i];
         if (r.status === "fulfilled") {
           okCount++;
           if (r.value.itemCreated) createdCount++;
@@ -212,7 +213,7 @@ function ScannerPage() {
       const summary: string[] = [`${okCount} saved`];
       if (createdCount) summary.push(`${createdCount} new item${createdCount !== 1 ? "s" : ""}`);
       if (linkedCount) summary.push(`${linkedCount} linked`);
-      if (allocatedCount) summary.push(`${allocatedCount} allocated to "${location}"`);
+      if (allocatedCount) summary.push(`${allocatedCount} allocated to "${selectedLocation}"`);
 
       if (errors.length > 0) {
         toast.error(
