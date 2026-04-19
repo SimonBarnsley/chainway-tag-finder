@@ -116,11 +116,12 @@ export function useRfidScanner(options: {
         return;
       }
 
-      // Accept hex chars AND common separators that some readers inject (we'll strip them later)
-      // Some Zebra DataWedge profiles send uppercase hex; some include spaces or dashes.
-      if (/^[a-fA-F0-9]$/.test(e.key)) {
+      // Accept ANY printable single character (we'll sanitize the buffer at flush time).
+      // Some DataWedge profiles emit non-hex prefixes, separators, or send EPCs as
+      // ASCII/Base64. Capturing everything lets us see what the reader actually sends.
+      if (e.key.length === 1) {
         bufferRef.current += e.key;
-        emitDebug("buffer", `+${e.key} → "${bufferRef.current}" (${bufferRef.current.length})`);
+        emitDebug("buffer", `+${JSON.stringify(e.key)} code=${e.code} → "${bufferRef.current}" (${bufferRef.current.length})`);
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
@@ -130,11 +131,8 @@ export function useRfidScanner(options: {
             processBuffer();
           }
         }, 300);
-      } else if (e.key.length === 1) {
-        // Log unexpected single chars so we can see what the reader is actually sending
-        console.log("[RFID Wedge] Ignored key:", JSON.stringify(e.key), "code:", e.code);
-        emitDebug("ignored", `key=${JSON.stringify(e.key)} code=${e.code}`);
       } else {
+        // Special keys (Shift, Ctrl, Arrow, etc.) — log so we can see them
         emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
