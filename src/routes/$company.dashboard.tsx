@@ -145,24 +145,50 @@ function DashboardPage() {
     }
 
     const epcs = (scans || []).map((s) => s.epc);
-    const { data: tagItems } = await supabase
-      .from("tag_items")
-      .select("epc, items(sku, name, description)")
-      .in("epc", epcs);
-
     const epcItemMap = new Map<string, { sku: string | null; name: string | null; description: string | null }>();
-    if (tagItems) {
-      for (const ti of tagItems) {
-        const item = ti.items as unknown as { sku: string | null; name: string | null; description: string | null } | null;
-        if (item) {
-          epcItemMap.set(ti.epc, { sku: item.sku, name: item.name, description: item.description });
+
+    if (epcs.length > 0) {
+      const { data: links } = await supabase
+        .from("tag_items")
+        .select("epc, item_id")
+        .eq("company_slug", company)
+        .in("epc", epcs);
+
+      const itemIds = Array.from(new Set((links || []).map((link) => link.item_id)));
+      const itemMap = new Map<string, { sku: string | null; name: string | null; description: string | null }>();
+
+      if (itemIds.length > 0) {
+        const { data: items } = await supabase
+          .from("items")
+          .select("id, sku, name, description")
+          .eq("company_slug", company)
+          .in("id", itemIds);
+
+        for (const item of items || []) {
+          itemMap.set(item.id, {
+            sku: item.sku,
+            name: item.name,
+            description: item.description,
+          });
+        }
+      }
+
+      for (const link of links || []) {
+        const item = itemMap.get(link.item_id);
+        if (item && !epcItemMap.has(link.epc)) {
+          epcItemMap.set(link.epc, item);
         }
       }
     }
 
     const enriched: ScanRecord[] = (scans || []).map((s) => {
       const itemInfo = epcItemMap.get(s.epc);
-      return { ...s, sku: itemInfo?.sku || null, item_name: itemInfo?.name || null, item_description: itemInfo?.description || null };
+      return {
+        ...s,
+        sku: itemInfo?.sku || null,
+        item_name: itemInfo?.name || null,
+        item_description: itemInfo?.description || null,
+      };
     });
 
     setRecords(enriched);
@@ -171,7 +197,7 @@ function DashboardPage() {
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+  }, [company]);
 
   useEffect(() => {
     if (!autoRefresh) return;

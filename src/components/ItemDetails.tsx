@@ -55,25 +55,40 @@ export function ItemDetails({ epc, companySlug, onClose, onDeleted }: ItemDetail
 
   const fetchItem = async () => {
     setLoading(true);
-    const { data: tagItem } = await supabase
+
+    const { data: tagItem, error: linkError } = await supabase
       .from("tag_items")
-      .select("item_id, items(*)")
+      .select("item_id")
+      .eq("company_slug", companySlug)
       .eq("epc", epc)
       .limit(1)
       .maybeSingle();
 
-    if (tagItem?.items) {
-      const i = tagItem.items as unknown as ItemInfo;
-      setItem(i);
-    } else {
+    if (linkError || !tagItem?.item_id) {
       setItem(null);
+      setLoading(false);
+      return;
     }
+
+    const { data: linkedItem, error: itemError } = await supabase
+      .from("items")
+      .select("*")
+      .eq("company_slug", companySlug)
+      .eq("id", tagItem.item_id)
+      .maybeSingle();
+
+    if (itemError || !linkedItem) {
+      setItem(null);
+    } else {
+      setItem(linkedItem as ItemInfo);
+    }
+
     setLoading(false);
   };
 
   useEffect(() => {
     fetchItem();
-  }, [epc]);
+  }, [epc, companySlug]);
 
   if (loading) {
     return (
