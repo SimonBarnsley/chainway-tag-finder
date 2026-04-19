@@ -32,6 +32,7 @@ export function useRfidScanner(options: {
     bufferRef.current = "";
 
     console.log("[RFID Wedge] processBuffer called with raw:", raw, "length:", raw.length);
+    emitDebug("flush", `raw="${raw}" len=${raw.length}`);
 
     if (raw.length >= 4) {
       const epc = raw.toUpperCase();
@@ -41,6 +42,7 @@ export function useRfidScanner(options: {
       };
 
       console.log("[RFID Wedge] Emitting tag:", epc);
+      emitDebug("info", `EMIT EPC ${epc}`);
 
       // A successful rapid-keystroke scan confirms wedge mode
       setWedgeStatus("detected");
