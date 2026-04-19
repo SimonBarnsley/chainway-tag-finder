@@ -93,7 +93,11 @@ export function TagList({ tags, companySlug, onGeigerSearch }: TagListProps) {
           </div>
           {expandedEpc === tag.epc && (
             <div className="mt-1 ml-2">
-              <ItemDetails epc={tag.epc} companySlug={companySlug} />
+              <ItemDetails
+                key={`${tag.epc}-${tag.saved ? "saved" : "pending"}`}
+                epc={tag.epc}
+                companySlug={companySlug}
+              />
             </div>
           )}
         </div>
