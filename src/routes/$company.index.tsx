@@ -1,6 +1,7 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Save, Trash2, Power, PowerOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { processScan } from "@/lib/process-scan.functions";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
