@@ -43,6 +43,8 @@ export const Route = createRootRoute({
       { name: "twitter:description", content: "UHF RFID tag scanner for the Zebra RFD40 sled paired with a TC22 via e-Connex" },
       { name: "twitter:card", content: "summary" },
       { property: "og:type", content: "website" },
+      { property: "og:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7d48389-8270-497e-8b42-2b81dd0a2105/id-preview-69d6d968--3d1f010a-6adc-4073-9959-1cd0b56e970a.lovable.app-1776616570972.png" },
+      { name: "twitter:image", content: "https://pub-bb2e103a32db4e198524a2e9ed8f35b4.r2.dev/a7d48389-8270-497e-8b42-2b81dd0a2105/id-preview-69d6d968--3d1f010a-6adc-4073-9959-1cd0b56e970a.lovable.app-1776616570972.png" },
     ],
     links: [
       { rel: "stylesheet", href: appCss },
