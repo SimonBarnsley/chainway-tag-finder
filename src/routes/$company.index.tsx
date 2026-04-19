@@ -1,6 +1,7 @@
-import { createFileRoute, useParams } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
+import { createFileRoute } from "@tanstack/react-router";
+import { useState, useCallback, useEffect, useRef } from "react";
 import { Save, Trash2, Power, PowerOff } from "lucide-react";
+import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
@@ -16,6 +17,7 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { processScan } from "@/lib/process-scan.functions";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
@@ -37,6 +39,7 @@ interface TagEntry {
 function ScannerPage() {
   const { company } = Route.useParams();
   const { companySlug } = useAuth();
+  const processScanFn = useServerFn(processScan);
   const [companyName, setCompanyName] = useState(company);
   const [scanEnabled, setScanEnabled] = useState(true);
   const [tags, setTags] = useState<Map<string, TagEntry>>(new Map());
@@ -46,6 +49,13 @@ function ScannerPage() {
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   const [lastScannedEpc, setLastScannedEpc] = useState<string | null>(null);
   const [lastScannedTime, setLastScannedTime] = useState(0);
+
+  // Per-EPC cooldown so a tag held in the field doesn't spam the server
+  const lastProcessedRef = useRef<Map<string, number>>(new Map());
+  const locationRef = useRef(location);
+  useEffect(() => {
+    locationRef.current = location;
+  }, [location]);
 
   useEffect(() => {
     const fetchCompanyName = async () => {
@@ -87,7 +97,42 @@ function ScannerPage() {
     if (!geigerEpc && navigator.vibrate) {
       navigator.vibrate(50);
     }
-  }, [geigerEpc]);
+
+    // Auto-process: decode SGTIN, save scan, link/create item, allocate location
+    const epc = tag.epc.toUpperCase();
+    const now = Date.now();
+    const lastAt = lastProcessedRef.current.get(epc) ?? 0;
+    if (now - lastAt < 8000) return; // cooldown — already processed this EPC very recently
+    lastProcessedRef.current.set(epc, now);
+
+    processScanFn({
+      data: {
+        epc,
+        location: locationRef.current || null,
+        scanCount: 1,
+        lastSeen: tag.timestamp.toISOString(),
+      },
+    })
+      .then((res) => {
+        // Mark this tag as saved in the local list (the scan row is now in the DB)
+        setTags((prev) => {
+          const next = new Map(prev);
+          const entry = next.get(epc);
+          if (entry) next.set(epc, { ...entry, saved: true });
+          return next;
+        });
+        if (res.itemCreated) {
+          toast.success(`New item created for GTIN ${res.gtin}`);
+        }
+      })
+      .catch((err: unknown) => {
+        const msg = err instanceof Error ? err.message : "Auto-save failed";
+        console.error("[auto-process] failed for", epc, msg);
+        toast.error(`Auto-save failed: ${msg}`);
+        // Allow a retry on the next scan instead of waiting for the cooldown
+        lastProcessedRef.current.delete(epc);
+      });
+  }, [geigerEpc, processScanFn]);
 
   const { isListening, wedgeStatus, addManualTag } = useRfidScanner({
     enabled: scanEnabled,
