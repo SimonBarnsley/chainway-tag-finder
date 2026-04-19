@@ -39,35 +39,38 @@ export function useRfidScanner(options: {
   const wedgeTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const processBuffer = useCallback(() => {
-    const raw = bufferRef.current.trim();
+    const raw = bufferRef.current;
     bufferRef.current = "";
 
     console.log("[RFID Wedge] processBuffer called with raw:", raw, "length:", raw.length);
-    emitDebug("flush", `raw="${raw}" len=${raw.length}`);
+    emitDebug("flush", `raw=${JSON.stringify(raw)} len=${raw.length}`);
 
-    if (raw.length >= 4) {
-      const epc = raw.toUpperCase();
-      const tag: RfidTag = {
-        epc,
-        timestamp: new Date(),
-      };
+    if (raw.length === 0) {
+      emitDebug("info", "EMPTY flush — terminator received with no buffered chars");
+      return;
+    }
+
+    // Try to extract a hex EPC from the raw buffer (strip spaces, dashes, prefixes)
+    const hexOnly = raw.replace(/[^a-fA-F0-9]/g, "").toUpperCase();
+    // Fallback: use the trimmed raw string as-is if no hex found
+    const epc = hexOnly.length >= 4 ? hexOnly : raw.trim().toUpperCase();
+
+    emitDebug("info", `parsed epc="${epc}" (hexOnly=${hexOnly.length} chars, raw=${raw.length})`);
+
+    if (epc.length >= 4) {
+      const tag: RfidTag = { epc, timestamp: new Date() };
 
       console.log("[RFID Wedge] Emitting tag:", epc);
       emitDebug("info", `EMIT EPC ${epc}`);
 
-      // A successful rapid-keystroke scan confirms wedge mode
       setWedgeStatus("detected");
-
-      // Reset the "not detected" timeout — wedge is alive
       if (wedgeTimeoutRef.current) clearTimeout(wedgeTimeoutRef.current);
-      wedgeTimeoutRef.current = setTimeout(() => {
-        // If no scan in 60s, mark as unknown (device may have disconnected)
-        setWedgeStatus("unknown");
-      }, 60_000);
+      wedgeTimeoutRef.current = setTimeout(() => setWedgeStatus("unknown"), 60_000);
 
       options.onTagScanned?.(tag);
     } else {
       console.log("[RFID Wedge] Buffer too short, discarded");
+      emitDebug("ignored", `discarded — too short: "${epc}"`);
     }
   }, [options.onTagScanned]);
 
@@ -116,11 +119,12 @@ export function useRfidScanner(options: {
         return;
       }
 
-      // Accept hex chars AND common separators that some readers inject (we'll strip them later)
-      // Some Zebra DataWedge profiles send uppercase hex; some include spaces or dashes.
-      if (/^[a-fA-F0-9]$/.test(e.key)) {
+      // Accept ANY printable single character (we'll sanitize the buffer at flush time).
+      // Some DataWedge profiles emit non-hex prefixes, separators, or send EPCs as
+      // ASCII/Base64. Capturing everything lets us see what the reader actually sends.
+      if (e.key.length === 1) {
         bufferRef.current += e.key;
-        emitDebug("buffer", `+${e.key} → "${bufferRef.current}" (${bufferRef.current.length})`);
+        emitDebug("buffer", `+${JSON.stringify(e.key)} code=${e.code} → "${bufferRef.current}" (${bufferRef.current.length})`);
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
@@ -130,11 +134,8 @@ export function useRfidScanner(options: {
             processBuffer();
           }
         }, 300);
-      } else if (e.key.length === 1) {
-        // Log unexpected single chars so we can see what the reader is actually sending
-        console.log("[RFID Wedge] Ignored key:", JSON.stringify(e.key), "code:", e.code);
-        emitDebug("ignored", `key=${JSON.stringify(e.key)} code=${e.code}`);
       } else {
+        // Special keys (Shift, Ctrl, Arrow, etc.) — log so we can see them
         emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
