@@ -1,7 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
 import { Save, Trash2, Power, PowerOff } from "lucide-react";
-import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
@@ -17,7 +16,6 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
-import { processScan } from "@/lib/process-scan.functions";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
@@ -39,7 +37,6 @@ interface TagEntry {
 function ScannerPage() {
   const { company } = Route.useParams();
   const { companySlug } = useAuth();
-  const processScanFn = useServerFn(processScan);
   const [companyName, setCompanyName] = useState(company);
   const [scanEnabled, setScanEnabled] = useState(true);
   const [tags, setTags] = useState<Map<string, TagEntry>>(new Map());
@@ -127,33 +124,52 @@ function ScannerPage() {
 
     setIsSaving(true);
     let okCount = 0;
-    let createdCount = 0;
-    let linkedCount = 0;
     let allocatedCount = 0;
     const errors: string[] = [];
 
     try {
-      const results = await Promise.allSettled(
-        tagsToProcess.map((t) =>
-          processScanFn({
-            data: {
-              epc: t.epc.toUpperCase(),
-              location: selectedLocation || null,
-              scanCount: t.count,
-              lastSeen: t.lastSeen.toISOString(),
-            },
-          })
-        )
-      );
+      const epcs = tagsToProcess.map((t) => t.epc.toUpperCase());
+      const { data: existingScans, error: existingError } = await supabase
+        .from("rfid_scans")
+        .select("epc, first_seen, scan_count, location")
+        .eq("company_slug", companySlug)
+        .in("epc", epcs);
 
-      for (let i = 0; i < results.length; i++) {
-        const r = results[i];
-        const tag = tagsToProcess[i];
-        if (r.status === "fulfilled") {
+      if (existingError) {
+        throw new Error(existingError.message);
+      }
+
+      const existingByEpc = new Map((existingScans ?? []).map((scan) => [scan.epc, scan]));
+      const payload = tagsToProcess.map((tag) => {
+        const epc = tag.epc.toUpperCase();
+        const existing = existingByEpc.get(epc);
+
+        return {
+          epc,
+          company_slug: companySlug,
+          first_seen: existing?.first_seen ?? tag.lastSeen.toISOString(),
+          last_seen: tag.lastSeen.toISOString(),
+          scan_count: Math.max(existing?.scan_count ?? 0, tag.count),
+          location: selectedLocation || existing?.location || null,
+        };
+      });
+
+      const { data: savedRows, error: saveError } = await supabase
+        .from("rfid_scans")
+        .upsert(payload, { onConflict: "epc" })
+        .select("epc, location");
+
+      if (saveError) {
+        throw new Error(saveError.message);
+      }
+
+      const savedSet = new Set((savedRows ?? []).map((row) => row.epc));
+
+      for (const tag of tagsToProcess) {
+        const epc = tag.epc.toUpperCase();
+        if (savedSet.has(epc)) {
           okCount++;
-          if (r.value.itemCreated) createdCount++;
-          if (r.value.linked) linkedCount++;
-          if (r.value.locationApplied) allocatedCount++;
+          if (selectedLocation) allocatedCount++;
           setTags((prev) => {
             const next = new Map(prev);
             const entry = next.get(tag.epc);
@@ -161,16 +177,11 @@ function ScannerPage() {
             return next;
           });
         } else {
-          const msg =
-            r.reason instanceof Error ? r.reason.message : String(r.reason);
-          errors.push(`${tag.epc.slice(-8)}: ${msg}`);
-          console.error("[SaveAll] failed for", tag.epc, msg);
+          errors.push(`${epc.slice(-8)}: save not confirmed`);
         }
       }
 
       const summary: string[] = [`${okCount} saved`];
-      if (createdCount) summary.push(`${createdCount} new item${createdCount !== 1 ? "s" : ""}`);
-      if (linkedCount) summary.push(`${linkedCount} linked`);
       if (allocatedCount) summary.push(`${allocatedCount} allocated to "${selectedLocation}"`);
 
       if (errors.length > 0) {
@@ -181,6 +192,8 @@ function ScannerPage() {
       if (okCount > 0) {
         toast.success(summary.join(" · "));
       }
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Failed to save scans");
     } finally {
       setIsSaving(false);
     }
