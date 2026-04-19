@@ -82,10 +82,23 @@ export function useRfidScanner(options: {
 
     setIsListening(true);
 
-    const handleKeyDown = (e: KeyboardEvent) => {
-      // Skip if user is typing in an input/textarea
-      const target = e.target as HTMLElement;
-      if (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable) {
+    // Make body focusable so it can receive key events when no input is focused.
+    // Some Chromium builds (incl. WebView on TC22) only deliver synthetic keys to
+    // a focusable element. tabIndex=-1 lets us focus() it without making it tab-stoppable.
+    const body = document.body;
+    const prevTabIndex = body.getAttribute("tabindex");
+    body.setAttribute("tabindex", "-1");
+    body.style.outline = "none";
+    // Focus body if nothing else is focused
+    if (document.activeElement === body || document.activeElement === null) {
+      body.focus();
+    }
+
+    const handleKey = (e: KeyboardEvent) => {
+      // Skip if user is actively typing in an input/textarea
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) {
         bufferRef.current = "";
         return;
       }
@@ -93,7 +106,6 @@ export function useRfidScanner(options: {
       const now = Date.now();
       const gap = now - lastKeyTimeRef.current;
 
-      // Track rapid keystrokes (< 100ms apart = wedge/scanner speed)
       if (gap < 100 && gap > 0) {
         rapidKeyCountRef.current++;
         if (rapidKeyCountRef.current >= 3 && wedgeStatus !== "detected") {
@@ -103,47 +115,74 @@ export function useRfidScanner(options: {
         rapidKeyCountRef.current = 0;
       }
 
-      // Reset buffer if there's a long gap between keystrokes (new scan starting)
       if (gap > 500 && bufferRef.current.length > 0) {
-        console.log("[RFID Wedge] Buffer reset due to gap:", bufferRef.current);
+        emitDebug("reset", `gap ${gap}ms — clearing "${bufferRef.current}"`);
         bufferRef.current = "";
       }
       lastKeyTimeRef.current = now;
 
-      // Enter / Tab terminates a scan
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        console.log("[RFID Wedge] Terminator received, buffer:", bufferRef.current);
         emitDebug("key", `TERMINATOR ${e.key} buf="${bufferRef.current}"`);
         processBuffer();
         return;
       }
 
-      // Accept ANY printable single character (we'll sanitize the buffer at flush time).
-      // Some DataWedge profiles emit non-hex prefixes, separators, or send EPCs as
-      // ASCII/Base64. Capturing everything lets us see what the reader actually sends.
-      if (e.key.length === 1) {
+      if (e.key && e.key.length === 1) {
         bufferRef.current += e.key;
         emitDebug("buffer", `+${JSON.stringify(e.key)} code=${e.code} → "${bufferRef.current}" (${bufferRef.current.length})`);
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           if (bufferRef.current.length >= 4) {
-            console.log("[RFID Wedge] Timeout flush, buffer:", bufferRef.current);
             emitDebug("info", `timeout flush buf="${bufferRef.current}"`);
             processBuffer();
           }
         }, 300);
-      } else {
-        // Special keys (Shift, Ctrl, Arrow, etc.) — log so we can see them
+      } else if (e.key) {
         emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
 
-    window.addEventListener("keydown", handleKeyDown);
+    // Also catch via beforeinput/input events — some WebView builds only fire
+    // these for synthetic keystrokes from DataWedge.
+    const handleBeforeInput = (e: InputEvent) => {
+      const target = e.target as HTMLElement | null;
+      const tag = target?.tagName;
+      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+
+      const data = e.data;
+      if (!data) return;
+
+      emitDebug("buffer", `beforeinput data=${JSON.stringify(data)}`);
+      bufferRef.current += data;
+      lastKeyTimeRef.current = Date.now();
+
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        if (bufferRef.current.length >= 4) {
+          emitDebug("info", `beforeinput timeout flush buf="${bufferRef.current}"`);
+          processBuffer();
+        }
+      }, 300);
+    };
+
+    // Use capture: true so we get events before any child component swallows them
+    window.addEventListener("keydown", handleKey, true);
+    window.addEventListener("keypress", handleKey, true);
+    document.addEventListener("beforeinput", handleBeforeInput as EventListener, true);
+
+    emitDebug("info", "wedge listeners attached (keydown + keypress + beforeinput, capture)");
 
     return () => {
-      window.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("keydown", handleKey, true);
+      window.removeEventListener("keypress", handleKey, true);
+      document.removeEventListener("beforeinput", handleBeforeInput as EventListener, true);
+      if (prevTabIndex === null) {
+        body.removeAttribute("tabindex");
+      } else {
+        body.setAttribute("tabindex", prevTabIndex);
+      }
       if (timerRef.current) clearTimeout(timerRef.current);
       if (wedgeTimeoutRef.current) clearTimeout(wedgeTimeoutRef.current);
     };
