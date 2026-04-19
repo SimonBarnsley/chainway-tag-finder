@@ -61,14 +61,26 @@ export const processScan = createServerFn({ method: "POST" })
       locationApplied: false,
     };
 
+    const { data: existingScan } = await supabaseAdmin
+      .from("rfid_scans")
+      .select("first_seen, scan_count, location")
+      .eq("company_slug", companySlug)
+      .eq("epc", epc)
+      .maybeSingle();
+
+    const effectiveLocation = location ?? existingScan?.location ?? null;
+    const effectiveScanCount = Math.max(existingScan?.scan_count ?? 0, scanCount);
+    const firstSeen = existingScan?.first_seen ?? lastSeen;
+
     // ── 1. Upsert the scan row ───────────────────────────────────────
     const { error: scanErr } = await supabaseAdmin.from("rfid_scans").upsert(
       [
         {
           epc,
-          scan_count: scanCount,
+          first_seen: firstSeen,
+          scan_count: effectiveScanCount,
           last_seen: lastSeen,
-          location,
+          location: effectiveLocation,
           company_slug: companySlug,
         },
       ],
@@ -157,17 +169,17 @@ export const processScan = createServerFn({ method: "POST" })
     }
 
     // ── 5. Allocate location to the item ─────────────────────────────
-    if (location) {
+    if (effectiveLocation) {
       const { data: currentItem, error: currentItemErr } = await supabaseAdmin
         .from("items")
         .select("warehouse_location")
         .eq("id", itemId)
         .maybeSingle();
 
-      if (!currentItemErr && currentItem?.warehouse_location !== location) {
+      if (!currentItemErr && currentItem?.warehouse_location !== effectiveLocation) {
         const { error: locErr } = await supabaseAdmin
           .from("items")
-          .update({ warehouse_location: location })
+          .update({ warehouse_location: effectiveLocation })
           .eq("id", itemId);
         if (!locErr) result.locationApplied = true;
       }
