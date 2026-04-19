@@ -82,23 +82,59 @@ export function useRfidScanner(options: {
 
     setIsListening(true);
 
-    // Make body focusable so it can receive key events when no input is focused.
-    // Some Chromium builds (incl. WebView on TC22) only deliver synthetic keys to
-    // a focusable element. tabIndex=-1 lets us focus() it without making it tab-stoppable.
-    const body = document.body;
-    const prevTabIndex = body.getAttribute("tabindex");
-    body.setAttribute("tabindex", "-1");
-    body.style.outline = "none";
-    // Focus body if nothing else is focused
-    if (document.activeElement === body || document.activeElement === null) {
-      body.focus();
-    }
+    const hiddenInput = document.createElement("input");
+    hiddenInput.type = "text";
+    hiddenInput.autocomplete = "off";
+    hiddenInput.autocapitalize = "off";
+    hiddenInput.spellcheck = false;
+    hiddenInput.tabIndex = -1;
+    hiddenInput.setAttribute("aria-hidden", "true");
+    hiddenInput.setAttribute("data-rfid-hidden-input", "true");
+    Object.assign(hiddenInput.style, {
+      position: "fixed",
+      opacity: "0",
+      pointerEvents: "none",
+      width: "1px",
+      height: "1px",
+      left: "-9999px",
+      top: "0",
+    });
+    document.body.appendChild(hiddenInput);
+
+    const focusHiddenInput = () => {
+      const active = document.activeElement as HTMLElement | null;
+      const isRealInput =
+        active != null &&
+        active !== hiddenInput &&
+        (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+
+      if (!isRealInput) {
+        hiddenInput.focus({ preventScroll: true });
+      }
+    };
+
+    const scheduleBufferFlush = (source: string) => {
+      if (timerRef.current) clearTimeout(timerRef.current);
+      timerRef.current = setTimeout(() => {
+        if (bufferRef.current.length >= 4) {
+          emitDebug("info", `${source} timeout flush buf="${bufferRef.current}"`);
+          processBuffer();
+          hiddenInput.value = "";
+        }
+      }, 300);
+    };
+
+    focusHiddenInput();
 
     const handleKey = (e: KeyboardEvent) => {
-      // Skip if user is actively typing in an input/textarea
       const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) {
+      const isHiddenInputTarget = target === hiddenInput;
+      const isRealInputTarget =
+        target != null &&
+        target !== hiddenInput &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
+      if (isRealInputTarget) {
         bufferRef.current = "";
         return;
       }
@@ -118,38 +154,52 @@ export function useRfidScanner(options: {
       if (gap > 500 && bufferRef.current.length > 0) {
         emitDebug("reset", `gap ${gap}ms — clearing "${bufferRef.current}"`);
         bufferRef.current = "";
+        hiddenInput.value = "";
       }
       lastKeyTimeRef.current = now;
 
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
+        if (isHiddenInputTarget && hiddenInput.value && !bufferRef.current) {
+          bufferRef.current = hiddenInput.value;
+        }
         emitDebug("key", `TERMINATOR ${e.key} buf="${bufferRef.current}"`);
         processBuffer();
+        hiddenInput.value = "";
+        focusHiddenInput();
+        return;
+      }
+
+      if (isHiddenInputTarget) {
         return;
       }
 
       if (e.key && e.key.length === 1) {
         bufferRef.current += e.key;
         emitDebug("buffer", `+${JSON.stringify(e.key)} code=${e.code} → "${bufferRef.current}" (${bufferRef.current.length})`);
-
-        if (timerRef.current) clearTimeout(timerRef.current);
-        timerRef.current = setTimeout(() => {
-          if (bufferRef.current.length >= 4) {
-            emitDebug("info", `timeout flush buf="${bufferRef.current}"`);
-            processBuffer();
-          }
-        }, 300);
+        scheduleBufferFlush("window");
       } else if (e.key) {
         emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
 
-    // Also catch via beforeinput/input events — some WebView builds only fire
-    // these for synthetic keystrokes from DataWedge.
     const handleBeforeInput = (e: InputEvent) => {
       const target = e.target as HTMLElement | null;
-      const tag = target?.tagName;
-      if (tag === "INPUT" || tag === "TEXTAREA" || target?.isContentEditable) return;
+      const isHiddenInputTarget = target === hiddenInput;
+      const isRealInputTarget =
+        target != null &&
+        target !== hiddenInput &&
+        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+
+      if (isRealInputTarget) return;
+
+      if (isHiddenInputTarget && hiddenInput.value) {
+        bufferRef.current = hiddenInput.value;
+        emitDebug("buffer", `hidden input value=${JSON.stringify(hiddenInput.value)} (${hiddenInput.value.length})`);
+        lastKeyTimeRef.current = Date.now();
+        scheduleBufferFlush("hidden-input");
+        return;
+      }
 
       const data = e.data;
       if (!data) return;
@@ -157,32 +207,34 @@ export function useRfidScanner(options: {
       emitDebug("buffer", `beforeinput data=${JSON.stringify(data)}`);
       bufferRef.current += data;
       lastKeyTimeRef.current = Date.now();
-
-      if (timerRef.current) clearTimeout(timerRef.current);
-      timerRef.current = setTimeout(() => {
-        if (bufferRef.current.length >= 4) {
-          emitDebug("info", `beforeinput timeout flush buf="${bufferRef.current}"`);
-          processBuffer();
-        }
-      }, 300);
+      scheduleBufferFlush("beforeinput");
     };
 
-    // Use capture: true so we get events before any child component swallows them
+    const handlePointerOrVisibility = () => {
+      window.setTimeout(focusHiddenInput, 0);
+    };
+
+    hiddenInput.addEventListener("beforeinput", handleBeforeInput as EventListener, true);
+    hiddenInput.addEventListener("input", handleBeforeInput as EventListener, true);
+    hiddenInput.addEventListener("blur", handlePointerOrVisibility);
     window.addEventListener("keydown", handleKey, true);
     window.addEventListener("keypress", handleKey, true);
     document.addEventListener("beforeinput", handleBeforeInput as EventListener, true);
+    document.addEventListener("visibilitychange", handlePointerOrVisibility, true);
+    window.addEventListener("pointerup", handlePointerOrVisibility, true);
 
-    emitDebug("info", "wedge listeners attached (keydown + keypress + beforeinput, capture)");
+    emitDebug("info", "wedge listeners attached (hidden input + keydown + keypress + beforeinput, capture)");
 
     return () => {
+      hiddenInput.removeEventListener("beforeinput", handleBeforeInput as EventListener, true);
+      hiddenInput.removeEventListener("input", handleBeforeInput as EventListener, true);
+      hiddenInput.removeEventListener("blur", handlePointerOrVisibility);
       window.removeEventListener("keydown", handleKey, true);
       window.removeEventListener("keypress", handleKey, true);
       document.removeEventListener("beforeinput", handleBeforeInput as EventListener, true);
-      if (prevTabIndex === null) {
-        body.removeAttribute("tabindex");
-      } else {
-        body.setAttribute("tabindex", prevTabIndex);
-      }
+      document.removeEventListener("visibilitychange", handlePointerOrVisibility, true);
+      window.removeEventListener("pointerup", handlePointerOrVisibility, true);
+      hiddenInput.remove();
       if (timerRef.current) clearTimeout(timerRef.current);
       if (wedgeTimeoutRef.current) clearTimeout(wedgeTimeoutRef.current);
     };
