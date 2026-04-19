@@ -91,7 +91,7 @@ function ScannerPage() {
       navigator.vibrate(50);
     }
 
-  }, [geigerEpc, processScanFn]);
+  }, [geigerEpc]);
 
   const { isListening, wedgeStatus, addManualTag } = useRfidScanner({
     enabled: scanEnabled,
