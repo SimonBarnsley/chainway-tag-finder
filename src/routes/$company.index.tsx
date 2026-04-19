@@ -154,9 +154,6 @@ function ScannerPage() {
       return;
     }
 
-    // RLS on rfid_scans requires company_slug to match the signed-in user's
-    // company. The URL param ("default" etc.) is just a display slug, so we
-    // always use the authenticated user's real company_slug from useAuth().
     if (!companySlug) {
       toast.error(
         "No company is assigned to your account yet — sign in or set up your company first."
@@ -165,45 +162,66 @@ function ScannerPage() {
     }
 
     setIsSaving(true);
+    let okCount = 0;
+    let createdCount = 0;
+    let linkedCount = 0;
+    let allocatedCount = 0;
+    const errors: string[] = [];
+
     try {
-      const records = unsaved.map((t) => ({
-        epc: t.epc,
-        scan_count: t.count,
-        last_seen: t.lastSeen.toISOString(),
-        location: location || null,
-        company_slug: companySlug,
-      }));
+      // Process each tag through the full pipeline:
+      //  rfid_scans upsert + SGTIN decode + item find/create + tag_items link +
+      //  items.warehouse_location allocation. Bypasses the per-EPC cooldown
+      //  used by auto-process so the user always gets a fresh save on demand.
+      const results = await Promise.allSettled(
+        unsaved.map((t) =>
+          processScanFn({
+            data: {
+              epc: t.epc.toUpperCase(),
+              location: location || null,
+              scanCount: t.count,
+              lastSeen: t.lastSeen.toISOString(),
+            },
+          })
+        )
+      );
 
-      const { error } = await supabase.from("rfid_scans").upsert(records, {
-        onConflict: "epc",
-        ignoreDuplicates: false,
-      });
-
-      if (error) {
-        console.error("[SaveAll] Supabase error:", error);
-        throw error;
+      for (let i = 0; i < results.length; i++) {
+        const r = results[i];
+        const tag = unsaved[i];
+        if (r.status === "fulfilled") {
+          okCount++;
+          if (r.value.itemCreated) createdCount++;
+          if (r.value.linked) linkedCount++;
+          if (r.value.locationApplied) allocatedCount++;
+          lastProcessedRef.current.set(tag.epc.toUpperCase(), Date.now());
+          setTags((prev) => {
+            const next = new Map(prev);
+            const entry = next.get(tag.epc);
+            if (entry) next.set(tag.epc, { ...entry, saved: true });
+            return next;
+          });
+        } else {
+          const msg =
+            r.reason instanceof Error ? r.reason.message : String(r.reason);
+          errors.push(`${tag.epc.slice(-8)}: ${msg}`);
+          console.error("[SaveAll] failed for", tag.epc, msg);
+        }
       }
 
-      setTags((prev) => {
-        const next = new Map(prev);
-        for (const t of unsaved) {
-          const entry = next.get(t.epc);
-          if (entry) next.set(t.epc, { ...entry, saved: true });
-        }
-        return next;
-      });
+      const summary: string[] = [`${okCount} saved`];
+      if (createdCount) summary.push(`${createdCount} new item${createdCount !== 1 ? "s" : ""}`);
+      if (linkedCount) summary.push(`${linkedCount} linked`);
+      if (allocatedCount) summary.push(`${allocatedCount} allocated to "${location}"`);
 
-      toast.success(`${unsaved.length} tags saved to database`);
-    } catch (err: unknown) {
-      const message =
-        err && typeof err === "object" && "message" in err
-          ? String((err as { message: unknown }).message)
-          : "Unknown error";
-      const details =
-        err && typeof err === "object" && "details" in err && (err as { details: unknown }).details
-          ? ` (${String((err as { details: unknown }).details)})`
-          : "";
-      toast.error("Save failed: " + message + details);
+      if (errors.length > 0) {
+        toast.error(
+          `${errors.length} failed: ${errors.slice(0, 2).join("; ")}${errors.length > 2 ? "…" : ""}`
+        );
+      }
+      if (okCount > 0) {
+        toast.success(summary.join(" · "));
+      }
     } finally {
       setIsSaving(false);
     }
