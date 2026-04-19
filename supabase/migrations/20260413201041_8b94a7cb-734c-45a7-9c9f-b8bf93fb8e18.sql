@@ -1,0 +1,1 @@
+ALTER TABLE public.rfid_scans ADD COLUMN location TEXT;

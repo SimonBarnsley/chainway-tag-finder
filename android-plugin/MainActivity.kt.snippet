@@ -1,0 +1,45 @@
+/*
+ * Snippet — paste the relevant parts into your generated MainActivity after
+ * running `bunx cap add android`. The full file lives at:
+ *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/MainActivity.kt
+ *
+ * Key things this does:
+ *   1) Registers the ChainwayUHF plugin
+ *   2) Captures the hardware trigger key (varies by device model — most
+ *      Chainway C-series use KEYCODE 293 or 139; some use F1 = 131)
+ *      and forwards press/release to the plugin.
+ */
+package com.barcodewarehouse.uhftagfinder
+
+import android.os.Bundle
+import android.view.KeyEvent
+import com.getcapacitor.BridgeActivity
+
+class MainActivity : BridgeActivity() {
+
+    // Common Chainway trigger keycodes — adjust for your model if needed.
+    private val triggerKeyCodes = setOf(293, 139, 131, KeyEvent.KEYCODE_F1)
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        registerPlugin(ChainwayUHFPlugin::class.java)
+        super.onCreate(savedInstanceState)
+    }
+
+    override fun dispatchKeyEvent(event: KeyEvent): Boolean {
+        if (event.keyCode in triggerKeyCodes) {
+            when (event.action) {
+                KeyEvent.ACTION_DOWN -> {
+                    if (event.repeatCount == 0) {
+                        ChainwayUHFPlugin.instance?.notifyTriggerPressed()
+                    }
+                    return true
+                }
+                KeyEvent.ACTION_UP -> {
+                    ChainwayUHFPlugin.instance?.notifyTriggerReleased()
+                    return true
+                }
+            }
+        }
+        return super.dispatchKeyEvent(event)
+    }
+}

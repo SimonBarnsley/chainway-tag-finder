@@ -1,0 +1,102 @@
+import { useState, useEffect } from "react";
+import { useNavigate, useParams } from "@tanstack/react-router";
+import { Building2, ChevronDown } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+  DropdownMenuLabel,
+  DropdownMenuSeparator,
+} from "@/components/ui/dropdown-menu";
+import { Button } from "@/components/ui/button";
+
+interface Company {
+  company_slug: string;
+  company_name: string;
+  display_name: string | null;
+  email: string | null;
+}
+
+export function CompanySwitcher() {
+  const [companies, setCompanies] = useState<Company[]>([]);
+  const [loading, setLoading] = useState(true);
+  const navigate = useNavigate();
+  const params = useParams({ strict: false }) as { company?: string };
+  const currentCompany = params.company;
+
+  useEffect(() => {
+    const fetchCompanies = async () => {
+      const { data } = await supabase
+        .from("profiles")
+        .select("company_slug, company_name, display_name, email")
+        .not("company_slug", "is", null)
+        .order("company_name");
+
+      if (data) {
+        // Deduplicate by company_slug
+        const seen = new Set<string>();
+        const unique = data.filter((p) => {
+          if (!p.company_slug || seen.has(p.company_slug)) return false;
+          seen.add(p.company_slug);
+          return true;
+        }) as Company[];
+        setCompanies(unique);
+      }
+      setLoading(false);
+    };
+    fetchCompanies();
+  }, []);
+
+  const currentLabel =
+    companies.find((c) => c.company_slug === currentCompany)?.company_name ||
+    currentCompany ||
+    "Select Company";
+
+  if (loading) return null;
+
+  return (
+    <DropdownMenu>
+      <DropdownMenuTrigger asChild>
+        <Button variant="outline" size="sm" className="gap-1.5 max-w-[180px]">
+          <Building2 className="h-4 w-4 shrink-0" />
+          <span className="truncate text-xs">{currentLabel}</span>
+          <ChevronDown className="h-3 w-3 shrink-0 opacity-50" />
+        </Button>
+      </DropdownMenuTrigger>
+      <DropdownMenuContent align="end" className="w-56">
+        <DropdownMenuLabel className="text-xs text-muted-foreground">
+          Switch Company
+        </DropdownMenuLabel>
+        <DropdownMenuSeparator />
+        {companies.map((c) => (
+          <DropdownMenuItem
+            key={c.company_slug}
+            className={`cursor-pointer text-sm ${c.company_slug === currentCompany ? "bg-accent font-medium" : ""}`}
+            onClick={() =>
+              navigate({
+                to: "/$company",
+                params: { company: c.company_slug },
+              })
+            }
+          >
+            <div className="flex flex-col gap-0.5 min-w-0">
+              <span className="truncate">{c.company_name || c.company_slug}</span>
+              {c.email && (
+                <span className="text-xs text-muted-foreground truncate">
+                  {c.email}
+                </span>
+              )}
+            </div>
+          </DropdownMenuItem>
+        ))}
+        {companies.length === 0 && (
+          <div className="px-2 py-3 text-xs text-muted-foreground text-center">
+            No companies found
+          </div>
+        )}
+      </DropdownMenuContent>
+    </DropdownMenu>
+  );
+}
