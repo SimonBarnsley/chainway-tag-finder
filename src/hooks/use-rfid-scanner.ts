@@ -31,12 +31,16 @@ export function useRfidScanner(options: {
     const raw = bufferRef.current.trim();
     bufferRef.current = "";
 
+    console.log("[RFID Wedge] processBuffer called with raw:", raw, "length:", raw.length);
+
     if (raw.length >= 4) {
       const epc = raw.toUpperCase();
       const tag: RfidTag = {
         epc,
         timestamp: new Date(),
       };
+
+      console.log("[RFID Wedge] Emitting tag:", epc);
 
       // A successful rapid-keystroke scan confirms wedge mode
       setWedgeStatus("detected");
@@ -49,6 +53,8 @@ export function useRfidScanner(options: {
       }, 60_000);
 
       options.onTagScanned?.(tag);
+    } else {
+      console.log("[RFID Wedge] Buffer too short, discarded");
     }
   }, [options.onTagScanned]);
 
@@ -71,39 +77,46 @@ export function useRfidScanner(options: {
       const now = Date.now();
       const gap = now - lastKeyTimeRef.current;
 
-      // Track rapid keystrokes (< 80ms apart = wedge/scanner speed)
-      if (gap < 80 && gap > 0) {
+      // Track rapid keystrokes (< 100ms apart = wedge/scanner speed)
+      if (gap < 100 && gap > 0) {
         rapidKeyCountRef.current++;
-        // 4+ rapid keys in a row strongly indicates a hardware scanner
-        if (rapidKeyCountRef.current >= 4 && wedgeStatus !== "detected") {
+        if (rapidKeyCountRef.current >= 3 && wedgeStatus !== "detected") {
           setWedgeStatus("detected");
         }
       } else {
         rapidKeyCountRef.current = 0;
       }
 
-      // DataWedge sends keys very rapidly (< 50ms between keys)
-      if (now - lastKeyTimeRef.current > 300 && bufferRef.current.length > 0) {
+      // Reset buffer if there's a long gap between keystrokes (new scan starting)
+      if (gap > 500 && bufferRef.current.length > 0) {
+        console.log("[RFID Wedge] Buffer reset due to gap:", bufferRef.current);
         bufferRef.current = "";
       }
       lastKeyTimeRef.current = now;
 
-      if (e.key === "Enter") {
+      // Enter / Tab terminates a scan
+      if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
+        console.log("[RFID Wedge] Terminator received, buffer:", bufferRef.current);
         processBuffer();
         return;
       }
 
-      // Only accept hex chars
+      // Accept hex chars AND common separators that some readers inject (we'll strip them later)
+      // Some Zebra DataWedge profiles send uppercase hex; some include spaces or dashes.
       if (/^[a-fA-F0-9]$/.test(e.key)) {
         bufferRef.current += e.key;
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           if (bufferRef.current.length >= 4) {
+            console.log("[RFID Wedge] Timeout flush, buffer:", bufferRef.current);
             processBuffer();
           }
-        }, 200);
+        }, 300);
+      } else if (e.key.length === 1) {
+        // Log unexpected single chars so we can see what the reader is actually sending
+        console.log("[RFID Wedge] Ignored key:", JSON.stringify(e.key), "code:", e.code);
       }
     };
 
