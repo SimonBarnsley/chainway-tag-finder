@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback, useEffect, useRef } from "react";
+import { useState, useCallback, useEffect } from "react";
 import { Save, Trash2, Power, PowerOff } from "lucide-react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/AppHeader";
@@ -50,13 +50,6 @@ function ScannerPage() {
   const [lastScannedEpc, setLastScannedEpc] = useState<string | null>(null);
   const [lastScannedTime, setLastScannedTime] = useState(0);
 
-  // Per-EPC cooldown so a tag held in the field doesn't spam the server
-  const lastProcessedRef = useRef<Map<string, number>>(new Map());
-  const locationRef = useRef(location);
-  useEffect(() => {
-    locationRef.current = location;
-  }, [location]);
-
   useEffect(() => {
     const fetchCompanyName = async () => {
       const { data } = await supabase
@@ -98,40 +91,6 @@ function ScannerPage() {
       navigator.vibrate(50);
     }
 
-    // Auto-process: decode SGTIN, save scan, link/create item, allocate location
-    const epc = tag.epc.toUpperCase();
-    const now = Date.now();
-    const lastAt = lastProcessedRef.current.get(epc) ?? 0;
-    if (now - lastAt < 8000) return; // cooldown — already processed this EPC very recently
-    lastProcessedRef.current.set(epc, now);
-
-    processScanFn({
-      data: {
-        epc,
-        location: locationRef.current || null,
-        scanCount: 1,
-        lastSeen: tag.timestamp.toISOString(),
-      },
-    })
-      .then((res) => {
-        // Mark this tag as saved in the local list (the scan row is now in the DB)
-        setTags((prev) => {
-          const next = new Map(prev);
-          const entry = next.get(epc);
-          if (entry) next.set(epc, { ...entry, saved: true });
-          return next;
-        });
-        if (res.itemCreated) {
-          toast.success(`New item created for GTIN ${res.gtin}`);
-        }
-      })
-      .catch((err: unknown) => {
-        const msg = err instanceof Error ? err.message : "Auto-save failed";
-        console.error("[auto-process] failed for", epc, msg);
-        toast.error(`Auto-save failed: ${msg}`);
-        // Allow a retry on the next scan instead of waiting for the cooldown
-        lastProcessedRef.current.delete(epc);
-      });
   }, [geigerEpc, processScanFn]);
 
   const { isListening, wedgeStatus, addManualTag } = useRfidScanner({
@@ -195,7 +154,6 @@ function ScannerPage() {
           if (r.value.itemCreated) createdCount++;
           if (r.value.linked) linkedCount++;
           if (r.value.locationApplied) allocatedCount++;
-          lastProcessedRef.current.set(tag.epc.toUpperCase(), Date.now());
           setTags((prev) => {
             const next = new Map(prev);
             const entry = next.get(tag.epc);
