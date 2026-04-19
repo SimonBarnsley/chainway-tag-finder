@@ -11,7 +11,7 @@ import { ManualEntry } from "@/components/ManualEntry";
 import { LocationSelector } from "@/components/LocationSelector";
 import { LocationFilter } from "@/components/LocationFilter";
 import { GeigerSearch } from "@/components/GeigerSearch";
-import { WedgeDebugOverlay } from "@/components/WedgeDebugOverlay";
+
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
@@ -332,7 +332,6 @@ function ScannerPage() {
           {companyName}
         </p>
       </footer>
-      <WedgeDebugOverlay />
     </div>
     </AuthGuard>
   );
