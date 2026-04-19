@@ -11,7 +11,7 @@ import { LocationSelector } from "@/components/LocationSelector";
 import { LocationFilter } from "@/components/LocationFilter";
 import { GeigerSearch } from "@/components/GeigerSearch";
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
-import { useChainwaySdk } from "@/hooks/use-chainway-sdk";
+import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -20,8 +20,8 @@ export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
   head: () => ({
     meta: [
-      { title: "RFID Scanner — Chainway UHF Reader" },
-      { name: "description", content: "UHF RFID tag scanner for Chainway handheld devices" },
+      { title: "RFID Scanner — Zebra RFD40 + TC22" },
+      { name: "description", content: "UHF RFID tag scanner for the Zebra RFD40 sled paired with a TC22 via e-Connex" },
     ],
   }),
 });
@@ -93,9 +93,10 @@ function ScannerPage() {
     onTagScanned: handleTagScanned,
   });
 
-  // Native Chainway SDK bridge — active only inside the Capacitor APK.
-  // In a regular browser this is a no-op and the keyboard wedge handles input.
-  const chainway = useChainwaySdk({
+  // Native Zebra RFD40 SDK bridge — active only inside the Capacitor APK on a TC22
+  // docked in the RFD40 sled (e-Connex pin connection). In a regular browser this
+  // is a no-op and the keyboard wedge / DataWedge handles input.
+  const zebra = useZebraSdk({
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
   });
@@ -187,10 +188,11 @@ function ScannerPage() {
           tagCount={totalScans}
           uniqueCount={tags.size}
           wedgeStatus={wedgeStatus}
-          sdkAvailable={chainway.isNativeSdkAvailable}
-          sdkStatus={chainway.status}
-          sdkError={chainway.errorMessage}
-          sdkScanning={chainway.isScanning}
+          sdkAvailable={zebra.isNativeSdkAvailable}
+          sdkStatus={zebra.status}
+          sdkError={zebra.errorMessage}
+          sdkScanning={zebra.isScanning}
+          readerName={zebra.readerName}
         />
 
         <div className="flex gap-2">

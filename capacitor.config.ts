@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
- * Capacitor configuration for the Chainway UHF wrapper.
+ * Capacitor configuration for the Zebra RFD40 + TC22 wrapper.
  *
  * Two modes:
  *  - Development (server.url set): WebView loads the live Lovable preview URL

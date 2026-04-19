@@ -1,4 +1,8 @@
-# Android (Capacitor) — Chainway UHF Wrapper
+# Android (Capacitor) — Zebra RFD40 + TC22 Wrapper
+
+Native wrapper for using a **Zebra RFD40** UHF RFID sled paired with a **Zebra TC22**
+mobile computer through the **e-Connex adapter** (pin-based serial connection — no
+Bluetooth pairing required).
 
 This folder is **not** generated yet. Capacitor scaffolds the Android Studio
 project on your local machine — it cannot be created from inside the Lovable
@@ -29,25 +33,23 @@ preview because Android Studio + JDK + the Android SDK aren't available here.
    bunx cap sync android
    ```
 
-5. **Drop in the Chainway SDK**:
-   - Get the `.aar` (or `.jar`) from Chainway (developer portal / device CD).
-   - Place it at `android/app/libs/chainway-uhf.aar`.
+5. **Drop in the Zebra RFID3 SDK**:
+   - Download the **Zebra RFID SDK for Android** from the
+     [Zebra developer portal](https://developer.zebra.com/rfid-sdk-android).
+   - Place the SDK files at `android/app/libs/`:
+     - `API3_LIB-x.x.x.aar` (main RFID3 SDK)
+     - `ASCII_SDK_API.jar` (if shipped alongside)
    - In `android/app/build.gradle`, ensure the `dependencies` block contains:
      ```gradle
      implementation fileTree(dir: 'libs', include: ['*.aar', '*.jar'])
      ```
 
 6. **Copy the plugin source** from this repo into the Android project:
-   - Copy `android-plugin/ChainwayUHFPlugin.kt` to:
-     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ChainwayUHFPlugin.kt`
-   - Register it in `android/app/src/main/java/com/.../MainActivity.java` (or `.kt`):
-     ```java
-     @Override
-     public void onCreate(Bundle savedInstanceState) {
-       registerPlugin(ChainwayUHFPlugin.class);
-       super.onCreate(savedInstanceState);
-     }
-     ```
+   - Copy `android-plugin/ZebraRFD40Plugin.kt` to:
+     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt`
+   - Merge `android-plugin/MainActivity.kt.snippet` into your generated
+     `MainActivity.kt`. It registers the plugin and forwards the e-Connex
+     hardware trigger key (KEYCODE 293 / 280) to the plugin.
 
 7. **Open in Android Studio and build**:
    ```bash
@@ -55,7 +57,7 @@ preview because Android Studio + JDK + the Android SDK aren't available here.
    ```
    Then Build → Build Bundle(s) / APK(s) → Build APK(s).
 
-8. **Sideload to the Chainway device** via USB:
+8. **Sideload to the TC22** via USB (with the RFD40 docked via e-Connex):
    ```bash
    adb install android/app/build/outputs/apk/debug/app-debug.apk
    ```
@@ -68,16 +70,31 @@ rebuilding the APK each time. Uncomment the `server.url` block in
 that, every change deployed to Lovable is reflected in the WebView on next
 app open.
 
-## Device model notes
+## How it talks to the sled
 
-The included plugin targets `com.rscja.deviceapi.RFIDWithUHFUART` which covers
-most C-series handhelds (C72, C66, C61, etc.). For BLE variants (C4050, C5)
-swap the import in `ChainwayUHFPlugin.kt` to the matching class — see the
-SDK docs included with your device.
+- **Transport**: `ENUM_TRANSPORT.SERIAL` — the e-Connex adapter exposes the
+  RFD40 to the TC22 over a serial pin connection, so no Bluetooth pairing is
+  needed and the connection is power-cycle stable.
+- **Trigger key**: the e-Connex passes the RFD40 hardware trigger up as
+  Android keycode **293** (some firmware uses **280**). `MainActivity` captures
+  both and forwards `triggerPressed` / `triggerReleased` events to the plugin,
+  which calls `Inventory.perform()` / `Inventory.stop()`.
+- **Tag reads**: the plugin subscribes to `RfidEventsListener.eventReadNotify`
+  and forwards each `TagData` to JS as `{ epc, rssi, antenna, tid }`.
+
+## Fallback: DataWedge keyboard wedge
+
+If the native plugin is unavailable (browser preview, SDK init failure, etc.)
+the app falls back to keyboard-wedge input. Configure a DataWedge profile on
+the TC22 to send EPC strings + Enter — the `useRfidScanner` hook will pick
+them up automatically.
 
 ## Permissions
 
-The plugin needs no special runtime permissions for the UHF radio itself
-(it's an internal hardware module). If you later add features that need
-camera, location, or storage, add them to
-`android/app/src/main/AndroidManifest.xml`.
+The Zebra RFID3 SDK over the e-Connex serial connection needs no special
+runtime permissions. If you switch to a Bluetooth-paired RFD40 variant, add:
+```xml
+<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
+<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
+```
+to `android/app/src/main/AndroidManifest.xml`.

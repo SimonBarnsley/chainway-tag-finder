@@ -1,6 +1,6 @@
 import { Radio, CircleOff, Wifi, Keyboard, Cpu } from "lucide-react";
 import type { WedgeStatus } from "@/hooks/use-rfid-scanner";
-import type { ChainwaySdkStatus } from "@/hooks/use-chainway-sdk";
+import type { ZebraSdkStatus } from "@/hooks/use-zebra-sdk";
 
 interface ScannerStatusProps {
   isListening: boolean;
@@ -8,9 +8,10 @@ interface ScannerStatusProps {
   uniqueCount: number;
   wedgeStatus: WedgeStatus;
   sdkAvailable?: boolean;
-  sdkStatus?: ChainwaySdkStatus;
+  sdkStatus?: ZebraSdkStatus;
   sdkError?: string | null;
   sdkScanning?: boolean;
+  readerName?: string | null;
 }
 
 const wedgeConfig: Record<WedgeStatus, { label: string; color: string; iconColor: string }> = {
@@ -19,7 +20,7 @@ const wedgeConfig: Record<WedgeStatus, { label: string; color: string; iconColor
   not_detected: { label: "DISABLED", color: "text-destructive", iconColor: "text-destructive" },
 };
 
-const sdkConfig: Record<ChainwaySdkStatus, { label: string; color: string; iconColor: string }> = {
+const sdkConfig: Record<ZebraSdkStatus, { label: string; color: string; iconColor: string }> = {
   unavailable: { label: "N/A", color: "text-muted-foreground", iconColor: "text-muted-foreground" },
   initializing: { label: "INIT…", color: "text-warning", iconColor: "text-warning" },
   ready: { label: "READY", color: "text-success", iconColor: "text-success" },
@@ -35,6 +36,7 @@ export function ScannerStatus({
   sdkStatus,
   sdkError,
   sdkScanning,
+  readerName,
 }: ScannerStatusProps) {
   const wedge = wedgeConfig[wedgeStatus];
   const sdk = sdkStatus ? sdkConfig[sdkStatus] : sdkConfig.unavailable;
@@ -56,15 +58,17 @@ export function ScannerStatus({
             className={`h-5 w-5 shrink-0 ${sdk.iconColor} ${sdkScanning ? "animate-pulse" : ""}`}
           />
           <div className="flex-1 min-w-0">
-            <p className="text-xs text-muted-foreground">Chainway SDK</p>
+            <p className="text-xs text-muted-foreground">
+              Zebra RFD40 {readerName ? `· ${readerName}` : ""}
+            </p>
             <p className={`text-sm font-bold ${sdk.color}`}>
               {sdk.label}
               {sdkScanning && " · SCANNING"}
             </p>
           </div>
           <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[12rem]">
-            {sdkStatus === "ready" && "Hold trigger to scan"}
-            {sdkStatus === "initializing" && "Connecting to radio…"}
+            {sdkStatus === "ready" && "Pull TC22 trigger to scan"}
+            {sdkStatus === "initializing" && "Connecting to RFD40 sled…"}
             {sdkStatus === "error" && (sdkError ?? "Init failed")}
           </span>
         </div>
@@ -84,7 +88,7 @@ export function ScannerStatus({
           className={`h-5 w-5 shrink-0 ${wedge.iconColor} ${wedgeStatus === "detected" ? "animate-pulse" : ""}`}
         />
         <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">Keyboard Wedge {sdkAvailable && "(fallback)"}</p>
+          <p className="text-xs text-muted-foreground">DataWedge {sdkAvailable && "(fallback)"}</p>
           <p className={`text-sm font-bold ${wedge.color}`}>{wedge.label}</p>
         </div>
         <span className="text-xs text-muted-foreground shrink-0">
