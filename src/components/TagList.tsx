@@ -31,7 +31,7 @@ export function TagList({ tags, companySlug, onGeigerSearch }: TagListProps) {
       <div className="flex flex-col items-center justify-center py-12 text-muted-foreground">
         <Radio className="h-10 w-10 mb-3 opacity-30" />
         <p className="text-sm">No tags scanned yet</p>
-        <p className="text-xs mt-1">Press the trigger on your Chainway device</p>
+        <p className="text-xs mt-1">Pull the trigger on your Zebra RFD40</p>
       </div>
     );
   }
