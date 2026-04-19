@@ -31,12 +31,16 @@ export function useRfidScanner(options: {
     const raw = bufferRef.current.trim();
     bufferRef.current = "";
 
+    console.log("[RFID Wedge] processBuffer called with raw:", raw, "length:", raw.length);
+
     if (raw.length >= 4) {
       const epc = raw.toUpperCase();
       const tag: RfidTag = {
         epc,
         timestamp: new Date(),
       };
+
+      console.log("[RFID Wedge] Emitting tag:", epc);
 
       // A successful rapid-keystroke scan confirms wedge mode
       setWedgeStatus("detected");
@@ -49,6 +53,8 @@ export function useRfidScanner(options: {
       }, 60_000);
 
       options.onTagScanned?.(tag);
+    } else {
+      console.log("[RFID Wedge] Buffer too short, discarded");
     }
   }, [options.onTagScanned]);
 
