@@ -188,10 +188,11 @@ function ScannerPage() {
           tagCount={totalScans}
           uniqueCount={tags.size}
           wedgeStatus={wedgeStatus}
-          sdkAvailable={chainway.isNativeSdkAvailable}
-          sdkStatus={chainway.status}
-          sdkError={chainway.errorMessage}
-          sdkScanning={chainway.isScanning}
+          sdkAvailable={zebra.isNativeSdkAvailable}
+          sdkStatus={zebra.status}
+          sdkError={zebra.errorMessage}
+          sdkScanning={zebra.isScanning}
+          readerName={zebra.readerName}
         />
 
         <div className="flex gap-2">

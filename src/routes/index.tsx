@@ -5,8 +5,8 @@ export const Route = createFileRoute("/")({
   component: IndexRedirect,
   head: () => ({
     meta: [
-      { title: "RFID Scanner — Chainway UHF Reader" },
-      { name: "description", content: "UHF RFID tag scanner for Chainway handheld devices" },
+      { title: "RFID Scanner — Zebra RFD40 + TC22" },
+      { name: "description", content: "UHF RFID tag scanner for the Zebra RFD40 sled paired with a TC22 via e-Connex" },
     ],
   }),
 });
