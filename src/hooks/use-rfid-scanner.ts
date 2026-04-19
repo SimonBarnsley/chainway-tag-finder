@@ -86,7 +86,12 @@ export function useRfidScanner(options: {
     // On Android (TC22 included), focusing a real <input> auto-shows the soft
     // keyboard. inputmode="none" on a contenteditable element keeps focus —
     // so DataWedge keystrokes still land here — but suppresses the IME.
-    const hiddenInput = document.createElement("div");
+    interface HiddenScannerInput extends HTMLDivElement {
+      value: string;
+      setSelectionRange: (start: number, end: number) => void;
+    }
+
+    const hiddenInput = document.createElement("div") as HiddenScannerInput;
     hiddenInput.contentEditable = "true";
     hiddenInput.tabIndex = -1;
     hiddenInput.setAttribute("inputmode", "none");
@@ -113,7 +118,6 @@ export function useRfidScanner(options: {
       overflow: "hidden",
       whiteSpace: "nowrap",
       zIndex: "2147483647",
-      // Belt-and-braces: try to discourage Android from showing the keyboard
       userSelect: "none",
       WebkitUserSelect: "none",
     });
@@ -128,18 +132,16 @@ export function useRfidScanner(options: {
         (this as HTMLElement).textContent = v;
       },
     });
-    // Stub setSelectionRange so the focus helper below stays happy.
-    (hiddenInput as unknown as { setSelectionRange: (a: number, b: number) => void }).setSelectionRange =
-      () => {
-        const range = document.createRange();
-        range.selectNodeContents(hiddenInput);
-        range.collapse(false);
-        const sel = window.getSelection();
-        if (sel) {
-          sel.removeAllRanges();
-          sel.addRange(range);
-        }
-      };
+    hiddenInput.setSelectionRange = () => {
+      const range = document.createRange();
+      range.selectNodeContents(hiddenInput);
+      range.collapse(false);
+      const sel = window.getSelection();
+      if (sel) {
+        sel.removeAllRanges();
+        sel.addRange(range);
+      }
+    };
     document.body.appendChild(hiddenInput);
 
     const isRealInputElement = (element: HTMLElement | null) => {
