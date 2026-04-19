@@ -109,6 +109,16 @@ function ScannerPage() {
       return;
     }
 
+    // RLS on rfid_scans requires company_slug to match the signed-in user's
+    // company. The URL param ("default" etc.) is just a display slug, so we
+    // always use the authenticated user's real company_slug from useAuth().
+    if (!companySlug) {
+      toast.error(
+        "No company is assigned to your account yet — sign in or set up your company first."
+      );
+      return;
+    }
+
     setIsSaving(true);
     try {
       const records = unsaved.map((t) => ({
@@ -116,7 +126,7 @@ function ScannerPage() {
         scan_count: t.count,
         last_seen: t.lastSeen.toISOString(),
         location: location || null,
-        company_slug: company,
+        company_slug: companySlug,
       }));
 
       const { error } = await supabase.from("rfid_scans").upsert(records, {
@@ -124,7 +134,10 @@ function ScannerPage() {
         ignoreDuplicates: false,
       });
 
-      if (error) throw error;
+      if (error) {
+        console.error("[SaveAll] Supabase error:", error);
+        throw error;
+      }
 
       setTags((prev) => {
         const next = new Map(prev);
@@ -137,8 +150,15 @@ function ScannerPage() {
 
       toast.success(`${unsaved.length} tags saved to database`);
     } catch (err: unknown) {
-      const message = err instanceof Error ? err.message : "Unknown error";
-      toast.error("Save failed: " + message);
+      const message =
+        err && typeof err === "object" && "message" in err
+          ? String((err as { message: unknown }).message)
+          : "Unknown error";
+      const details =
+        err && typeof err === "object" && "details" in err && (err as { details: unknown }).details
+          ? ` (${String((err as { details: unknown }).details)})`
+          : "";
+      toast.error("Save failed: " + message + details);
     } finally {
       setIsSaving(false);
     }
