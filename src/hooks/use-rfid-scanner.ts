@@ -82,12 +82,19 @@ export function useRfidScanner(options: {
 
     setIsListening(true);
 
-    const hiddenInput = document.createElement("input");
-    hiddenInput.type = "text";
-    hiddenInput.autocomplete = "off";
-    hiddenInput.autocapitalize = "off";
-    hiddenInput.spellcheck = false;
+    // Use a contenteditable <div> with inputmode="none" instead of an <input>.
+    // On Android (TC22 included), focusing a real <input> auto-shows the soft
+    // keyboard. inputmode="none" on a contenteditable element keeps focus —
+    // so DataWedge keystrokes still land here — but suppresses the IME.
+    const hiddenInput = document.createElement("div");
+    hiddenInput.contentEditable = "true";
     hiddenInput.tabIndex = -1;
+    hiddenInput.setAttribute("inputmode", "none");
+    hiddenInput.setAttribute("autocomplete", "off");
+    hiddenInput.setAttribute("autocapitalize", "off");
+    hiddenInput.setAttribute("autocorrect", "off");
+    hiddenInput.setAttribute("spellcheck", "false");
+    hiddenInput.setAttribute("aria-hidden", "true");
     hiddenInput.setAttribute("data-rfid-hidden-input", "true");
     Object.assign(hiddenInput.style, {
       position: "fixed",
@@ -103,8 +110,36 @@ export function useRfidScanner(options: {
       background: "transparent",
       color: "transparent",
       caretColor: "transparent",
+      overflow: "hidden",
+      whiteSpace: "nowrap",
       zIndex: "2147483647",
+      // Belt-and-braces: try to discourage Android from showing the keyboard
+      userSelect: "none",
+      WebkitUserSelect: "none",
     });
+    // Mirror the contenteditable text via a `value` accessor so the rest of
+    // the hook can keep using `hiddenInput.value` (and assign to it).
+    Object.defineProperty(hiddenInput, "value", {
+      configurable: true,
+      get() {
+        return (this as HTMLElement).textContent ?? "";
+      },
+      set(v: string) {
+        (this as HTMLElement).textContent = v;
+      },
+    });
+    // Stub setSelectionRange so the focus helper below stays happy.
+    (hiddenInput as unknown as { setSelectionRange: (a: number, b: number) => void }).setSelectionRange =
+      () => {
+        const range = document.createRange();
+        range.selectNodeContents(hiddenInput);
+        range.collapse(false);
+        const sel = window.getSelection();
+        if (sel) {
+          sel.removeAllRanges();
+          sel.addRange(range);
+        }
+      };
     document.body.appendChild(hiddenInput);
 
     const isRealInputElement = (element: HTMLElement | null) => {
