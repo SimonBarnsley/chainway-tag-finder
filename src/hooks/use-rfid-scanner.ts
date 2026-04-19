@@ -88,51 +88,81 @@ export function useRfidScanner(options: {
     hiddenInput.autocapitalize = "off";
     hiddenInput.spellcheck = false;
     hiddenInput.tabIndex = -1;
-    hiddenInput.setAttribute("aria-hidden", "true");
     hiddenInput.setAttribute("data-rfid-hidden-input", "true");
     Object.assign(hiddenInput.style, {
       position: "fixed",
-      opacity: "0",
-      pointerEvents: "none",
       width: "1px",
       height: "1px",
-      left: "-9999px",
-      top: "0",
+      right: "0",
+      bottom: "0",
+      opacity: "0.01",
+      pointerEvents: "none",
+      border: "0",
+      padding: "0",
+      margin: "0",
+      background: "transparent",
+      color: "transparent",
+      caretColor: "transparent",
+      zIndex: "2147483647",
     });
     document.body.appendChild(hiddenInput);
 
+    const isRealInputElement = (element: HTMLElement | null) => {
+      return !!(
+        element != null &&
+        element !== hiddenInput &&
+        (element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.isContentEditable)
+      );
+    };
+
     const focusHiddenInput = () => {
       const active = document.activeElement as HTMLElement | null;
-      const isRealInput =
-        active != null &&
-        active !== hiddenInput &&
-        (active.tagName === "INPUT" || active.tagName === "TEXTAREA" || active.isContentEditable);
+      if (isRealInputElement(active)) return;
 
-      if (!isRealInput) {
+      if (document.activeElement !== hiddenInput) {
         hiddenInput.focus({ preventScroll: true });
+      }
+
+      const length = hiddenInput.value.length;
+      try {
+        hiddenInput.setSelectionRange(length, length);
+      } catch {
+        // ignore platforms that do not support selection on this input type
       }
     };
 
     const scheduleBufferFlush = (source: string) => {
       if (timerRef.current) clearTimeout(timerRef.current);
       timerRef.current = setTimeout(() => {
+        if (!bufferRef.current && hiddenInput.value.length >= 4) {
+          bufferRef.current = hiddenInput.value;
+          emitDebug("buffer", `hidden input sync (${source}:timeout)=${JSON.stringify(hiddenInput.value)} (${hiddenInput.value.length})`);
+        }
+
         if (bufferRef.current.length >= 4) {
           emitDebug("info", `${source} timeout flush buf="${bufferRef.current}"`);
           processBuffer();
           hiddenInput.value = "";
+          focusHiddenInput();
         }
       }, 300);
     };
 
+    const syncFromHiddenInput = (source: string) => {
+      if (!hiddenInput.value) return false;
+      bufferRef.current = hiddenInput.value;
+      emitDebug("buffer", `hidden input sync (${source})=${JSON.stringify(hiddenInput.value)} (${hiddenInput.value.length})`);
+      lastKeyTimeRef.current = Date.now();
+      return true;
+    };
+
     focusHiddenInput();
+    const refocusInterval = window.setInterval(focusHiddenInput, 750);
 
     const handleKey = (e: KeyboardEvent) => {
       const target = e.target as HTMLElement | null;
       const isHiddenInputTarget = target === hiddenInput;
-      const isRealInputTarget =
-        target != null &&
-        target !== hiddenInput &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      const isRealInputTarget = isRealInputElement(target);
 
       if (isRealInputTarget) {
         bufferRef.current = "";
@@ -160,8 +190,8 @@ export function useRfidScanner(options: {
 
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
-        if (isHiddenInputTarget && hiddenInput.value && !bufferRef.current) {
-          bufferRef.current = hiddenInput.value;
+        if (!bufferRef.current) {
+          syncFromHiddenInput("terminator");
         }
         emitDebug("key", `TERMINATOR ${e.key} buf="${bufferRef.current}"`);
         processBuffer();
@@ -171,6 +201,8 @@ export function useRfidScanner(options: {
       }
 
       if (isHiddenInputTarget) {
+        syncFromHiddenInput("keydown");
+        scheduleBufferFlush("hidden-input-keydown");
         return;
       }
 
@@ -186,18 +218,12 @@ export function useRfidScanner(options: {
     const handleBeforeInput = (e: InputEvent) => {
       const target = e.target as HTMLElement | null;
       const isHiddenInputTarget = target === hiddenInput;
-      const isRealInputTarget =
-        target != null &&
-        target !== hiddenInput &&
-        (target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable);
+      if (isRealInputElement(target)) return;
 
-      if (isRealInputTarget) return;
-
-      if (isHiddenInputTarget && hiddenInput.value) {
-        bufferRef.current = hiddenInput.value;
-        emitDebug("buffer", `hidden input value=${JSON.stringify(hiddenInput.value)} (${hiddenInput.value.length})`);
-        lastKeyTimeRef.current = Date.now();
-        scheduleBufferFlush("hidden-input");
+      if (isHiddenInputTarget) {
+        if (syncFromHiddenInput(e.type)) {
+          scheduleBufferFlush(`hidden-input-${e.type}`);
+        }
         return;
       }
 
@@ -210,30 +236,41 @@ export function useRfidScanner(options: {
       scheduleBufferFlush("beforeinput");
     };
 
-    const handlePointerOrVisibility = () => {
+    const handleHiddenInputValue = () => {
+      if (syncFromHiddenInput("input")) {
+        scheduleBufferFlush("hidden-input-input");
+      }
+    };
+
+    const handleRefocus = () => {
       window.setTimeout(focusHiddenInput, 0);
     };
 
     hiddenInput.addEventListener("beforeinput", handleBeforeInput as EventListener, true);
-    hiddenInput.addEventListener("input", handleBeforeInput as EventListener, true);
-    hiddenInput.addEventListener("blur", handlePointerOrVisibility);
+    hiddenInput.addEventListener("input", handleHiddenInputValue, true);
+    hiddenInput.addEventListener("blur", handleRefocus);
     window.addEventListener("keydown", handleKey, true);
     window.addEventListener("keypress", handleKey, true);
     document.addEventListener("beforeinput", handleBeforeInput as EventListener, true);
-    document.addEventListener("visibilitychange", handlePointerOrVisibility, true);
-    window.addEventListener("pointerup", handlePointerOrVisibility, true);
+    document.addEventListener("focusin", handleRefocus, true);
+    document.addEventListener("visibilitychange", handleRefocus, true);
+    window.addEventListener("focus", handleRefocus, true);
+    window.addEventListener("pointerup", handleRefocus, true);
 
-    emitDebug("info", "wedge listeners attached (hidden input + keydown + keypress + beforeinput, capture)");
+    emitDebug("info", "wedge listeners attached (focused hidden input keepalive)");
 
     return () => {
+      window.clearInterval(refocusInterval);
       hiddenInput.removeEventListener("beforeinput", handleBeforeInput as EventListener, true);
-      hiddenInput.removeEventListener("input", handleBeforeInput as EventListener, true);
-      hiddenInput.removeEventListener("blur", handlePointerOrVisibility);
+      hiddenInput.removeEventListener("input", handleHiddenInputValue, true);
+      hiddenInput.removeEventListener("blur", handleRefocus);
       window.removeEventListener("keydown", handleKey, true);
       window.removeEventListener("keypress", handleKey, true);
       document.removeEventListener("beforeinput", handleBeforeInput as EventListener, true);
-      document.removeEventListener("visibilitychange", handlePointerOrVisibility, true);
-      window.removeEventListener("pointerup", handlePointerOrVisibility, true);
+      document.removeEventListener("focusin", handleRefocus, true);
+      document.removeEventListener("visibilitychange", handleRefocus, true);
+      window.removeEventListener("focus", handleRefocus, true);
+      window.removeEventListener("pointerup", handleRefocus, true);
       hiddenInput.remove();
       if (timerRef.current) clearTimeout(timerRef.current);
       if (wedgeTimeoutRef.current) clearTimeout(wedgeTimeoutRef.current);
