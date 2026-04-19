@@ -111,6 +111,7 @@ export function useRfidScanner(options: {
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
         console.log("[RFID Wedge] Terminator received, buffer:", bufferRef.current);
+        emitDebug("key", `TERMINATOR ${e.key} buf="${bufferRef.current}"`);
         processBuffer();
         return;
       }
@@ -119,17 +120,22 @@ export function useRfidScanner(options: {
       // Some Zebra DataWedge profiles send uppercase hex; some include spaces or dashes.
       if (/^[a-fA-F0-9]$/.test(e.key)) {
         bufferRef.current += e.key;
+        emitDebug("buffer", `+${e.key} → "${bufferRef.current}" (${bufferRef.current.length})`);
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           if (bufferRef.current.length >= 4) {
             console.log("[RFID Wedge] Timeout flush, buffer:", bufferRef.current);
+            emitDebug("info", `timeout flush buf="${bufferRef.current}"`);
             processBuffer();
           }
         }, 300);
       } else if (e.key.length === 1) {
         // Log unexpected single chars so we can see what the reader is actually sending
         console.log("[RFID Wedge] Ignored key:", JSON.stringify(e.key), "code:", e.code);
+        emitDebug("ignored", `key=${JSON.stringify(e.key)} code=${e.code}`);
+      } else {
+        emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
 
