@@ -9,9 +9,11 @@ export interface RfidTag {
 export type WedgeStatus = "unknown" | "detected" | "not_detected";
 
 /**
- * Hook that captures RFID tag data from Chainway devices.
- * Chainway UHF readers in keyboard wedge mode send EPC data as rapid keystrokes
- * followed by Enter. This hook detects that pattern and extracts the EPC.
+ * Hook that captures RFID tag data from a Zebra RFD40 sled (via TC22 + e-Connex)
+ * configured to act as a keyboard wedge through DataWedge.
+ * The wedge sends EPC data as rapid keystrokes followed by Enter — this hook
+ * detects that pattern and extracts the EPC. Used as a fallback when the
+ * native Zebra RFID3 SDK plugin is unavailable.
  */
 export function useRfidScanner(options: {
   enabled: boolean;
@@ -80,7 +82,7 @@ export function useRfidScanner(options: {
         rapidKeyCountRef.current = 0;
       }
 
-      // Chainway wedge sends keys very rapidly (< 50ms between keys)
+      // DataWedge sends keys very rapidly (< 50ms between keys)
       if (now - lastKeyTimeRef.current > 300 && bufferRef.current.length > 0) {
         bufferRef.current = "";
       }
