@@ -2,56 +2,64 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import type { RfidTag } from "@/hooks/use-rfid-scanner";
 
 /**
- * Bridge to the native Chainway UHF SDK plugin (Android only).
+ * Bridge to the native Zebra RFID SDK plugin (Android only).
  *
- * When running inside the Capacitor APK, `window.ChainwayUHF` is injected by
- * the native plugin. In a regular browser preview it's undefined and this
- * hook becomes a no-op — the keyboard wedge handler stays the source of truth.
+ * Targets the Zebra RFD40 UHF sled paired with a TC22 mobile computer via the
+ * e-Connex adapter (pin-based serial connection — no Bluetooth pairing needed).
  *
- * Native plugin contract (see android/app/src/main/java/.../ChainwayUHFPlugin.kt):
- *   ChainwayUHF.init()       -> Promise<{ success: boolean; error?: string }>
- *   ChainwayUHF.startScan()  -> Promise<void>
- *   ChainwayUHF.stopScan()   -> Promise<void>
- *   ChainwayUHF.release()    -> Promise<void>
- *   ChainwayUHF.addListener("tagRead", (tag) => ...)
- *   ChainwayUHF.addListener("triggerPressed", () => ...)
- *   ChainwayUHF.addListener("triggerReleased", () => ...)
+ * When running inside the Capacitor APK, `Capacitor.Plugins.ZebraRFID` is
+ * injected by the native plugin (see android-plugin/ZebraRFD40Plugin.kt).
+ * In a regular browser preview it's undefined and this hook becomes a no-op —
+ * the keyboard wedge handler stays the source of truth.
+ *
+ * Native plugin contract (see android-plugin/ZebraRFD40Plugin.kt):
+ *   ZebraRFID.init()       -> Promise<{ success: boolean; error?: string; readerName?: string }>
+ *   ZebraRFID.startScan()  -> Promise<void>
+ *   ZebraRFID.stopScan()   -> Promise<void>
+ *   ZebraRFID.release()    -> Promise<void>
+ *   ZebraRFID.addListener("tagRead", (tag) => ...)
+ *   ZebraRFID.addListener("triggerPressed", () => ...)
+ *   ZebraRFID.addListener("triggerReleased", () => ...)
+ *   ZebraRFID.addListener("readerStatus", ({ connected, name }) => ...)
  */
 
-type NativeTag = { epc: string; rssi?: number };
+type NativeTag = { epc: string; rssi?: number; antenna?: number; tid?: string };
+type ReaderStatus = { connected: boolean; name?: string };
 type Listener<T> = (data: T) => void;
 type RemovableHandle = { remove: () => void };
 
-interface ChainwayUHFNative {
-  init: () => Promise<{ success: boolean; error?: string }>;
+interface ZebraRFIDNative {
+  init: () => Promise<{ success: boolean; error?: string; readerName?: string }>;
   startScan: () => Promise<void>;
   stopScan: () => Promise<void>;
   release: () => Promise<void>;
   addListener: ((event: "tagRead", cb: Listener<NativeTag>) => Promise<RemovableHandle>) &
     ((event: "triggerPressed", cb: Listener<void>) => Promise<RemovableHandle>) &
-    ((event: "triggerReleased", cb: Listener<void>) => Promise<RemovableHandle>);
+    ((event: "triggerReleased", cb: Listener<void>) => Promise<RemovableHandle>) &
+    ((event: "readerStatus", cb: Listener<ReaderStatus>) => Promise<RemovableHandle>);
 }
 
 declare global {
   interface Window {
-    Capacitor?: { isNativePlatform: () => boolean; Plugins?: { ChainwayUHF?: ChainwayUHFNative } };
+    Capacitor?: { isNativePlatform: () => boolean; Plugins?: { ZebraRFID?: ZebraRFIDNative } };
   }
 }
 
-export type ChainwaySdkStatus = "unavailable" | "initializing" | "ready" | "error";
+export type ZebraSdkStatus = "unavailable" | "initializing" | "ready" | "error";
 
-export function useChainwaySdk(options: {
+export function useZebraSdk(options: {
   enabled: boolean;
   onTagScanned?: (tag: RfidTag) => void;
 }) {
-  const [status, setStatus] = useState<ChainwaySdkStatus>("unavailable");
+  const [status, setStatus] = useState<ZebraSdkStatus>("unavailable");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
+  const [readerName, setReaderName] = useState<string | null>(null);
   const onTagRef = useRef(options.onTagScanned);
   onTagRef.current = options.onTagScanned;
 
   const isNative = typeof window !== "undefined" && window.Capacitor?.isNativePlatform() === true;
-  const plugin = isNative ? window.Capacitor?.Plugins?.ChainwayUHF : undefined;
+  const plugin = isNative ? window.Capacitor?.Plugins?.ZebraRFID : undefined;
 
   // Initialize the SDK once on mount (native only)
   useEffect(() => {
@@ -65,6 +73,7 @@ export function useChainwaySdk(options: {
         if (res.success) {
           setStatus("ready");
           setErrorMessage(null);
+          if (res.readerName) setReaderName(res.readerName);
         } else {
           setStatus("error");
           setErrorMessage(res.error ?? "SDK init failed");
@@ -81,7 +90,7 @@ export function useChainwaySdk(options: {
     };
   }, [plugin, options.enabled]);
 
-  // Wire up tag + trigger listeners
+  // Wire up tag + trigger + reader-status listeners
   useEffect(() => {
     if (!plugin || status !== "ready") return;
     const handles: RemovableHandle[] = [];
@@ -108,6 +117,19 @@ export function useChainwaySdk(options: {
       })
       .then((h) => handles.push(h));
 
+    plugin
+      .addListener("readerStatus", ({ connected, name }) => {
+        if (name) setReaderName(name);
+        if (!connected) {
+          setStatus("error");
+          setErrorMessage("RFD40 sled disconnected");
+        } else {
+          setStatus("ready");
+          setErrorMessage(null);
+        }
+      })
+      .then((h) => handles.push(h));
+
     return () => {
       handles.forEach((h) => h.remove());
       plugin.stopScan().catch(() => undefined);
@@ -131,6 +153,7 @@ export function useChainwaySdk(options: {
     status,
     errorMessage,
     isScanning,
+    readerName,
     startScan,
     stopScan,
   };
