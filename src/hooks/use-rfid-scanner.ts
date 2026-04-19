@@ -8,6 +8,17 @@ export interface RfidTag {
 
 export type WedgeStatus = "unknown" | "detected" | "not_detected";
 
+type DebugType = "key" | "ignored" | "buffer" | "flush" | "reset" | "info";
+
+function emitDebug(type: DebugType, detail: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("rfid-wedge-debug", {
+      detail: { t: Date.now(), type, detail },
+    })
+  );
+}
+
 /**
  * Hook that captures RFID tag data from a Zebra RFD40 sled (via TC22 + e-Connex)
  * configured to act as a keyboard wedge through DataWedge.
@@ -32,6 +43,7 @@ export function useRfidScanner(options: {
     bufferRef.current = "";
 
     console.log("[RFID Wedge] processBuffer called with raw:", raw, "length:", raw.length);
+    emitDebug("flush", `raw="${raw}" len=${raw.length}`);
 
     if (raw.length >= 4) {
       const epc = raw.toUpperCase();
@@ -41,6 +53,7 @@ export function useRfidScanner(options: {
       };
 
       console.log("[RFID Wedge] Emitting tag:", epc);
+      emitDebug("info", `EMIT EPC ${epc}`);
 
       // A successful rapid-keystroke scan confirms wedge mode
       setWedgeStatus("detected");
@@ -98,6 +111,7 @@ export function useRfidScanner(options: {
       if (e.key === "Enter" || e.key === "Tab") {
         e.preventDefault();
         console.log("[RFID Wedge] Terminator received, buffer:", bufferRef.current);
+        emitDebug("key", `TERMINATOR ${e.key} buf="${bufferRef.current}"`);
         processBuffer();
         return;
       }
@@ -106,17 +120,22 @@ export function useRfidScanner(options: {
       // Some Zebra DataWedge profiles send uppercase hex; some include spaces or dashes.
       if (/^[a-fA-F0-9]$/.test(e.key)) {
         bufferRef.current += e.key;
+        emitDebug("buffer", `+${e.key} → "${bufferRef.current}" (${bufferRef.current.length})`);
 
         if (timerRef.current) clearTimeout(timerRef.current);
         timerRef.current = setTimeout(() => {
           if (bufferRef.current.length >= 4) {
             console.log("[RFID Wedge] Timeout flush, buffer:", bufferRef.current);
+            emitDebug("info", `timeout flush buf="${bufferRef.current}"`);
             processBuffer();
           }
         }, 300);
       } else if (e.key.length === 1) {
         // Log unexpected single chars so we can see what the reader is actually sending
         console.log("[RFID Wedge] Ignored key:", JSON.stringify(e.key), "code:", e.code);
+        emitDebug("ignored", `key=${JSON.stringify(e.key)} code=${e.code}`);
+      } else {
+        emitDebug("ignored", `special key=${e.key} code=${e.code}`);
       }
     };
 
