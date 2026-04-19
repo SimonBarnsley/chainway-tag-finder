@@ -8,6 +8,17 @@ export interface RfidTag {
 
 export type WedgeStatus = "unknown" | "detected" | "not_detected";
 
+type DebugType = "key" | "ignored" | "buffer" | "flush" | "reset" | "info";
+
+function emitDebug(type: DebugType, detail: string) {
+  if (typeof window === "undefined") return;
+  window.dispatchEvent(
+    new CustomEvent("rfid-wedge-debug", {
+      detail: { t: Date.now(), type, detail },
+    })
+  );
+}
+
 /**
  * Hook that captures RFID tag data from a Zebra RFD40 sled (via TC22 + e-Connex)
  * configured to act as a keyboard wedge through DataWedge.
