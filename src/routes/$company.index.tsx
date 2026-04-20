@@ -47,8 +47,10 @@ function ScannerPage() {
   const [isSaving, setIsSaving] = useState(false);
   const [location, setLocation] = useState("");
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
-  const [lastScannedEpc, setLastScannedEpc] = useState<string | null>(null);
-  const [lastScannedTime, setLastScannedTime] = useState(0);
+  // Monotonic counter + last scan info — using a counter ensures the GeigerSearch
+  // effect re-fires even when the SAME EPC is scanned repeatedly (which is the
+  // normal case in geiger mode — the target tag is read over and over).
+  const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
 
   useEffect(() => {
     const fetchCompanyName = async () => {
@@ -64,9 +66,11 @@ function ScannerPage() {
   }, [company]);
 
   const handleTagScanned = useCallback((tag: RfidTag) => {
-    setTotalScans((prev) => prev + 1);
-    setLastScannedEpc(tag.epc);
-    setLastScannedTime(Date.now());
+    setTotalScans((prev) => {
+      const next = prev + 1;
+      setLastScan({ epc: tag.epc, rssi: tag.rssi, seq: next });
+      return next;
+    });
     setTags((prev) => {
       const next = new Map(prev);
       const existing = next.get(tag.epc);
@@ -291,8 +295,7 @@ function ScannerPage() {
         {geigerEpc && (
           <GeigerSearch
             targetEpc={geigerEpc}
-            lastScannedEpc={lastScannedEpc}
-            lastScannedTime={lastScannedTime}
+            lastScan={lastScan}
             onClose={() => setGeigerEpc(null)}
           />
         )}
