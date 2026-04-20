@@ -466,11 +466,6 @@ function ItemsPage() {
         )}
       </main>
 
-      {geigerEpc && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 p-3 bg-background/95 backdrop-blur-sm border-t border-border">
-          <GeigerSearch targetEpc={geigerEpc} lastScannedEpc={lastScannedEpc} lastScannedTime={lastScannedTime} onClose={() => setGeigerEpc(null)} />
-        </div>
-      )}
     </div>
     </AuthGuard>
   );
