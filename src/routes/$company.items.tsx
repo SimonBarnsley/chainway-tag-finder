@@ -91,26 +91,7 @@ function ItemsPage() {
   const [linkEpc, setLinkEpc] = useState("");
   const [linkingItemId, setLinkingItemId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
-  const [lastScannedEpc, setLastScannedEpc] = useState<string | null>(null);
-  const [lastScannedTime, setLastScannedTime] = useState(0);
-  const [copiedEpc, setCopiedEpc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleCopyEpc = (epc: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(epc);
-    setCopiedEpc(epc);
-    setTimeout(() => setCopiedEpc(null), 1500);
-  };
-
-  useRfidScanner({
-    enabled: !!geigerEpc,
-    onTagScanned: (tag) => {
-      setLastScannedEpc(tag.epc);
-      setLastScannedTime(Date.now());
-    },
-  });
 
   const fetchItems = async () => {
     setLoading(true);
