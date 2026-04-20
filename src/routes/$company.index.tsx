@@ -39,6 +39,7 @@ interface TagEntry {
 function ScannerPage() {
   const { company } = Route.useParams();
   const { companySlug } = useAuth();
+  const linkSavedEpcsFn = useServerFn(linkSavedEpcs);
   const [companyName, setCompanyName] = useState(company);
   const [scanEnabled, setScanEnabled] = useState(true);
   const [tags, setTags] = useState<Map<string, TagEntry>>(new Map());
