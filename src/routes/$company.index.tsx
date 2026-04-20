@@ -16,6 +16,8 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
