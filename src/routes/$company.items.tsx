@@ -28,8 +28,6 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRfidScanner } from "@/hooks/use-rfid-scanner";
-import { GeigerSearch } from "@/components/GeigerSearch";
 import { InlineItemForm } from "@/components/InlineItemForm";
 
 export const Route = createFileRoute("/$company/items")({
