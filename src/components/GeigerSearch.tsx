@@ -227,33 +227,34 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearch
 
       {/* Manual scan control — bypasses the hardware trigger so you can verify
           the RFD40 sled responds even if the e-Connex trigger key isn't being
-          captured by MainActivity.dispatchKeyEvent. */}
-      {sdk?.available && (
-        <Button
-          onClick={() => (sdk.isScanning ? sdk.stopScan() : sdk.startScan())}
-          variant={sdk.isScanning ? "destructive" : "default"}
-          className="w-full gap-2"
-        >
-          {sdk.isScanning ? (
-            <>
-              <Square className="h-4 w-4" /> Stop scanning
-            </>
-          ) : (
-            <>
-              <Play className="h-4 w-4" /> Start scanning
-            </>
-          )}
-        </Button>
-      )}
+          captured by MainActivity.dispatchKeyEvent. Always rendered so the user
+          can see why it isn't usable when running in a regular browser. */}
+      <Button
+        onClick={() => {
+          if (!sdk?.available) return;
+          sdk.isScanning ? sdk.stopScan() : sdk.startScan();
+        }}
+        disabled={!sdk?.available}
+        variant={sdk?.isScanning ? "destructive" : "default"}
+        className="w-full gap-2"
+      >
+        {sdk?.isScanning ? (
+          <>
+            <Square className="h-4 w-4" /> Stop scanning
+          </>
+        ) : (
+          <>
+            <Play className="h-4 w-4" /> Start scanning
+          </>
+        )}
+      </Button>
 
       <p className="text-[10px] text-muted-foreground text-center">
         {sdk?.available
           ? sdk.isScanning
             ? "Sweep the RFD40 around — beeps speed up as you get closer"
             : "Pull the TC22 trigger OR tap Start scanning above"
-          : hasRssi
-            ? "Hold the trigger and sweep — beeps speed up as you get closer"
-            : "Hold the trigger and sweep — keep the trigger held to keep reading"}
+          : "Native RFD40 control only works inside the installed Android APK on the TC22 — not in a browser preview."}
       </p>
     </div>
   );
