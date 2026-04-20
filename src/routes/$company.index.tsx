@@ -297,6 +297,16 @@ function ScannerPage() {
             targetEpc={geigerEpc}
             lastScan={lastScan}
             onClose={() => setGeigerEpc(null)}
+            sdk={
+              zebra.isNativeSdkAvailable
+                ? {
+                    available: true,
+                    isScanning: zebra.isScanning,
+                    startScan: zebra.startScan,
+                    stopScan: zebra.stopScan,
+                  }
+                : undefined
+            }
           />
         )}
 

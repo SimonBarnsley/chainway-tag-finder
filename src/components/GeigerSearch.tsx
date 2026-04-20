@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Crosshair, X, Volume2, VolumeX } from "lucide-react";
+import { Crosshair, X, Volume2, VolumeX, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LastScan {
@@ -18,6 +18,13 @@ interface GeigerSearchProps {
    */
   lastScan: LastScan | null;
   onClose: () => void;
+  /** Optional manual scan controls — shown when the native Zebra SDK is available */
+  sdk?: {
+    available: boolean;
+    isScanning: boolean;
+    startScan: () => Promise<void>;
+    stopScan: () => Promise<void>;
+  };
 }
 
 // RSSI dBm range we map to 0-100% signal.
@@ -30,7 +37,7 @@ function rssiToPercent(rssi: number): number {
   return Math.round(((clamped - RSSI_FAR) / (RSSI_NEAR - RSSI_FAR)) * 100);
 }
 
-export function GeigerSearch({ targetEpc, lastScan, onClose }: GeigerSearchProps) {
+export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearchProps) {
   const [hitCount, setHitCount] = useState(0);
   const [signal, setSignal] = useState(0); // 0-100 (smoothed)
   const [lastRssi, setLastRssi] = useState<number | null>(null);
@@ -218,10 +225,35 @@ export function GeigerSearch({ targetEpc, lastScan, onClose }: GeigerSearchProps
         </div>
       </div>
 
+      {/* Manual scan control — bypasses the hardware trigger so you can verify
+          the RFD40 sled responds even if the e-Connex trigger key isn't being
+          captured by MainActivity.dispatchKeyEvent. */}
+      {sdk?.available && (
+        <Button
+          onClick={() => (sdk.isScanning ? sdk.stopScan() : sdk.startScan())}
+          variant={sdk.isScanning ? "destructive" : "default"}
+          className="w-full gap-2"
+        >
+          {sdk.isScanning ? (
+            <>
+              <Square className="h-4 w-4" /> Stop scanning
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" /> Start scanning
+            </>
+          )}
+        </Button>
+      )}
+
       <p className="text-[10px] text-muted-foreground text-center">
-        {hasRssi
-          ? "Hold the trigger and sweep — beeps speed up as you get closer"
-          : "Hold the trigger and sweep — keep the trigger held to keep reading"}
+        {sdk?.available
+          ? sdk.isScanning
+            ? "Sweep the RFD40 around — beeps speed up as you get closer"
+            : "Pull the TC22 trigger OR tap Start scanning above"
+          : hasRssi
+            ? "Hold the trigger and sweep — beeps speed up as you get closer"
+            : "Hold the trigger and sweep — keep the trigger held to keep reading"}
       </p>
     </div>
   );
