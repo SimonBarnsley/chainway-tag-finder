@@ -37,7 +37,7 @@ function rssiToPercent(rssi: number): number {
   return Math.round(((clamped - RSSI_FAR) / (RSSI_NEAR - RSSI_FAR)) * 100);
 }
 
-export function GeigerSearch({ targetEpc, lastScan, onClose }: GeigerSearchProps) {
+export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearchProps) {
   const [hitCount, setHitCount] = useState(0);
   const [signal, setSignal] = useState(0); // 0-100 (smoothed)
   const [lastRssi, setLastRssi] = useState<number | null>(null);
