@@ -14,9 +14,6 @@ import {
   Link as LinkIcon,
   ImagePlus,
   Loader2,
-  Crosshair,
-  Copy,
-  Check,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -31,8 +28,6 @@ import {
 } from "@/components/ui/select";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { useRfidScanner } from "@/hooks/use-rfid-scanner";
-import { GeigerSearch } from "@/components/GeigerSearch";
 import { InlineItemForm } from "@/components/InlineItemForm";
 
 export const Route = createFileRoute("/$company/items")({
@@ -85,8 +80,8 @@ const emptyItem: Omit<Item, "id"> = {
 function ItemsPage() {
   const { company } = Route.useParams();
   const [items, setItems] = useState<Item[]>([]);
-  const [itemEpcs, setItemEpcs] = useState<Record<string, string[]>>({});
   const [itemScanLocations, setItemScanLocations] = useState<Record<string, string[]>>({});
+  const [itemLocationCounts, setItemLocationCounts] = useState<Record<string, Record<string, number>>>({});
   const [allLocations, setAllLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -96,26 +91,7 @@ function ItemsPage() {
   const [linkEpc, setLinkEpc] = useState("");
   const [linkingItemId, setLinkingItemId] = useState<string | null>(null);
   const [uploadingImage, setUploadingImage] = useState(false);
-  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
-  const [lastScannedEpc, setLastScannedEpc] = useState<string | null>(null);
-  const [lastScannedTime, setLastScannedTime] = useState(0);
-  const [copiedEpc, setCopiedEpc] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleCopyEpc = (epc: string, e: React.MouseEvent) => {
-    e.stopPropagation();
-    navigator.clipboard.writeText(epc);
-    setCopiedEpc(epc);
-    setTimeout(() => setCopiedEpc(null), 1500);
-  };
-
-  useRfidScanner({
-    enabled: !!geigerEpc,
-    onTagScanned: (tag) => {
-      setLastScannedEpc(tag.epc);
-      setLastScannedTime(Date.now());
-    },
-  });
 
   const fetchItems = async () => {
     setLoading(true);
@@ -134,19 +110,17 @@ function ItemsPage() {
           .from("tag_items")
           .select("item_id, epc")
           .in("item_id", ids);
-        const map: Record<string, string[]> = {};
+
         const epcToItems: Record<string, string[]> = {};
         (links || []).forEach((l) => {
-          if (!map[l.item_id]) map[l.item_id] = [];
-          map[l.item_id].push(l.epc);
           if (!epcToItems[l.epc]) epcToItems[l.epc] = [];
           epcToItems[l.epc].push(l.item_id);
         });
-        setItemEpcs(map);
 
         // Fetch scan locations for linked EPCs
         const allEpcs = Object.keys(epcToItems);
         const scanLocMap: Record<string, string[]> = {};
+        const locCountMap: Record<string, Record<string, number>> = {};
         if (allEpcs.length > 0) {
           const { data: scans } = await supabase
             .from("rfid_scans")
@@ -159,10 +133,13 @@ function ItemsPage() {
             for (const itemId of epcToItems[s.epc] || []) {
               if (!scanLocMap[itemId]) scanLocMap[itemId] = [];
               if (!scanLocMap[itemId].includes(s.location)) scanLocMap[itemId].push(s.location);
+              if (!locCountMap[itemId]) locCountMap[itemId] = {};
+              locCountMap[itemId][s.location] = (locCountMap[itemId][s.location] || 0) + 1;
             }
           });
         }
         setItemScanLocations(scanLocMap);
+        setItemLocationCounts(locCountMap);
       }
 
       // All distinct scan locations for this company (so dropdown shows everything)
@@ -444,22 +421,20 @@ function ItemsPage() {
                         {item.price != null && <span>{item.price} {item.currency}</span>}
                         {item.warehouse_location && <span>📍 {item.warehouse_location}</span>}
                       </div>
-                      {itemEpcs[item.id] && itemEpcs[item.id].length > 0 && (
+                      {itemLocationCounts[item.id] && Object.keys(itemLocationCounts[item.id]).length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {itemEpcs[item.id].map((epc) => (
-                            <div key={epc} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono text-primary">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setGeigerEpc(epc); }}
-                                className="inline-flex items-center gap-1 hover:text-primary/80"
-                                title="Geiger search"
+                          {Object.entries(itemLocationCounts[item.id])
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([loc, count]) => (
+                              <span
+                                key={loc}
+                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
+                                title={`${count} ${count === 1 ? "tag" : "tags"} in ${loc}`}
                               >
-                                <Crosshair className="h-2.5 w-2.5" /> {epc}
-                              </button>
-                              <button onClick={(e) => handleCopyEpc(epc, e)} className="p-0.5 rounded hover:bg-primary/20" title="Copy EPC">
-                                {copiedEpc === epc ? <Check className="h-2.5 w-2.5 text-green-500" /> : <Copy className="h-2.5 w-2.5" />}
-                              </button>
-                            </div>
-                          ))}
+                                <span>📍 {loc}</span>
+                                <span className="font-semibold">×{count}</span>
+                              </span>
+                            ))}
                         </div>
                       )}
                     </div>
@@ -491,11 +466,6 @@ function ItemsPage() {
         )}
       </main>
 
-      {geigerEpc && (
-        <div className="fixed bottom-0 left-0 right-0 z-20 p-3 bg-background/95 backdrop-blur-sm border-t border-border">
-          <GeigerSearch targetEpc={geigerEpc} lastScannedEpc={lastScannedEpc} lastScannedTime={lastScannedTime} onClose={() => setGeigerEpc(null)} />
-        </div>
-      )}
     </div>
     </AuthGuard>
   );
