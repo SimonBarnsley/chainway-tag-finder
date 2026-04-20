@@ -445,22 +445,20 @@ function ItemsPage() {
                         {item.price != null && <span>{item.price} {item.currency}</span>}
                         {item.warehouse_location && <span>📍 {item.warehouse_location}</span>}
                       </div>
-                      {itemEpcs[item.id] && itemEpcs[item.id].length > 0 && (
+                      {itemLocationCounts[item.id] && Object.keys(itemLocationCounts[item.id]).length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {itemEpcs[item.id].map((epc) => (
-                            <div key={epc} className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-mono text-primary">
-                              <button
-                                onClick={(e) => { e.stopPropagation(); setGeigerEpc(epc); }}
-                                className="inline-flex items-center gap-1 hover:text-primary/80"
-                                title="Geiger search"
+                          {Object.entries(itemLocationCounts[item.id])
+                            .sort((a, b) => b[1] - a[1])
+                            .map(([loc, count]) => (
+                              <span
+                                key={loc}
+                                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] text-primary"
+                                title={`${count} ${count === 1 ? "tag" : "tags"} in ${loc}`}
                               >
-                                <Crosshair className="h-2.5 w-2.5" /> {epc}
-                              </button>
-                              <button onClick={(e) => handleCopyEpc(epc, e)} className="p-0.5 rounded hover:bg-primary/20" title="Copy EPC">
-                                {copiedEpc === epc ? <Check className="h-2.5 w-2.5 text-green-500" /> : <Copy className="h-2.5 w-2.5" />}
-                              </button>
-                            </div>
-                          ))}
+                                <span>📍 {loc}</span>
+                                <span className="font-semibold">×{count}</span>
+                              </span>
+                            ))}
                         </div>
                       )}
                     </div>
