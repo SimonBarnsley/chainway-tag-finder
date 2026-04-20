@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Crosshair, X, Volume2, VolumeX } from "lucide-react";
+import { Crosshair, X, Volume2, VolumeX, Play, Square } from "lucide-react";
 import { Button } from "@/components/ui/button";
 
 interface LastScan {
@@ -18,6 +18,13 @@ interface GeigerSearchProps {
    */
   lastScan: LastScan | null;
   onClose: () => void;
+  /** Optional manual scan controls — shown when the native Zebra SDK is available */
+  sdk?: {
+    available: boolean;
+    isScanning: boolean;
+    startScan: () => Promise<void>;
+    stopScan: () => Promise<void>;
+  };
 }
 
 // RSSI dBm range we map to 0-100% signal.
