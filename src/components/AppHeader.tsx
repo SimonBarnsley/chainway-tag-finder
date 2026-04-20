@@ -40,7 +40,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6">
-        <div className="flex items-center justify-between">
+        <div className="relative flex items-center justify-between">
           <div className="flex items-center gap-3">
             <Link to="/$company" params={{ company }}>
               <img
@@ -50,6 +50,10 @@ export function AppHeader({ actions }: AppHeaderProps) {
               />
             </Link>
           </div>
+
+          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl sm:text-3xl font-extrabold tracking-tight text-foreground pointer-events-none">
+            ZEBRA - ZEBRA
+          </h1>
 
           <div className="flex items-center gap-2">
             {isSuperAdmin && <CompanySwitcher />}
