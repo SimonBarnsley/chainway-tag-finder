@@ -16,6 +16,8 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
@@ -37,6 +39,7 @@ interface TagEntry {
 function ScannerPage() {
   const { company } = Route.useParams();
   const { companySlug } = useAuth();
+  const linkSavedEpcsFn = useServerFn(linkSavedEpcs);
   const [companyName, setCompanyName] = useState(company);
   const [scanEnabled, setScanEnabled] = useState(true);
   const [tags, setTags] = useState<Map<string, TagEntry>>(new Map());
@@ -183,6 +186,17 @@ function ScannerPage() {
 
       const summary: string[] = [`${okCount} saved`];
       if (allocatedCount) summary.push(`${allocatedCount} allocated to "${selectedLocation}"`);
+
+      // Auto-link saved EPCs to items via SGTIN decoding
+      const savedEpcs = Array.from(savedSet);
+      if (savedEpcs.length > 0) {
+        try {
+          const linkRes = await linkSavedEpcsFn({ data: { epcs: savedEpcs } });
+          if (linkRes?.linked) summary.push(`${linkRes.linked} linked to items`);
+        } catch (linkErr) {
+          console.error("[scanner] linkSavedEpcs failed:", linkErr);
+        }
+      }
 
       if (errors.length > 0) {
         toast.error(
