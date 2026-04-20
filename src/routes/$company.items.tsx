@@ -134,19 +134,17 @@ function ItemsPage() {
           .from("tag_items")
           .select("item_id, epc")
           .in("item_id", ids);
-        const map: Record<string, string[]> = {};
+
         const epcToItems: Record<string, string[]> = {};
         (links || []).forEach((l) => {
-          if (!map[l.item_id]) map[l.item_id] = [];
-          map[l.item_id].push(l.epc);
           if (!epcToItems[l.epc]) epcToItems[l.epc] = [];
           epcToItems[l.epc].push(l.item_id);
         });
-        setItemEpcs(map);
 
         // Fetch scan locations for linked EPCs
         const allEpcs = Object.keys(epcToItems);
         const scanLocMap: Record<string, string[]> = {};
+        const locCountMap: Record<string, Record<string, number>> = {};
         if (allEpcs.length > 0) {
           const { data: scans } = await supabase
             .from("rfid_scans")
@@ -159,10 +157,13 @@ function ItemsPage() {
             for (const itemId of epcToItems[s.epc] || []) {
               if (!scanLocMap[itemId]) scanLocMap[itemId] = [];
               if (!scanLocMap[itemId].includes(s.location)) scanLocMap[itemId].push(s.location);
+              if (!locCountMap[itemId]) locCountMap[itemId] = {};
+              locCountMap[itemId][s.location] = (locCountMap[itemId][s.location] || 0) + 1;
             }
           });
         }
         setItemScanLocations(scanLocMap);
+        setItemLocationCounts(locCountMap);
       }
 
       // All distinct scan locations for this company (so dropdown shows everything)
