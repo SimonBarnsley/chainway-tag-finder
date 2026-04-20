@@ -85,8 +85,8 @@ const emptyItem: Omit<Item, "id"> = {
 function ItemsPage() {
   const { company } = Route.useParams();
   const [items, setItems] = useState<Item[]>([]);
-  const [itemEpcs, setItemEpcs] = useState<Record<string, string[]>>({});
   const [itemScanLocations, setItemScanLocations] = useState<Record<string, string[]>>({});
+  const [itemLocationCounts, setItemLocationCounts] = useState<Record<string, Record<string, number>>>({});
   const [allLocations, setAllLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
