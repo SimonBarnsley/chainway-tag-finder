@@ -187,6 +187,17 @@ function ScannerPage() {
       const summary: string[] = [`${okCount} saved`];
       if (allocatedCount) summary.push(`${allocatedCount} allocated to "${selectedLocation}"`);
 
+      // Auto-link saved EPCs to items via SGTIN decoding
+      const savedEpcs = Array.from(savedSet);
+      if (savedEpcs.length > 0) {
+        try {
+          const linkRes = await linkSavedEpcsFn({ data: { epcs: savedEpcs } });
+          if (linkRes?.linked) summary.push(`${linkRes.linked} linked to items`);
+        } catch (linkErr) {
+          console.error("[scanner] linkSavedEpcs failed:", linkErr);
+        }
+      }
+
       if (errors.length > 0) {
         toast.error(
           `${errors.length} failed: ${errors.slice(0, 2).join("; ")}${errors.length > 2 ? "…" : ""}`
