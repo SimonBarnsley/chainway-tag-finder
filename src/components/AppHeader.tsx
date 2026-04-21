@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, ChevronDown, Users, ShieldCheck } from "lucide-react";
+import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck } from "lucide-react";
 import barcodeWarehouseLogo from "@/assets/barcode-warehouse-logo.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -26,6 +26,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
     { label: "Decoder", to: "/$company/decoder" as const, icon: Barcode },
     { label: "Bulk Upload", to: "/$company/bulk-upload" as const, icon: Upload },
     { label: "Readers", to: "/$company/readers" as const, icon: Router },
+    { label: "Floor Plan Maps", to: "/$company/maps" as const, icon: MapIcon },
   ];
 
   useEffect(() => {
