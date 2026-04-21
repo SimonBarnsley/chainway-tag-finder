@@ -101,7 +101,6 @@ function ScannerPage() {
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
   });
-  });
 
   // Native Zebra RFD40 SDK bridge — active only inside the Capacitor APK on a TC22
   // docked in the RFD40 sled (e-Connex pin connection). In a regular browser this
