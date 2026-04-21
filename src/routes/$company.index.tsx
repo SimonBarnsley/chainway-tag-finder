@@ -376,12 +376,6 @@ function ScannerPage() {
           />
         )}
 
-        <div>
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Browse by Location
-          </h2>
-          <LocationFilter onGeigerSearch={setGeigerEpc} companySlug={company} />
-        </div>
 
         <div>
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
