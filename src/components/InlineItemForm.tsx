@@ -5,6 +5,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { generateRandomSgtin96 } from "@/lib/sgtin-decoder";
 
 interface InlineItemFormProps {
   epc?: string;
@@ -91,17 +92,40 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
 
       if (insertErr) throw insertErr;
 
-      // 2. If an EPC was passed in (linking flow), link it to the new item
-      if (epc) {
+      // 2. If an EPC was passed in (linking flow), link it to the new item.
+      //    Otherwise, if we have enough GS1 info (company prefix + SKU/item ref),
+      //    generate a seed SGTIN-96 EPC so future scans matching this item's
+      //    GTIN/SKU/companyPrefix can auto-link via auto-link-epcs.ts.
+      let linkEpc: string | null = epc ? epc.toUpperCase() : null;
+      let generated = false;
+      if (!linkEpc && companyPrefix.trim() && (sku.trim() || gtin.trim())) {
+        try {
+          linkEpc = generateRandomSgtin96({
+            companyPrefix: companyPrefix.trim(),
+            itemReference: (sku.trim() || gtin.trim()),
+          });
+          generated = true;
+        } catch (e) {
+          console.warn("[InlineItemForm] EPC generation skipped:", e);
+        }
+      }
+
+      if (linkEpc) {
         const { error: linkErr } = await supabase.from("tag_items").upsert({
-          epc: epc.toUpperCase(),
+          epc: linkEpc,
           item_id: item.id,
           gtin: gtin || null,
           company_slug: companySlug,
         }, { onConflict: "epc,item_id" });
 
         if (linkErr) throw linkErr;
-        toast.success(`Item created & linked to EPC ${epc.slice(0, 12)}…`);
+        if (epc) {
+          toast.success(`Item created & linked to EPC ${epc.slice(0, 12)}…`);
+        } else if (generated) {
+          toast.success(`Item created with seed EPC ${linkEpc.slice(0, 12)}…`);
+        } else {
+          toast.success("Item created");
+        }
       } else {
         toast.success("Item created");
       }
