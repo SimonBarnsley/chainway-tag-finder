@@ -169,6 +169,19 @@ function ItemsPage() {
     fetchItems();
   }, []);
 
+  // Refresh when the tab becomes visible again (e.g. user returns from scanner page)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchItems();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
+  }, []);
+
   const handleSave = async () => {
     if (!editing) return;
     if (!editing.name.trim()) {
