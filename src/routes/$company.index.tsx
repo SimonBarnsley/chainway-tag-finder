@@ -270,7 +270,7 @@ function ScannerPage() {
       <main className="flex-1 px-4 py-4 space-y-4">
         <LocationSelector location={location} onLocationChange={setLocation} />
 
-        <div className="flex gap-2 border-4">
+        <div className="flex gap-2">
           <Button
             onClick={handleSaveAll}
             disabled={isSaving || tags.size === 0}
