@@ -49,90 +49,57 @@ export async function autoLinkEpcsToItems(
   const toProcess = unique.filter((e) => !alreadyLinked.has(e));
   if (toProcess.length === 0) return result;
 
-  // Decode each EPC (some will fail — those are raw chip TIDs)
+  // Decode each EPC. Only SGTIN-decodable EPCs are eligible for linking;
+  // raw TIDs / non-SGTIN EPCs are counted as undecodable and skipped.
   const decodedEntries = toProcess.map((epc) => {
     const d = decodeSgtin(epc);
     return "error" in d ? { epc, decoded: null } : { epc, decoded: d };
   });
 
-  // Build candidate sku/gtin lookup set from decodable EPCs
+  // Build candidate SKU lookup set from decodable EPCs.
+  // Match strategy: itemReference OR companyPrefix+itemReference against items.sku.
   const candidates = new Set<string>();
   for (const e of decodedEntries) {
     if (!e.decoded) continue;
     candidates.add(e.decoded.itemReference);
     candidates.add(e.decoded.companyPrefix + e.decoded.itemReference);
-    candidates.add(e.decoded.gtin14);
   }
 
   const skuMap = new Map<string, string>();
-  const gtinMap = new Map<string, string>();
   if (candidates.size > 0) {
     const candidateList = Array.from(candidates);
     const { data: items } = await supabaseAdmin
       .from("items")
-      .select("id, sku, gtin")
+      .select("id, sku")
       .eq("company_slug", companySlug)
-      .or(
-        `sku.in.(${candidateList.map((c) => `"${c}"`).join(",")}),gtin.in.(${candidateList.map((c) => `"${c}"`).join(",")})`
-      );
+      .in("sku", candidateList);
     for (const it of items || []) {
       if (it.sku) skuMap.set(it.sku, it.id);
-      if (it.gtin) gtinMap.set(it.gtin, it.id);
     }
   }
 
   const inserts: { epc: string; item_id: string; gtin: string | null; company_slug: string }[] = [];
 
   for (const entry of decodedEntries) {
-    let itemId: string | undefined;
-    let gtinForLink: string | null = null;
-
-    if (entry.decoded) {
-      const { companyPrefix, itemReference, gtin14 } = entry.decoded;
-      itemId =
-        skuMap.get(itemReference) ||
-        skuMap.get(companyPrefix + itemReference) ||
-        gtinMap.get(gtin14);
-      gtinForLink = gtin14;
-    } else {
+    if (!entry.decoded) {
       result.undecodable++;
+      continue;
     }
 
-    // No existing item — auto-create a placeholder
-    if (!itemId) {
-      const name = entry.decoded
-        ? `Item ${entry.decoded.gtin14}`
-        : `Tag ${entry.epc.slice(-8)}`;
-      const sku = entry.decoded ? entry.decoded.gtin14 : entry.epc;
-      const { data: created, error: createErr } = await supabaseAdmin
-        .from("items")
-        .insert({
-          name,
-          sku,
-          gtin: gtinForLink,
-          company_slug: companySlug,
-        })
-        .select("id")
-        .single();
+    const { companyPrefix, itemReference, gtin14 } = entry.decoded;
+    const itemId =
+      skuMap.get(itemReference) || skuMap.get(companyPrefix + itemReference);
 
-      if (createErr || !created) {
-        console.error("[autoLinkEpcsToItems] item create error:", createErr?.message);
-        result.unmatched++;
-        continue;
-      }
-      itemId = created.id;
-      result.itemsCreated++;
-      // Cache so duplicate decoded EPCs in the same batch reuse this item
-      if (entry.decoded) {
-        skuMap.set(entry.decoded.gtin14, itemId);
-        gtinMap.set(entry.decoded.gtin14, itemId);
-      }
+    if (!itemId) {
+      // No SKU match — do NOT auto-create items. Skip.
+      result.unmatched++;
+      continue;
     }
 
     inserts.push({
       epc: entry.epc,
       item_id: itemId,
-      gtin: gtinForLink,
+      gtin: gtin14,
       company_slug: companySlug,
     });
   }
