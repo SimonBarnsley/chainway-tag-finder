@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Plus, Trash2, Edit3, X, Save, ScanBarcode } from "lucide-react";
+import { MapPin, Plus, Trash2, Edit3, X, Save, ScanBarcode, Radio } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,15 @@ interface LocationRow {
   created_at: string;
 }
 
+interface AntennaMappingRow {
+  id: string;
+  reader_id: string;
+  reader_name: string;
+  antenna_port: number;
+  location: string;
+  description: string | null;
+}
+
 function LocationsPage() {
   const { companySlug } = useAuth();
   const [locations, setLocations] = useState<LocationRow[]>([]);
@@ -40,6 +49,8 @@ function LocationsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", description: "", barcode: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [antennaMappings, setAntennaMappings] = useState<AntennaMappingRow[]>([]);
+  const [isLoadingAntennas, setIsLoadingAntennas] = useState(true);
 
   const fetchLocations = useCallback(async () => {
     if (!companySlug) return;
@@ -57,9 +68,37 @@ function LocationsPage() {
     setIsLoading(false);
   }, [companySlug]);
 
+  const fetchAntennaMappings = useCallback(async () => {
+    if (!companySlug) return;
+    setIsLoadingAntennas(true);
+    const { data, error } = await supabase
+      .from("reader_antennas")
+      .select("id, reader_id, antenna_port, location, description, fixed_readers!inner(name)")
+      .eq("company_slug", companySlug)
+      .order("location", { ascending: true });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      const rows: AntennaMappingRow[] = (data ?? []).map((a) => {
+        const reader = a.fixed_readers as unknown as { name: string };
+        return {
+          id: a.id,
+          reader_id: a.reader_id,
+          reader_name: reader?.name ?? "Reader",
+          antenna_port: a.antenna_port,
+          location: a.location,
+          description: a.description ?? null,
+        };
+      });
+      setAntennaMappings(rows);
+    }
+    setIsLoadingAntennas(false);
+  }, [companySlug]);
+
   useEffect(() => {
     fetchLocations();
-  }, [fetchLocations]);
+    fetchAntennaMappings();
+  }, [fetchLocations, fetchAntennaMappings]);
 
   const resetForm = () => {
     setForm({ name: "", description: "", barcode: "" });
@@ -280,6 +319,73 @@ function LocationsPage() {
                 ))}
               </ul>
             )}
+          </div>
+
+          {/* Antenna mapping locations (read-only) */}
+          <div className="space-y-2">
+            <div>
+              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
+                <Radio className="h-5 w-5 text-primary" />
+                Antenna Mapping Locations
+              </h2>
+              <p className="text-xs text-muted-foreground">
+                Locations defined per reader antenna. Manage these on the Readers page.
+              </p>
+            </div>
+            <div className="rounded-lg border border-border bg-card">
+              {isLoadingAntennas ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  Loading antenna mappings...
+                </div>
+              ) : antennaMappings.length === 0 ? (
+                <div className="p-6 text-center text-sm text-muted-foreground">
+                  No antenna mappings configured yet.
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {Object.entries(
+                    antennaMappings.reduce<Record<string, AntennaMappingRow[]>>((acc, m) => {
+                      const key = m.location || "(unset)";
+                      (acc[key] ||= []).push(m);
+                      return acc;
+                    }, {})
+                  )
+                    .sort(([a], [b]) => a.localeCompare(b))
+                    .map(([location, rows]) => (
+                      <li key={location} className="px-4 py-3 space-y-1.5">
+                        <div className="flex items-center gap-2">
+                          <MapPin className="h-4 w-4 text-primary shrink-0" />
+                          <span className="text-sm font-medium text-foreground truncate">
+                            {location}
+                          </span>
+                          <span className="text-xs text-muted-foreground">
+                            · {rows.length} antenna{rows.length === 1 ? "" : "s"}
+                          </span>
+                        </div>
+                        <div className="pl-6 space-y-1">
+                          {rows.map((r) => (
+                            <div
+                              key={r.id}
+                              className="flex items-center gap-2 text-xs text-muted-foreground"
+                            >
+                              <Radio className="h-3 w-3 shrink-0" />
+                              <span className="font-mono">A{r.antenna_port}</span>
+                              <span>·</span>
+                              <span className="truncate">{r.reader_name}</span>
+                              {r.description && (
+                                <>
+                                  <span>·</span>
+                                  <span className="truncate italic">{r.description}</span>
+                                </>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
           </div>
         </main>
       </div>
