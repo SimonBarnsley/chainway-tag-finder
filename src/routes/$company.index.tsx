@@ -263,6 +263,7 @@ function ScannerPage() {
             for (const epc of savedEpcSet) next.delete(epc);
             return next;
           });
+          setLocation("");
         }, 10000);
       }
     } catch (error) {
