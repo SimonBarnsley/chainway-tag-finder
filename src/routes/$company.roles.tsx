@@ -49,7 +49,8 @@ function RolesPage() {
 }
 
 function RolesContent() {
-  const { isSuperAdmin } = useAuth();
+  const { isAdmin } = useAuth();
+  const canEdit = isAdmin;
   const [rows, setRows] = useState<RolePermRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState<string | null>(null);
