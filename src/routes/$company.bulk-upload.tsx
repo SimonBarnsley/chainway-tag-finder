@@ -328,7 +328,7 @@ function BulkUploadPage() {
             <FileSpreadsheet className="h-12 w-12 mb-3 opacity-30" />
             <p className="text-sm font-medium">No items loaded</p>
             <p className="text-xs mt-1 text-center max-w-xs">
-              Upload a CSV file or add rows manually. Each item gets a unique SGTIN-96 EPC generated automatically.
+              Upload a CSV file or add rows manually. Items are created without EPCs — link tags later from the Items page.
             </p>
             <Button onClick={downloadTemplate} variant="link" className="mt-3 gap-1.5 text-xs">
               <Download className="h-3.5 w-3.5" /> Download CSV template
