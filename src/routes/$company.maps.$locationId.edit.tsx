@@ -10,6 +10,7 @@ import {
   X,
   ArrowLeft,
   Eye,
+  Wand2,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
@@ -52,6 +53,7 @@ interface AntennaOption {
   reader_hostname: string;
   antenna_port: number;
   location: string;
+  description: string | null;
 }
 
 type DraftRect = { kind: "rect"; x: number; y: number; w: number; h: number };
@@ -105,7 +107,7 @@ function Editor() {
           .maybeSingle(),
         supabase
           .from("reader_antennas")
-          .select("reader_id, antenna_port, location, fixed_readers!inner(id, name, hostname)")
+          .select("reader_id, antenna_port, location, description, fixed_readers!inner(id, name, hostname)")
           .eq("company_slug", companySlug),
       ]);
 
@@ -138,6 +140,7 @@ function Editor() {
           reader_hostname: reader.hostname,
           antenna_port: a.antenna_port,
           location: a.location,
+          description: a.description ?? null,
         };
       });
       setAntennaOptions(opts);
