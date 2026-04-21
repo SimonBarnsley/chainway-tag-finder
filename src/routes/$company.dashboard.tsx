@@ -21,9 +21,7 @@ import {
   ChevronRight,
   Link2,
   Trash2,
-  Crosshair,
 } from "lucide-react";
-import { copyEpcAndOpen123RFID } from "@/lib/launch-external-app";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -664,16 +662,6 @@ function ScanRow({
       </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1">
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              copyEpcAndOpen123RFID(r.epc);
-            }}
-            className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
-            title="Copy EPC & open 123RFID Mobile"
-          >
-            <Crosshair className="h-3.5 w-3.5" />
-          </button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
