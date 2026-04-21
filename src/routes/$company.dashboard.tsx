@@ -266,6 +266,9 @@ function DashboardPage() {
           if (new Date(r.last_seen) > new Date(existing.lastSeen)) {
             existing.lastSeen = r.last_seen;
           }
+          if (new Date(r.first_seen) < new Date(existing.firstSeen)) {
+            existing.firstSeen = r.first_seen;
+          }
         } else {
           groups.set(r.sku, {
             sku: r.sku,
@@ -274,6 +277,7 @@ function DashboardPage() {
             records: [r],
             totalScans: r.scan_count,
             lastSeen: r.last_seen,
+            firstSeen: r.first_seen,
           });
         }
       } else {
@@ -290,6 +294,9 @@ function DashboardPage() {
     }
 
     if (singletons.length > 0) {
+      const sortedFirst = [...singletons].sort(
+        (a, b) => new Date(a.first_seen).getTime() - new Date(b.first_seen).getTime()
+      );
       result.push({
         sku: "__ungrouped__",
         item_name: null,
@@ -297,6 +304,7 @@ function DashboardPage() {
         records: singletons,
         totalScans: singletons.reduce((s, r) => s + r.scan_count, 0),
         lastSeen: singletons[0]?.last_seen || "",
+        firstSeen: sortedFirst[0]?.first_seen || "",
       });
     }
 
