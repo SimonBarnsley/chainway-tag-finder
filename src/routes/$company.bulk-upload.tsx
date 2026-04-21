@@ -322,25 +322,6 @@ function BulkUploadPage() {
                     </div>
                     <Input value={item.warehouse_location} onChange={(e) => updateItem(idx, "warehouse_location", e.target.value)} placeholder="Warehouse location" className="text-xs h-7" />
                     <div className="grid grid-cols-3 gap-1.5">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Company Prefix</label>
-                        <Input value={item.company_prefix} onChange={(e) => updateItem(idx, "company_prefix", e.target.value.replace(/\D/g, ""))} className="text-xs font-mono h-7" maxLength={12} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Item Ref</label>
-                        <Input value={item.item_reference} onChange={(e) => updateItem(idx, "item_reference", e.target.value.replace(/\D/g, ""))} placeholder="Auto" className="text-xs font-mono h-7" maxLength={7} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Filter</label>
-                        <Input value={item.filter} onChange={(e) => updateItem(idx, "filter", e.target.value)} type="number" min={0} max={7} className="text-xs font-mono h-7" />
-                      </div>
-                    </div>
-                    {item.generated_epc && (
-                      <div className="rounded border border-primary/20 bg-primary/5 px-2 py-1">
-                        <p className="text-[10px] text-muted-foreground">Generated EPC</p>
-                        <p className="font-mono text-xs text-primary font-bold break-all">{item.generated_epc}</p>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))}
