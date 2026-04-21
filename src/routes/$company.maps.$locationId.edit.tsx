@@ -326,6 +326,61 @@ function Editor() {
     }
   };
 
+  const handleAutoCreateZones = async () => {
+    if (!companySlug || !mapId) return;
+    if (antennaOptions.length === 0) {
+      toast.error("No antenna mappings found. Configure them on the Readers page first.");
+      return;
+    }
+
+    // Skip antennas already mapped on this map
+    const existing = new Set(zones.map((z) => `${z.reader_id}::${z.antenna_port}`));
+    const toCreate = antennaOptions.filter(
+      (o) => !existing.has(`${o.reader_id}::${o.antenna_port}`)
+    );
+    if (toCreate.length === 0) {
+      toast.info("All antennas already have zones on this map");
+      return;
+    }
+
+    // Lay out new zones in a grid that fits the unused space.
+    // Each zone is ~22% wide / ~22% tall; 4 columns, rows as needed.
+    const cols = 4;
+    const cellW = 0.22;
+    const cellH = 0.22;
+    const gapX = (1 - cols * cellW) / (cols + 1);
+    const gapY = 0.04;
+    const startIndex = zones.length;
+
+    const rows = toCreate.map((o, i) => {
+      const idx = startIndex + i;
+      const col = i % cols;
+      const row = Math.floor(i / cols);
+      const x = gapX + col * (cellW + gapX);
+      const y = Math.min(0.9 - cellH, gapY + row * (cellH + gapY));
+      const labelParts = [o.location, o.description].filter(Boolean).join(" — ").slice(0, 100);
+      return {
+        company_slug: companySlug,
+        map_id: mapId,
+        reader_id: o.reader_id,
+        antenna_port: o.antenna_port,
+        shape_kind: "rect",
+        shape_data: { x, y, w: cellW, h: cellH },
+        label: labelParts || `${o.reader_name} A${o.antenna_port}`,
+        color: colorForIndex(idx),
+      };
+    });
+
+    try {
+      const { error } = await supabase.from("antenna_zones").insert(rows);
+      if (error) throw error;
+      toast.success(`Created ${rows.length} zone${rows.length === 1 ? "" : "s"} from antenna mapping`);
+      fetchAll();
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to auto-create zones");
+    }
+  };
+
   const handleDeleteZone = async (id: string) => {
     try {
       const { error } = await supabase.from("antenna_zones").delete().eq("id", id);
