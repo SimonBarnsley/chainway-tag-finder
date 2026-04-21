@@ -86,6 +86,7 @@ interface SkuGroup {
   records: ScanRecord[];
   totalScans: number;
   lastSeen: string;
+  firstSeen: string;
 }
 
 function DashboardPage() {
