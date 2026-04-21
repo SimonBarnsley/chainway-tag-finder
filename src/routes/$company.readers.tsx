@@ -16,6 +16,8 @@ import {
   Power,
   PowerOff,
   MapPin,
+  Copy,
+  Link as LinkIcon,
 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
@@ -194,6 +196,8 @@ function ReadersContent() {
             <Plus className="h-4 w-4" /> {showAddForm ? "Cancel" : "Add Reader"}
           </Button>
         </div>
+
+        <EndpointUrlCard company={company} />
 
         {showAddForm && (
           <Card>
@@ -457,3 +461,99 @@ function ReaderCard({
     </Card>
   );
 }
+
+function EndpointUrlCard({ company }: { company: string }) {
+  const [apiKey, setApiKey] = useState("");
+  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  const keyForUrl = apiKey.trim() || "<API_KEY>";
+  const pathUrl = `${origin}/api/zebra-reader/${company}/${encodeURIComponent(keyForUrl)}`;
+  const queryUrl = `${origin}/api/zebra-reader?company=${company}&key=${encodeURIComponent(keyForUrl)}`;
+
+  const copy = async (text: string, label: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success(`${label} copied`);
+    } catch {
+      toast.error("Copy failed");
+    }
+  };
+
+  return (
+    <Card>
+      <CardContent className="p-4 space-y-3">
+        <div className="flex items-center gap-2">
+          <LinkIcon className="h-4 w-4 text-primary" />
+          <h2 className="text-sm font-semibold text-foreground">
+            Zebra IoT Connector HTTPS POST Endpoint
+          </h2>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Configure your FX9600 IoT Connector to POST tag reads to one of the URLs
+          below. The path-based URL is preferred (single field, no <code>&amp;</code>).
+        </p>
+
+        <div className="space-y-1.5">
+          <Label htmlFor="endpoint-key" className="text-xs">
+            API Key (optional preview)
+          </Label>
+          <Input
+            id="endpoint-key"
+            value={apiKey}
+            onChange={(e) => setApiKey(e.target.value)}
+            placeholder="Paste your ZEBRA_READER_API_KEY to preview the full URL"
+            className="text-xs font-mono"
+          />
+          <p className="text-xs text-muted-foreground">
+            Not stored — only used to render the URL below.
+          </p>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Path-based URL (recommended)</Label>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs font-mono bg-muted rounded px-2 py-1.5 break-all">
+              {pathUrl}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1 shrink-0"
+              onClick={() => copy(pathUrl, "Path URL")}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy
+            </Button>
+          </div>
+        </div>
+
+        <div className="space-y-1.5">
+          <Label className="text-xs">Query-string URL (legacy)</Label>
+          <div className="flex items-center gap-2">
+            <code className="flex-1 text-xs font-mono bg-muted rounded px-2 py-1.5 break-all">
+              {queryUrl}
+            </code>
+            <Button
+              type="button"
+              variant="outline"
+              size="sm"
+              className="h-8 gap-1 shrink-0"
+              onClick={() => copy(queryUrl, "Query URL")}
+            >
+              <Copy className="h-3.5 w-3.5" /> Copy
+            </Button>
+          </div>
+        </div>
+
+        <div className="text-xs text-muted-foreground space-y-1 pt-1 border-t border-border">
+          <p><span className="font-semibold text-foreground">Method:</span> POST</p>
+          <p><span className="font-semibold text-foreground">Content-Type:</span> application/json (or application/xml)</p>
+          <p>
+            <span className="font-semibold text-foreground">Optional headers:</span>{" "}
+            <code>X-Reader: &lt;hostname&gt;</code> to map antennas to locations.
+          </p>
+        </div>
+      </CardContent>
+    </Card>
+  );
+}
+
