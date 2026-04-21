@@ -62,8 +62,6 @@ const EMPTY_ROW: BulkItem = {
 function BulkUploadPage() {
   const { company } = Route.useParams();
   const [items, setItems] = useState<BulkItem[]>([]);
-  const [defaultPrefix, setDefaultPrefix] = useState("0000000");
-  const [defaultFilter, setDefaultFilter] = useState("1");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
