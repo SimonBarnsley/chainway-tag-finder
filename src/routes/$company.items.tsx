@@ -82,6 +82,8 @@ function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [itemScanLocations, setItemScanLocations] = useState<Record<string, string[]>>({});
   const [itemLocationCounts, setItemLocationCounts] = useState<Record<string, Record<string, number>>>({});
+  const [itemTagCounts, setItemTagCounts] = useState<Record<string, number>>({});
+  const [itemTagEpcs, setItemTagEpcs] = useState<Record<string, string[]>>({});
   const [allLocations, setAllLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -112,10 +114,17 @@ function ItemsPage() {
           .in("item_id", ids);
 
         const epcToItems: Record<string, string[]> = {};
+        const tagCountMap: Record<string, number> = {};
+        const tagEpcMap: Record<string, string[]> = {};
         (links || []).forEach((l) => {
           if (!epcToItems[l.epc]) epcToItems[l.epc] = [];
           epcToItems[l.epc].push(l.item_id);
+          tagCountMap[l.item_id] = (tagCountMap[l.item_id] || 0) + 1;
+          if (!tagEpcMap[l.item_id]) tagEpcMap[l.item_id] = [];
+          tagEpcMap[l.item_id].push(l.epc);
         });
+        setItemTagCounts(tagCountMap);
+        setItemTagEpcs(tagEpcMap);
 
         // Fetch scan locations for linked EPCs
         const allEpcs = Object.keys(epcToItems);
@@ -158,6 +167,19 @@ function ItemsPage() {
 
   useEffect(() => {
     fetchItems();
+  }, []);
+
+  // Refresh when the tab becomes visible again (e.g. user returns from scanner page)
+  useEffect(() => {
+    const onVisible = () => {
+      if (document.visibilityState === "visible") fetchItems();
+    };
+    document.addEventListener("visibilitychange", onVisible);
+    window.addEventListener("focus", onVisible);
+    return () => {
+      document.removeEventListener("visibilitychange", onVisible);
+      window.removeEventListener("focus", onVisible);
+    };
   }, []);
 
   const handleSave = async () => {
@@ -420,6 +442,15 @@ function ItemsPage() {
                         {item.category && <span>{item.category}</span>}
                         {item.price != null && <span>{item.price} {item.currency}</span>}
                         {item.warehouse_location && <span>📍 {item.warehouse_location}</span>}
+                        {itemTagCounts[item.id] > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-primary font-semibold"
+                            title={(itemTagEpcs[item.id] || []).join("\n")}
+                          >
+                            <LinkIcon className="h-2.5 w-2.5" />
+                            {itemTagCounts[item.id]} {itemTagCounts[item.id] === 1 ? "tag" : "tags"}
+                          </span>
+                        )}
                       </div>
                       {itemLocationCounts[item.id] && Object.keys(itemLocationCounts[item.id]).length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
