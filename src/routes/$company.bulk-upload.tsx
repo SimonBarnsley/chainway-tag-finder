@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Upload,
@@ -124,25 +124,6 @@ function BulkUploadPage() {
     if (fileRef.current) fileRef.current.value = "";
   };
 
-  const generateAllEpcs = useCallback(() => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.generated_epc) return item;
-        try {
-          const epc = generateRandomSgtin96({
-            companyPrefix: item.company_prefix || defaultPrefix,
-            itemReference: item.item_reference || undefined,
-            filter: Number(item.filter) || Number(defaultFilter),
-          });
-          return { ...item, generated_epc: epc };
-        } catch (err: unknown) {
-          return { ...item, generated_epc: "", status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
-        }
-      })
-    );
-    toast.success("EPCs generated");
-  }, [defaultPrefix, defaultFilter]);
-
   const addRow = () => {
     setItems((prev) => [...prev, { ...EMPTY_ROW, company_prefix: defaultPrefix, filter: defaultFilter }]);
   };
@@ -160,8 +141,24 @@ function BulkUploadPage() {
   };
 
   const handleBulkInsert = async () => {
-    const valid = items.filter((i) => i.name.trim() && i.generated_epc);
-    if (valid.length === 0) { toast.error("No valid items with EPCs to upload"); return; }
+    // Auto-generate EPCs for any rows that don't yet have one
+    const withEpcs = items.map((it) => {
+      if (!it.name.trim() || it.generated_epc) return it;
+      try {
+        const epc = generateRandomSgtin96({
+          companyPrefix: it.company_prefix || defaultPrefix,
+          itemReference: it.item_reference || undefined,
+          filter: Number(it.filter) || Number(defaultFilter),
+        });
+        return { ...it, generated_epc: epc, status: "pending" as const, error: undefined };
+      } catch (err: unknown) {
+        return { ...it, status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
+      }
+    });
+    setItems(withEpcs);
+
+    const valid = withEpcs.filter((i) => i.name.trim() && i.generated_epc);
+    if (valid.length === 0) { toast.error("No valid items to upload (need a name)"); return; }
 
     // Pre-flight: in-batch duplicate detection (name / sku / gtin)
     const seenNames = new Map<string, number>();
@@ -169,7 +166,7 @@ function BulkUploadPage() {
     const seenGtins = new Map<string, number>();
     const inBatchDupes: number[] = [];
     valid.forEach((it) => {
-      const idx = items.indexOf(it);
+      const idx = withEpcs.indexOf(it);
       const n = it.name.trim().toLowerCase();
       const s = it.sku.trim().toLowerCase();
       const g = it.gtin.trim();
@@ -194,7 +191,7 @@ function BulkUploadPage() {
     let successCount = 0;
     for (let i = 0; i < valid.length; i++) {
       const item = valid[i];
-      const idx = items.indexOf(item);
+      const idx = withEpcs.indexOf(item);
       try {
         // DB duplicate check (name / sku / gtin within company)
         const orParts: string[] = [`name.eq.${item.name.trim()}`];
@@ -266,7 +263,7 @@ function BulkUploadPage() {
     toast.success("CSV exported");
   };
 
-  const validCount = items.filter((i) => i.name.trim() && i.generated_epc).length;
+  const namedCount = items.filter((i) => i.name.trim()).length;
   const errorCount = items.filter((i) => i.status === "error").length;
   const successCount = items.filter((i) => i.status === "success").length;
 
@@ -316,18 +313,15 @@ function BulkUploadPage() {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{items.length} items loaded</span>
               <div className="flex gap-3">
-                {validCount > 0 && <span className="text-primary">{validCount} ready</span>}
+                {namedCount > 0 && <span className="text-primary">{namedCount} ready</span>}
                 {errorCount > 0 && <span className="text-destructive">{errorCount} errors</span>}
                 {successCount > 0 && <span className="text-green-500">{successCount} uploaded</span>}
               </div>
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={generateAllEpcs} variant="outline" size="sm" className="gap-1.5 flex-1 text-xs">
-                <Zap className="h-3.5 w-3.5" /> Generate All EPCs
-              </Button>
-              <Button onClick={handleBulkInsert} size="sm" className="gap-1.5 flex-1 text-xs" disabled={uploading || validCount === 0}>
-                {uploading ? (<><Loader2 className="h-3.5 w-3.5 animate-spin" />{progress}%</>) : (<><Upload className="h-3.5 w-3.5" />Upload {validCount} Items</>)}
+              <Button onClick={handleBulkInsert} size="sm" className="gap-1.5 flex-1 text-xs" disabled={uploading || items.filter((i) => i.name.trim()).length === 0}>
+                {uploading ? (<><Loader2 className="h-3.5 w-3.5 animate-spin" />{progress}%</>) : (<><Upload className="h-3.5 w-3.5" />Upload {items.filter((i) => i.name.trim()).length} Items</>)}
               </Button>
             </div>
 

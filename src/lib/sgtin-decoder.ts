@@ -260,8 +260,9 @@ export function generateRandomSgtin96(opts?: {
   if (partition === null) throw new Error("Invalid company prefix length");
   const [, , , irDigits] = PARTITION_TABLE_96[partition];
 
-  // Auto-generate item reference if not provided
-  const itemReference = opts?.itemReference || "0".padStart(irDigits, "0");
+  // Auto-pad item reference with leading zeros to required digit length
+  const rawIr = (opts?.itemReference || "").replace(/\D/g, "");
+  const itemReference = rawIr ? rawIr.padStart(irDigits, "0").slice(-irDigits) : "0".padStart(irDigits, "0");
 
   // Random 38-bit serial (max 274877906943)
   const serial = Math.floor(Math.random() * 274877906943);
