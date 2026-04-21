@@ -14,6 +14,63 @@ export type Database = {
   }
   public: {
     Tables: {
+      antenna_zones: {
+        Row: {
+          antenna_port: number
+          color: string
+          company_slug: string
+          created_at: string
+          id: string
+          label: string | null
+          map_id: string
+          reader_id: string
+          shape_data: Json
+          shape_kind: string
+          updated_at: string
+        }
+        Insert: {
+          antenna_port: number
+          color?: string
+          company_slug: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          map_id: string
+          reader_id: string
+          shape_data: Json
+          shape_kind: string
+          updated_at?: string
+        }
+        Update: {
+          antenna_port?: number
+          color?: string
+          company_slug?: string
+          created_at?: string
+          id?: string
+          label?: string | null
+          map_id?: string
+          reader_id?: string
+          shape_data?: Json
+          shape_kind?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "antenna_zones_map_id_fkey"
+            columns: ["map_id"]
+            isOneToOne: false
+            referencedRelation: "location_maps"
+            referencedColumns: ["id"]
+          },
+          {
+            foreignKeyName: "antenna_zones_reader_id_fkey"
+            columns: ["reader_id"]
+            isOneToOne: false
+            referencedRelation: "fixed_readers"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       fixed_readers: {
         Row: {
           antenna_count: number
@@ -116,6 +173,39 @@ export type Database = {
           weight?: number | null
           weight_unit?: string | null
           width?: number | null
+        }
+        Relationships: []
+      }
+      location_maps: {
+        Row: {
+          company_slug: string
+          created_at: string
+          id: string
+          image_height: number
+          image_path: string
+          image_width: number
+          location_id: string
+          updated_at: string
+        }
+        Insert: {
+          company_slug: string
+          created_at?: string
+          id?: string
+          image_height?: number
+          image_path: string
+          image_width?: number
+          location_id: string
+          updated_at?: string
+        }
+        Update: {
+          company_slug?: string
+          created_at?: string
+          id?: string
+          image_height?: number
+          image_path?: string
+          image_width?: number
+          location_id?: string
+          updated_at?: string
         }
         Relationships: []
       }
