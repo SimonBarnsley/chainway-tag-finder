@@ -193,11 +193,13 @@ function ScannerPage() {
 
       // Auto-link saved EPCs to items (creates placeholder items for unknown EPCs)
       const savedEpcs = Array.from(savedSet);
+      let linkDetails: Array<{ epc: string; itemId: string; itemName: string | null; location: string | null }> = [];
       if (savedEpcs.length > 0) {
         try {
           const linkRes = await linkSavedEpcsFn({ data: { epcs: savedEpcs } });
           if (linkRes?.linked) summary.push(`${linkRes.linked} linked`);
           if (linkRes?.itemsCreated) summary.push(`${linkRes.itemsCreated} new item${linkRes.itemsCreated === 1 ? "" : "s"} created`);
+          linkDetails = linkRes?.details ?? [];
         } catch (linkErr) {
           console.error("[scanner] linkSavedEpcs failed:", linkErr);
         }
