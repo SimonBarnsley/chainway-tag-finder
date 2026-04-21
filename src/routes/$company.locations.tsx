@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useEffect, useCallback } from "react";
-import { MapPin, Plus, Trash2, Edit3, X, Save, ScanBarcode } from "lucide-react";
+import { MapPin, Plus, Trash2, Edit3, X, Save, ScanBarcode, Radio } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
@@ -32,6 +32,15 @@ interface LocationRow {
   created_at: string;
 }
 
+interface AntennaMappingRow {
+  id: string;
+  reader_id: string;
+  reader_name: string;
+  antenna_port: number;
+  location: string;
+  description: string | null;
+}
+
 function LocationsPage() {
   const { companySlug } = useAuth();
   const [locations, setLocations] = useState<LocationRow[]>([]);
@@ -40,6 +49,8 @@ function LocationsPage() {
   const [editingId, setEditingId] = useState<string | null>(null);
   const [form, setForm] = useState({ name: "", description: "", barcode: "" });
   const [isSaving, setIsSaving] = useState(false);
+  const [antennaMappings, setAntennaMappings] = useState<AntennaMappingRow[]>([]);
+  const [isLoadingAntennas, setIsLoadingAntennas] = useState(true);
 
   const fetchLocations = useCallback(async () => {
     if (!companySlug) return;
@@ -57,9 +68,37 @@ function LocationsPage() {
     setIsLoading(false);
   }, [companySlug]);
 
+  const fetchAntennaMappings = useCallback(async () => {
+    if (!companySlug) return;
+    setIsLoadingAntennas(true);
+    const { data, error } = await supabase
+      .from("reader_antennas")
+      .select("id, reader_id, antenna_port, location, description, fixed_readers!inner(name)")
+      .eq("company_slug", companySlug)
+      .order("location", { ascending: true });
+    if (error) {
+      toast.error(error.message);
+    } else {
+      const rows: AntennaMappingRow[] = (data ?? []).map((a) => {
+        const reader = a.fixed_readers as unknown as { name: string };
+        return {
+          id: a.id,
+          reader_id: a.reader_id,
+          reader_name: reader?.name ?? "Reader",
+          antenna_port: a.antenna_port,
+          location: a.location,
+          description: a.description ?? null,
+        };
+      });
+      setAntennaMappings(rows);
+    }
+    setIsLoadingAntennas(false);
+  }, [companySlug]);
+
   useEffect(() => {
     fetchLocations();
-  }, [fetchLocations]);
+    fetchAntennaMappings();
+  }, [fetchLocations, fetchAntennaMappings]);
 
   const resetForm = () => {
     setForm({ name: "", description: "", barcode: "" });
