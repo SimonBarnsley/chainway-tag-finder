@@ -8,7 +8,7 @@ import { ScannerStatus } from "@/components/ScannerStatus";
 import { TagList } from "@/components/TagList";
 import { ManualEntry } from "@/components/ManualEntry";
 import { LocationSelector } from "@/components/LocationSelector";
-import { LocationFilter } from "@/components/LocationFilter";
+
 import { GeigerSearch } from "@/components/GeigerSearch";
 
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
@@ -376,12 +376,6 @@ function ScannerPage() {
           />
         )}
 
-        <div>
-          <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
-            Browse by Location
-          </h2>
-          <LocationFilter onGeigerSearch={setGeigerEpc} companySlug={company} />
-        </div>
 
         <div>
           <h2 className="text-xs font-medium text-muted-foreground uppercase tracking-wider mb-2">
