@@ -25,7 +25,6 @@ export function AppHeader({ actions }: AppHeaderProps) {
     { label: "History", to: "/$company/history" as const, icon: History },
     { label: "Decoder", to: "/$company/decoder" as const, icon: Barcode },
     { label: "Bulk Upload", to: "/$company/bulk-upload" as const, icon: Upload },
-    { label: "Readers", to: "/$company/readers" as const, icon: Router },
   ];
 
   useEffect(() => {
@@ -129,6 +128,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
                           >
                             <ShieldCheck className="h-4 w-4" />
                             Roles
+                          </Link>
+                          <Link
+                            to="/$company/readers"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Router className="h-4 w-4" />
+                            Readers
                           </Link>
                           <Link
                             to="/$company/maps"
