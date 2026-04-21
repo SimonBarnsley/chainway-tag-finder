@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { backfillTagItems } from "@/lib/backfill-tag-items";
-import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -102,9 +102,7 @@ function DashboardPage() {
   const [groupBySku, setGroupBySku] = useState(true);
   const [expandedSku, setExpandedSku] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
-  const [linkingUngrouped, setLinkingUngrouped] = useState(false);
   const backfillFn = useServerFn(backfillTagItems);
-  const linkSavedEpcsFn = useServerFn(linkSavedEpcs);
 
   const handleBackfill = async () => {
     setBackfilling(true);
