@@ -160,8 +160,24 @@ function BulkUploadPage() {
   };
 
   const handleBulkInsert = async () => {
-    const valid = items.filter((i) => i.name.trim() && i.generated_epc);
-    if (valid.length === 0) { toast.error("No valid items with EPCs to upload"); return; }
+    // Auto-generate EPCs for any rows that don't yet have one
+    const withEpcs = items.map((it) => {
+      if (!it.name.trim() || it.generated_epc) return it;
+      try {
+        const epc = generateRandomSgtin96({
+          companyPrefix: it.company_prefix || defaultPrefix,
+          itemReference: it.item_reference || undefined,
+          filter: Number(it.filter) || Number(defaultFilter),
+        });
+        return { ...it, generated_epc: epc, status: "pending" as const, error: undefined };
+      } catch (err: unknown) {
+        return { ...it, status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
+      }
+    });
+    setItems(withEpcs);
+
+    const valid = withEpcs.filter((i) => i.name.trim() && i.generated_epc);
+    if (valid.length === 0) { toast.error("No valid items to upload (need a name)"); return; }
 
     // Pre-flight: in-batch duplicate detection (name / sku / gtin)
     const seenNames = new Map<string, number>();
