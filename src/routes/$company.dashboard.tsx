@@ -495,6 +495,21 @@ function DashboardPage() {
                             <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary font-medium ml-auto">
                               {group.records.length} tag{group.records.length !== 1 ? "s" : ""} · {group.totalScans} scans
                             </span>
+                            {group.sku === "__ungrouped__" && (
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                disabled={linkingUngrouped}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  handleLinkUngrouped(group.records.map((r) => r.epc));
+                                }}
+                                className="h-7 gap-1.5"
+                              >
+                                <Link2 className="h-3.5 w-3.5" />
+                                {linkingUngrouped ? "Linking..." : "Link to items"}
+                              </Button>
+                            )}
                           </div>
                         </td>
                       </tr>
