@@ -74,29 +74,6 @@ export function ScannerStatus({
         </div>
       )}
 
-      {/* Wedge status banner */}
-      <div
-        className={`flex items-center gap-2.5 rounded-lg border p-3 ${
-          wedgeStatus === "detected"
-            ? "border-success/30 bg-success/5"
-            : wedgeStatus === "not_detected"
-              ? "border-destructive/30 bg-destructive/5"
-              : "border-border bg-card"
-        }`}
-      >
-        <Keyboard
-          className={`h-5 w-5 shrink-0 ${wedge.iconColor} ${wedgeStatus === "detected" ? "animate-pulse" : ""}`}
-        />
-        <div className="flex-1 min-w-0">
-          <p className="text-xs text-muted-foreground">DataWedge {sdkAvailable && "(fallback)"}</p>
-          <p className={`text-sm font-bold ${wedge.color}`}>{wedge.label}</p>
-        </div>
-        <span className="text-xs text-muted-foreground shrink-0">
-          {wedgeStatus === "unknown" && "Trigger scan to detect"}
-          {wedgeStatus === "detected" && "Reader connected"}
-          {wedgeStatus === "not_detected" && "No reader input"}
-        </span>
-      </div>
 
       {/* Stats row */}
       <div className="grid grid-cols-3 gap-2">
