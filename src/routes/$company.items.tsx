@@ -114,10 +114,17 @@ function ItemsPage() {
           .in("item_id", ids);
 
         const epcToItems: Record<string, string[]> = {};
+        const tagCountMap: Record<string, number> = {};
+        const tagEpcMap: Record<string, string[]> = {};
         (links || []).forEach((l) => {
           if (!epcToItems[l.epc]) epcToItems[l.epc] = [];
           epcToItems[l.epc].push(l.item_id);
+          tagCountMap[l.item_id] = (tagCountMap[l.item_id] || 0) + 1;
+          if (!tagEpcMap[l.item_id]) tagEpcMap[l.item_id] = [];
+          tagEpcMap[l.item_id].push(l.epc);
         });
+        setItemTagCounts(tagCountMap);
+        setItemTagEpcs(tagEpcMap);
 
         // Fetch scan locations for linked EPCs
         const allEpcs = Object.keys(epcToItems);
