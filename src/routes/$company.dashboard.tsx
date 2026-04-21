@@ -422,7 +422,7 @@ function DashboardPage() {
 
         <div className="flex items-center justify-between text-xs text-muted-foreground">
           <span>
-            {filtered.length} of {records.length} tags
+            {"\u200B"}
             {autoRefresh && <span className="ml-2 text-success">● Live updates</span>}
           </span>
           <span>Sorted by {sortField.replace("_", " ")} ({sortDir})</span>
