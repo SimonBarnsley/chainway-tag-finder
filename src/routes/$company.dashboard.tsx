@@ -451,7 +451,7 @@ function DashboardPage() {
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center text-muted-foreground">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center text-muted-foreground">
                       No tag reads found
                     </td>
                   </tr>
