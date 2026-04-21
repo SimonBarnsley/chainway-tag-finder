@@ -257,24 +257,6 @@ function BulkUploadPage() {
       } />
 
       <main className="flex-1 px-4 py-4 space-y-4 max-w-7xl mx-auto w-full">
-        <Card>
-          <CardContent className="p-3 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-              <Zap className="h-3.5 w-3.5" /> GS1 SGTIN-96 Defaults
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground">Default Company Prefix</label>
-                <Input value={defaultPrefix} onChange={(e) => setDefaultPrefix(e.target.value.replace(/\D/g, ""))} placeholder="0614141" className="text-xs font-mono h-8" maxLength={12} />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground">Default Filter (0-7)</label>
-                <Input value={defaultFilter} onChange={(e) => setDefaultFilter(e.target.value)} type="number" min={0} max={7} className="text-xs font-mono h-8" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="grid grid-cols-3 gap-2">
           <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-1.5 text-xs h-12 flex-col">
             <Upload className="h-4 w-4" /> Upload CSV
