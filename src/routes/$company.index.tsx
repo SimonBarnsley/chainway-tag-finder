@@ -8,7 +8,7 @@ import { ScannerStatus } from "@/components/ScannerStatus";
 import { TagList } from "@/components/TagList";
 import { ManualEntry } from "@/components/ManualEntry";
 import { LocationSelector } from "@/components/LocationSelector";
-import { LocationFilter } from "@/components/LocationFilter";
+
 import { GeigerSearch } from "@/components/GeigerSearch";
 
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
