@@ -425,7 +425,7 @@ function DashboardPage() {
             {"\u200B"}
             {autoRefresh && <span className="ml-2 text-success">● Live updates</span>}
           </span>
-          <span>Sorted by {sortField.replace("_", " ")} ({sortDir})</span>
+          <span>{"\n"}</span>
         </div>
 
         <div className="rounded-lg border border-border overflow-hidden">
