@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState, useRef, useCallback } from "react";
+import { useState, useRef } from "react";
 import { AppHeader } from "@/components/AppHeader";
 import {
   Upload,
@@ -123,25 +123,6 @@ function BulkUploadPage() {
     reader.readAsText(file);
     if (fileRef.current) fileRef.current.value = "";
   };
-
-  const generateAllEpcs = useCallback(() => {
-    setItems((prev) =>
-      prev.map((item) => {
-        if (item.generated_epc) return item;
-        try {
-          const epc = generateRandomSgtin96({
-            companyPrefix: item.company_prefix || defaultPrefix,
-            itemReference: item.item_reference || undefined,
-            filter: Number(item.filter) || Number(defaultFilter),
-          });
-          return { ...item, generated_epc: epc };
-        } catch (err: unknown) {
-          return { ...item, generated_epc: "", status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
-        }
-      })
-    );
-    toast.success("EPCs generated");
-  }, [defaultPrefix, defaultFilter]);
 
   const addRow = () => {
     setItems((prev) => [...prev, { ...EMPTY_ROW, company_prefix: defaultPrefix, filter: defaultFilter }]);
@@ -282,7 +263,7 @@ function BulkUploadPage() {
     toast.success("CSV exported");
   };
 
-  const validCount = items.filter((i) => i.name.trim() && i.generated_epc).length;
+  const namedCount = items.filter((i) => i.name.trim()).length;
   const errorCount = items.filter((i) => i.status === "error").length;
   const successCount = items.filter((i) => i.status === "success").length;
 
