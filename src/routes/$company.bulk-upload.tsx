@@ -162,6 +162,33 @@ function BulkUploadPage() {
   const handleBulkInsert = async () => {
     const valid = items.filter((i) => i.name.trim() && i.generated_epc);
     if (valid.length === 0) { toast.error("No valid items with EPCs to upload"); return; }
+
+    // Pre-flight: in-batch duplicate detection (name / sku / gtin)
+    const seenNames = new Map<string, number>();
+    const seenSkus = new Map<string, number>();
+    const seenGtins = new Map<string, number>();
+    const inBatchDupes: number[] = [];
+    valid.forEach((it) => {
+      const idx = items.indexOf(it);
+      const n = it.name.trim().toLowerCase();
+      const s = it.sku.trim().toLowerCase();
+      const g = it.gtin.trim();
+      let dup = false;
+      if (seenNames.has(n)) dup = true; else seenNames.set(n, idx);
+      if (s && seenSkus.has(s)) dup = true; else if (s) seenSkus.set(s, idx);
+      if (g && seenGtins.has(g)) dup = true; else if (g) seenGtins.set(g, idx);
+      if (dup) inBatchDupes.push(idx);
+    });
+    if (inBatchDupes.length > 0) {
+      setItems((prev) => {
+        const u = [...prev];
+        inBatchDupes.forEach((i) => { u[i] = { ...u[i], status: "error", error: "Duplicate within batch (name/SKU/GTIN)" }; });
+        return u;
+      });
+      toast.error(`${inBatchDupes.length} duplicate row(s) within the batch — fix and retry`);
+      return;
+    }
+
     setUploading(true);
     setProgress(0);
     let successCount = 0;
@@ -169,6 +196,25 @@ function BulkUploadPage() {
       const item = valid[i];
       const idx = items.indexOf(item);
       try {
+        // DB duplicate check (name / sku / gtin within company)
+        const orParts: string[] = [`name.eq.${item.name.trim()}`];
+        if (item.sku.trim()) orParts.push(`sku.eq.${item.sku.trim()}`);
+        if (item.gtin.trim()) orParts.push(`gtin.eq.${item.gtin.trim()}`);
+        const { data: existing, error: dupErr } = await supabase
+          .from("items")
+          .select("id, name, sku, gtin")
+          .eq("company_slug", company)
+          .or(orParts.join(","))
+          .limit(1);
+        if (dupErr) throw dupErr;
+        if (existing && existing.length > 0) {
+          const e = existing[0];
+          const reason = e.sku && e.sku === item.sku.trim() ? `SKU "${e.sku}"` :
+                         e.gtin && e.gtin === item.gtin.trim() ? `GTIN "${e.gtin}"` :
+                         `name "${e.name}"`;
+          throw new Error(`Duplicate ${reason} already exists`);
+        }
+
         const { data: created, error: itemErr } = await supabase.from("items").insert({
           name: item.name.trim(), description: item.description || null, category: item.category || null,
           sku: item.sku || null, gtin: item.gtin || null, price: item.price ? Number(item.price) : null,
