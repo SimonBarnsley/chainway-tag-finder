@@ -15,6 +15,8 @@ import { Route as CompanyRouteImport } from './routes/$company'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
+import { Route as CompanyUsersRouteImport } from './routes/$company.users'
+import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
 import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
@@ -56,6 +58,16 @@ const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
   id: '/api/zebra-reader',
   path: '/api/zebra-reader',
   getParentRoute: () => rootRouteImport,
+} as any)
+const CompanyUsersRoute = CompanyUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyRolesRoute = CompanyRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyReadersRoute = CompanyReadersRouteImport.update({
   id: '/readers',
@@ -129,6 +141,8 @@ export interface FileRoutesByFullPath {
   '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
+  '/$company/roles': typeof CompanyRolesRoute
+  '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -147,6 +161,8 @@ export interface FileRoutesByTo {
   '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
+  '/$company/roles': typeof CompanyRolesRoute
+  '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company': typeof CompanyIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -167,6 +183,8 @@ export interface FileRoutesById {
   '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
+  '/$company/roles': typeof CompanyRolesRoute
+  '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -188,6 +206,8 @@ export interface FileRouteTypes {
     | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
+    | '/$company/roles'
+    | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
     | '/api/zebra-reader/$company/$key'
@@ -206,6 +226,8 @@ export interface FileRouteTypes {
     | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
+    | '/$company/roles'
+    | '/$company/users'
     | '/api/zebra-reader'
     | '/$company'
     | '/api/zebra-reader/$company/$key'
@@ -225,6 +247,8 @@ export interface FileRouteTypes {
     | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
+    | '/$company/roles'
+    | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
     | '/api/zebra-reader/$company/$key'
@@ -281,6 +305,20 @@ declare module '@tanstack/react-router' {
       fullPath: '/api/zebra-reader'
       preLoaderRoute: typeof ApiZebraReaderRouteImport
       parentRoute: typeof rootRouteImport
+    }
+    '/$company/users': {
+      id: '/$company/users'
+      path: '/users'
+      fullPath: '/$company/users'
+      preLoaderRoute: typeof CompanyUsersRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/roles': {
+      id: '/$company/roles'
+      path: '/roles'
+      fullPath: '/$company/roles'
+      preLoaderRoute: typeof CompanyRolesRouteImport
+      parentRoute: typeof CompanyRoute
     }
     '/$company/readers': {
       id: '/$company/readers'
@@ -373,6 +411,8 @@ interface CompanyRouteChildren {
   CompanyLocationsRoute: typeof CompanyLocationsRoute
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
+  CompanyRolesRoute: typeof CompanyRolesRoute
+  CompanyUsersRoute: typeof CompanyUsersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
 }
 
@@ -387,6 +427,8 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyLocationsRoute: CompanyLocationsRoute,
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
+  CompanyRolesRoute: CompanyRolesRoute,
+  CompanyUsersRoute: CompanyUsersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
 }
 

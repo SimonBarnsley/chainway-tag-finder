@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin } from "lucide-react";
+import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, ChevronDown, Users, ShieldCheck } from "lucide-react";
 import barcodeWarehouseLogo from "@/assets/barcode-warehouse-logo.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -11,6 +11,7 @@ interface AppHeaderProps {
 
 export function AppHeader({ actions }: AppHeaderProps) {
   const [open, setOpen] = useState(false);
+  const [adminOpen, setAdminOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, isAdmin, isSuperAdmin, user, signOut, companySlug } = useAuth();
   const params = useParams({ strict: false }) as { company?: string };
@@ -85,28 +86,65 @@ export function AppHeader({ actions }: AppHeaderProps) {
                     </Link>
                   ))}
                   {isAdmin && (
-                    <Link
-                      to="/$company/admin-dashboard"
-                      params={{ company }}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
-                    >
-                      <Shield className="h-4 w-4" />
-                      Admin Dashboard
-                    </Link>
-                  )}
-                  {isSuperAdmin && (
-                    <Link
-                      to="/$company/admin"
-                      params={{ company }}
-                      onClick={() => setOpen(false)}
-                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
-                      activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
-                    >
-                      <Shield className="h-4 w-4" />
-                      Admin
-                    </Link>
+                    <>
+                      <div className="border-t border-border my-1" />
+                      <button
+                        onClick={() => setAdminOpen(!adminOpen)}
+                        className="flex w-full items-center justify-between px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <span className="flex items-center gap-2.5">
+                          <Shield className="h-4 w-4" />
+                          Admin
+                        </span>
+                        <ChevronDown className={`h-3.5 w-3.5 transition-transform ${adminOpen ? "rotate-180" : ""}`} />
+                      </button>
+                      {adminOpen && (
+                        <div className="bg-muted/30">
+                          <Link
+                            to="/$company/admin-dashboard"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <BarChart3 className="h-4 w-4" />
+                            Admin Dashboard
+                          </Link>
+                          <Link
+                            to="/$company/users"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Users className="h-4 w-4" />
+                            Users
+                          </Link>
+                          <Link
+                            to="/$company/roles"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <ShieldCheck className="h-4 w-4" />
+                            Roles
+                          </Link>
+                          {isSuperAdmin && (
+                            <Link
+                              to="/$company/admin"
+                              params={{ company }}
+                              onClick={() => setOpen(false)}
+                              className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                              activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                            >
+                              <Shield className="h-4 w-4" />
+                              Super Admin
+                            </Link>
+                          )}
+                        </div>
+                      )}
+                    </>
                   )}
                   {isAuthenticated && (
                     <>
