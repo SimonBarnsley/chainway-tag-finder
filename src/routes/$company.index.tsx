@@ -327,7 +327,7 @@ function ScannerPage() {
           </Button>
         </div>
 
-        <ManualEntry onSubmit={addManualTag} />
+        
 
         {geigerEpc && (
           <GeigerSearch
