@@ -244,6 +244,20 @@ function ScannerPage() {
             description: `EPC ${epc.slice(-12)} · ${loc}`,
           });
         }
+
+        // Auto-clear the scanned tags buffer 10s after a successful save
+        const savedEpcSet = new Set(
+          tagsToProcess
+            .filter((t) => savedSet.has(t.epc.toUpperCase()))
+            .map((t) => t.epc)
+        );
+        setTimeout(() => {
+          setTags((prev) => {
+            const next = new Map(prev);
+            for (const epc of savedEpcSet) next.delete(epc);
+            return next;
+          });
+        }, 10000);
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save scans");
