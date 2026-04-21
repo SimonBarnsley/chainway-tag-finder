@@ -313,7 +313,7 @@ function BulkUploadPage() {
             <div className="flex items-center justify-between text-xs text-muted-foreground">
               <span>{items.length} items loaded</span>
               <div className="flex gap-3">
-                {validCount > 0 && <span className="text-primary">{validCount} ready</span>}
+                {namedCount > 0 && <span className="text-primary">{namedCount} ready</span>}
                 {errorCount > 0 && <span className="text-destructive">{errorCount} errors</span>}
                 {successCount > 0 && <span className="text-green-500">{successCount} uploaded</span>}
               </div>
