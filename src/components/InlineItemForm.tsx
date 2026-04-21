@@ -141,6 +141,13 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
         <Input value={gtin} onChange={(e) => setGtin(e.target.value)} placeholder="GTIN" className="text-xs font-mono" />
         <Input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price" type="number" className="text-xs" />
       </div>
+      <Input
+        value={companyPrefix}
+        onChange={(e) => setCompanyPrefix(e.target.value.replace(/\D/g, ""))}
+        placeholder="GS1 company prefix (e.g. 0614141)"
+        className="text-xs font-mono"
+        maxLength={12}
+      />
       <Input value={warehouseLocation} onChange={(e) => setWarehouseLocation(e.target.value)} placeholder="Warehouse location" className="text-xs" />
 
       {/* Image */}
