@@ -640,16 +640,18 @@ function ScanRow({
           {r.scan_count}
         </span>
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap">
-        {r.location ? (
-          <span className="inline-flex items-center gap-1 text-primary">
-            <MapPin className="h-3 w-3" />
-            {r.location}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
+      {showSku && (
+        <td className="px-3 py-2.5 whitespace-nowrap">
+          {r.location ? (
+            <span className="inline-flex items-center gap-1 text-primary">
+              <MapPin className="h-3 w-3" />
+              {r.location}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </td>
+      )}
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
       </td>
