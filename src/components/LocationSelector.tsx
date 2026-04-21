@@ -125,18 +125,6 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
         <ScanBarcode className="h-4 w-4" />
         Scan Location Barcode
       </Button>
-      <Button
-        variant="outline"
-        size="sm"
-        onClick={() => {
-          setIsEditing(true);
-          setInputValue("");
-        }}
-        className="flex-1 gap-2 border-dashed"
-      >
-        <Edit3 className="h-4 w-4" />
-        Type Location
-      </Button>
     </div>
   );
 }
