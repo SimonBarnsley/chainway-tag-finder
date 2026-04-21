@@ -444,7 +444,7 @@ function ItemsPage() {
                         {item.warehouse_location && <span>📍 {item.warehouse_location}</span>}
                         {itemTagCounts[item.id] > 0 && (
                           <span
-                            className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 font-semibold"
+                            className="inline-flex items-center gap-1 rounded-full bg-primary/15 px-2 py-0.5 text-primary font-semibold"
                             title={(itemTagEpcs[item.id] || []).join("\n")}
                           >
                             <LinkIcon className="h-2.5 w-2.5" />
