@@ -112,6 +112,9 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
             readerDevice = first
             first.rfidReader.connect()
             configureReader()
+            lastConnectedState = true
+            heartbeatHandler.removeCallbacks(heartbeatRunnable)
+            heartbeatHandler.postDelayed(heartbeatRunnable, 2000L)
 
             val ret = JSObject()
             ret.put("success", true)
