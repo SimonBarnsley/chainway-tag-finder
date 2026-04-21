@@ -18,6 +18,7 @@ import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { useServerFn } from "@tanstack/react-start";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+import { backfillTagItems } from "@/lib/backfill-tag-items";
 
 export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
@@ -40,6 +41,7 @@ function ScannerPage() {
   const { company } = Route.useParams();
   const { companySlug } = useAuth();
   const linkSavedEpcsFn = useServerFn(linkSavedEpcs);
+  const backfillFn = useServerFn(backfillTagItems);
   const [companyName, setCompanyName] = useState(company);
   const [scanEnabled, setScanEnabled] = useState(true);
   const [tags, setTags] = useState<Map<string, TagEntry>>(new Map());
@@ -208,6 +210,20 @@ function ScannerPage() {
         } catch (linkErr) {
           console.error("[scanner] linkSavedEpcs failed:", linkErr);
         }
+      }
+
+      // Also run the full backfill across all company scans, mirroring the
+      // dashboard's "Link EPCs" action so any previously-unlinked tags get
+      // resolved automatically on every Save All.
+      try {
+        const backfillRes = await backfillFn({ data: { companySlug } });
+        if (backfillRes?.ok) {
+          const extras: string[] = [];
+          if (backfillRes.linked) extras.push(`${backfillRes.linked} backfilled`);
+          if (extras.length) summary.push(extras.join(" · "));
+        }
+      } catch (bfErr) {
+        console.error("[scanner] backfillTagItems failed:", bfErr);
       }
 
       if (errors.length > 0) {
