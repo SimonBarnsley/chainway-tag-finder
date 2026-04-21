@@ -466,6 +466,8 @@ function ReaderCard({
 
 function EndpointUrlCard({ company }: { company: string }) {
   const [apiKey, setApiKey] = useState("");
+  const [fetchingKey, setFetchingKey] = useState(false);
+  const getZebraApiKeyFn = useServerFn(getZebraApiKey);
   const origin = typeof window !== "undefined" ? window.location.origin : "";
   const keyForUrl = apiKey.trim() || "<API_KEY>";
   const pathUrl = `${origin}/api/zebra-reader/${company}/${encodeURIComponent(keyForUrl)}`;
@@ -477,6 +479,29 @@ function EndpointUrlCard({ company }: { company: string }) {
       toast.success(`${label} copied`);
     } catch {
       toast.error("Copy failed");
+    }
+  };
+
+  const copyWithServerKey = async (kind: "path" | "query") => {
+    setFetchingKey(true);
+    try {
+      const res = await getZebraApiKeyFn();
+      if (!res.configured || !res.apiKey) {
+        toast.error("ZEBRA_READER_API_KEY is not set in backend secrets");
+        return;
+      }
+      const url =
+        kind === "path"
+          ? `${origin}/api/zebra-reader/${company}/${encodeURIComponent(res.apiKey)}`
+          : `${origin}/api/zebra-reader?company=${company}&key=${encodeURIComponent(res.apiKey)}`;
+      await navigator.clipboard.writeText(url);
+      toast.success(
+        `${kind === "path" ? "Path URL" : "Query URL"} with API key copied`
+      );
+    } catch (err) {
+      toast.error(err instanceof Error ? err.message : "Failed to fetch API key");
+    } finally {
+      setFetchingKey(false);
     }
   };
 
@@ -492,6 +517,8 @@ function EndpointUrlCard({ company }: { company: string }) {
         <p className="text-xs text-muted-foreground">
           Configure your FX9600 IoT Connector to POST tag reads to one of the URLs
           below. The path-based URL is preferred (single field, no <code>&amp;</code>).
+          Use <span className="font-semibold text-foreground">Copy with key</span> to
+          fetch your API key from backend secrets and copy a ready-to-paste URL.
         </p>
 
         <div className="space-y-1.5">
@@ -525,6 +552,17 @@ function EndpointUrlCard({ company }: { company: string }) {
             >
               <Copy className="h-3.5 w-3.5" /> Copy
             </Button>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="h-8 gap-1 shrink-0"
+              disabled={fetchingKey}
+              onClick={() => copyWithServerKey("path")}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              {fetchingKey ? "..." : "Copy with key"}
+            </Button>
           </div>
         </div>
 
@@ -542,6 +580,17 @@ function EndpointUrlCard({ company }: { company: string }) {
               onClick={() => copy(queryUrl, "Query URL")}
             >
               <Copy className="h-3.5 w-3.5" /> Copy
+            </Button>
+            <Button
+              type="button"
+              variant="default"
+              size="sm"
+              className="h-8 gap-1 shrink-0"
+              disabled={fetchingKey}
+              onClick={() => copyWithServerKey("query")}
+            >
+              <Copy className="h-3.5 w-3.5" />
+              {fetchingKey ? "..." : "Copy with key"}
             </Button>
           </div>
         </div>
