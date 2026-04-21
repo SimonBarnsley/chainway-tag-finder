@@ -276,8 +276,21 @@ function ScannerPage() {
           const simulateOff =
             typeof window !== "undefined" &&
             new URLSearchParams(window.location.search).get("simulate") === "rfd-off";
+          // Detect "RFD40 not connected / powered off":
+          //  - explicit ?simulate=rfd-off URL flag (browser testing), OR
+          //  - native Capacitor app on Android where the Zebra SDK is reachable
+          //    but the sled isn't in the "ready" state (init failed, disconnected,
+          //    powered off, or still initializing), OR
+          //  - running inside the native APK but the ZebraRFID plugin never
+          //    injected at all (e.g. plugin failed to register / TC22 didn't
+          //    expose the e-Connex serial transport).
+          const isNativePlatform =
+            typeof window !== "undefined" &&
+            window.Capacitor?.isNativePlatform?.() === true;
           const rfdOff =
-            simulateOff || (zebra.isNativeSdkAvailable && zebra.status !== "ready");
+            simulateOff ||
+            (zebra.isNativeSdkAvailable && zebra.status !== "ready") ||
+            (isNativePlatform && !zebra.isNativeSdkAvailable);
           return (
             <Button
               onClick={() => setScanEnabled(!scanEnabled)}
