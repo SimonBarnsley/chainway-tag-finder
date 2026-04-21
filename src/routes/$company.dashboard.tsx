@@ -438,21 +438,20 @@ function DashboardPage() {
                   <SortHeader label="Scans" field="scan_count" current={sortField} dir={sortDir} onSort={toggleSort} />
                   <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />
                   <SortHeader label="Last Seen" field="last_seen" current={sortField} dir={sortDir} onSort={toggleSort} />
-                  <th className="px-3 py-2 text-left font-medium text-muted-foreground">​</th>
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Actions</th>
                 </tr>
               </thead>
               <tbody>
                 {loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 7 : 6} className="px-3 py-12 text-center">
+                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center">
                       <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
                       <p className="text-muted-foreground">Loading...</p>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 7 : 6} className="px-3 py-12 text-center text-muted-foreground">
+                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center text-muted-foreground">
                       No tag reads found
                     </td>
                   </tr>
@@ -485,9 +484,6 @@ function DashboardPage() {
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
                           {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
-                        </td>
-                        <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
-                          {group.firstSeen ? "​" : "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           {group.sku === "__ungrouped__" && (
@@ -656,9 +652,6 @@ function ScanRow({
       </td>
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
-      </td>
-      <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-        {"​"}
       </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1">
