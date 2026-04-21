@@ -19,6 +19,7 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
   const [category, setCategory] = useState("");
   const [sku, setSku] = useState("");
   const [gtin, setGtin] = useState("");
+  const [companyPrefix, setCompanyPrefix] = useState("");
   const [price, setPrice] = useState("");
   const [warehouseLocation, setWarehouseLocation] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
@@ -81,6 +82,7 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
         category: category || null,
         sku: sku || null,
         gtin: gtin || null,
+        company_prefix: companyPrefix.trim() || null,
         price: price ? Number(price) : null,
         warehouse_location: warehouseLocation || null,
         image_url: imageUrl,
@@ -139,6 +141,13 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
         <Input value={gtin} onChange={(e) => setGtin(e.target.value)} placeholder="GTIN" className="text-xs font-mono" />
         <Input value={price} onChange={(e) => setPrice(e.target.value)} placeholder="Price" type="number" className="text-xs" />
       </div>
+      <Input
+        value={companyPrefix}
+        onChange={(e) => setCompanyPrefix(e.target.value.replace(/\D/g, ""))}
+        placeholder="GS1 company prefix (e.g. 0614141)"
+        className="text-xs font-mono"
+        maxLength={12}
+      />
       <Input value={warehouseLocation} onChange={(e) => setWarehouseLocation(e.target.value)} placeholder="Warehouse location" className="text-xs" />
 
       {/* Image */}
