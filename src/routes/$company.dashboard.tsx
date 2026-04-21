@@ -496,19 +496,71 @@ function DashboardPage() {
                               {group.records.length} tag{group.records.length !== 1 ? "s" : ""} · {group.totalScans} scans
                             </span>
                             {group.sku === "__ungrouped__" && (
-                              <Button
-                                size="sm"
-                                variant="outline"
-                                disabled={linkingUngrouped}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  handleLinkUngrouped(group.records.map((r) => r.epc));
-                                }}
-                                className="h-7 gap-1.5"
-                              >
-                                <Link2 className="h-3.5 w-3.5" />
-                                {linkingUngrouped ? "Linking..." : "Link to items"}
-                              </Button>
+                              <>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  disabled={linkingUngrouped}
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleLinkUngrouped(group.records.map((r) => r.epc));
+                                  }}
+                                  className="h-7 gap-1.5"
+                                >
+                                  <Link2 className="h-3.5 w-3.5" />
+                                  {linkingUngrouped ? "Linking..." : "Link to items"}
+                                </Button>
+                                <AlertDialog>
+                                  <AlertDialogTrigger asChild>
+                                    <Button
+                                      size="sm"
+                                      variant="outline"
+                                      onClick={(e) => e.stopPropagation()}
+                                      className="h-7 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                    >
+                                      <Trash2 className="h-3.5 w-3.5" />
+                                      Delete all
+                                    </Button>
+                                  </AlertDialogTrigger>
+                                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
+                                    <AlertDialogHeader>
+                                      <AlertDialogTitle>
+                                        Delete all {group.records.length} ungrouped tag{group.records.length !== 1 ? "s" : ""}?
+                                      </AlertDialogTitle>
+                                      <AlertDialogDescription>
+                                        This will permanently remove all ungrouped scan records
+                                        and unlink them from any items. This action cannot be undone.
+                                      </AlertDialogDescription>
+                                    </AlertDialogHeader>
+                                    <AlertDialogFooter>
+                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                      <AlertDialogAction
+                                        onClick={async () => {
+                                          const epcs = group.records.map((r) => r.epc);
+                                          const ids = group.records.map((r) => r.id);
+                                          const [scanRes, tagRes] = await Promise.all([
+                                            supabase.from("rfid_scans").delete().in("id", ids),
+                                            supabase
+                                              .from("tag_items")
+                                              .delete()
+                                              .eq("company_slug", company)
+                                              .in("epc", epcs),
+                                          ]);
+                                          if (scanRes.error || tagRes.error) {
+                                            toast.error("Failed to delete ungrouped tags");
+                                            return;
+                                          }
+                                          toast.success(`Deleted ${ids.length} ungrouped tag${ids.length !== 1 ? "s" : ""}`);
+                                          fetchRecords();
+                                        }}
+                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                      >
+                                        Delete all
+                                      </AlertDialogAction>
+                                    </AlertDialogFooter>
+                                  </AlertDialogContent>
+                                </AlertDialog>
+                              </>
                             )}
                           </div>
                         </td>
