@@ -362,26 +362,54 @@ function Editor() {
           )}
         </div>
 
+        {/* Always-visible upload control */}
+        <Card>
+          <CardContent className="p-3 flex items-center gap-3">
+            <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
+              <Upload className="h-5 w-5 text-primary" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-foreground">
+                {imageUrl ? "Replace floor plan image" : "Upload floor plan image"}
+              </p>
+              <p className="text-xs text-muted-foreground truncate">
+                {imageUrl
+                  ? "Uploading a new file will replace the current map (zones are kept)."
+                  : "JPG, PNG or WebP. Recommended: a top-down floor plan of the location."}
+              </p>
+            </div>
+            <input
+              ref={fileRef}
+              type="file"
+              accept="image/jpeg,image/png,image/webp"
+              className="hidden"
+              onChange={(e) => {
+                const f = e.target.files?.[0];
+                if (f) handleUpload(f);
+              }}
+            />
+            <Button
+              onClick={() => fileRef.current?.click()}
+              disabled={uploading}
+              size="sm"
+              className="gap-1 shrink-0"
+            >
+              <Upload className="h-4 w-4" />
+              {uploading ? "Uploading…" : imageUrl ? "Replace" : "Upload Map"}
+            </Button>
+          </CardContent>
+        </Card>
+
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading…</p>
         ) : !imageUrl ? (
           <Card>
-            <CardContent className="p-6 text-center space-y-3">
-              <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
-              <p className="text-sm text-foreground">Upload a JPG or PNG floor plan for this location</p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUpload(f);
-                }}
-              />
-              <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-1">
-                <Upload className="h-4 w-4" /> {uploading ? "Uploading…" : "Choose File"}
-              </Button>
+            <CardContent className="p-6 text-center space-y-2">
+              <MapIcon className="h-8 w-8 text-muted-foreground mx-auto" />
+              <p className="text-sm text-muted-foreground">No floor plan uploaded yet</p>
+              <p className="text-xs text-muted-foreground">
+                Use the <span className="font-semibold text-foreground">Upload Map</span> button above to get started.
+              </p>
             </CardContent>
           </Card>
         ) : (
