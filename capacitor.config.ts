@@ -12,7 +12,9 @@ import type { CapacitorConfig } from "@capacitor/cli";
 const config: CapacitorConfig = {
   appId: "com.barcodewarehouse.uhftagfinder",
   appName: "UHF Tag Finder",
-  webDir: "dist",
+  // TanStack Start emits the static client bundle to dist/client (dist/server is the SSR worker).
+  // Capacitor only needs the client assets.
+  webDir: "dist/client",
   // For live development against the published site, uncomment:
   // server: {
   //   url: "https://uhf-tag-finder.lovable.app",
