@@ -436,7 +436,7 @@ function DashboardPage() {
                   <SortHeader label="EPC" field="epc" current={sortField} dir={sortDir} onSort={toggleSort} />
                   {groupBySku && <th className="px-3 py-2 text-left font-medium text-muted-foreground">SKU</th>}
                   <SortHeader label="Scans" field="scan_count" current={sortField} dir={sortDir} onSort={toggleSort} />
-                  <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />
+                  {groupBySku && <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />}
                   <SortHeader label="Last Seen" field="last_seen" current={sortField} dir={sortDir} onSort={toggleSort} />
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Actions</th>
                 </tr>
