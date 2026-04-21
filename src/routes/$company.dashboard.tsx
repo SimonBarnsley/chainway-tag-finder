@@ -485,9 +485,6 @@ function DashboardPage() {
                         <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
                           {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
                         </td>
-                        <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
-                          {group.firstSeen ? "​" : "—"}
-                        </td>
                         <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           {group.sku === "__ungrouped__" && (
                             <AlertDialog>
