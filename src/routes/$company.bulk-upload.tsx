@@ -78,14 +78,11 @@ function BulkUploadPage() {
         const idx = headers.indexOf(key);
         return idx >= 0 && idx < values.length ? values[idx].trim() : "";
       };
-      const cp = get("company_prefix") || get("companyprefix") || defaultPrefix;
-      const ir = get("item_reference") || get("itemreference") || "";
-      const f = get("filter") || defaultFilter;
       rows.push({
         name: get("name"), description: get("description"), category: get("category"),
         sku: get("sku"), gtin: get("gtin"), price: get("price"),
         warehouse_location: get("warehouse_location") || get("warehouselocation") || get("location"),
-        company_prefix: cp, item_reference: ir, filter: f,
+        company_prefix: "", item_reference: "", filter: "",
         generated_epc: "", status: "pending",
       });
     }
