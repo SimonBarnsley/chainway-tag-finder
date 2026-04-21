@@ -86,8 +86,8 @@ function RolesContent() {
   };
 
   const toggle = async (role: UiRole, perm: string) => {
-    if (!isSuperAdmin) {
-      toast.error("Only super admins can edit permissions");
+    if (!canEdit) {
+      toast.error("You don't have permission to edit");
       return;
     }
     const dbRole = uiToDb(role);
@@ -123,7 +123,7 @@ function RolesContent() {
           <ShieldCheck className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold text-foreground">Roles & Permissions</h1>
           <span className="text-xs text-muted-foreground ml-2">
-            {isSuperAdmin ? "Click cells to toggle access" : "Read-only view"}
+            {canEdit ? "Click cells to toggle access" : "Read-only view"}
           </span>
         </div>
 
@@ -164,11 +164,11 @@ function RolesContent() {
                             <button
                               type="button"
                               onClick={() => toggle(r, p.key)}
-                              disabled={!isSuperAdmin || isSaving}
+                              disabled={!canEdit || isSaving}
                               className={`inline-flex h-6 w-11 items-center rounded-full transition-colors ${
                                 enabled ? "bg-primary" : "bg-muted"
                               } ${
-                                isSuperAdmin
+                                canEdit
                                   ? "cursor-pointer hover:opacity-80"
                                   : "cursor-not-allowed opacity-60"
                               }`}
