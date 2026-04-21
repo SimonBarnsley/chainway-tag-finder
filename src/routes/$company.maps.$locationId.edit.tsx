@@ -510,6 +510,15 @@ function Editor() {
                   </>
                 )}
                 <div className="flex-1" />
+                <Button
+                  size="sm"
+                  variant="secondary"
+                  className="h-8 gap-1"
+                  onClick={handleAutoCreateZones}
+                  title="Create one zone per antenna mapping (you can drag/resize after)"
+                >
+                  <Wand2 className="h-3.5 w-3.5" /> Auto from Antennas
+                </Button>
                 <input
                   ref={fileRef}
                   type="file"
