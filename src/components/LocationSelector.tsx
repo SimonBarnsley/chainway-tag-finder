@@ -1,7 +1,9 @@
-import { useState, useRef } from "react";
-import { MapPin, ScanBarcode, X, Edit3 } from "lucide-react";
+import { useState, useRef, useEffect } from "react";
+import { MapPin, ScanBarcode, X, Edit3, ChevronDown } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { supabase } from "@/integrations/supabase/client";
+import { useAuth } from "@/hooks/use-auth";
 
 interface LocationSelectorProps {
   location: string;
@@ -9,10 +11,62 @@ interface LocationSelectorProps {
 }
 
 export function LocationSelector({ location, onLocationChange }: LocationSelectorProps) {
+  const { companySlug } = useAuth();
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(location);
   const [isBarcodeMode, setIsBarcodeMode] = useState(false);
+  const [existingLocations, setExistingLocations] = useState<string[]>([]);
+  const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  // Fetch the union of distinct locations from rfid_scans + items.warehouse_location
+  // for the current company. Refetched whenever the user enters edit mode so newly
+  // saved locations show up without a page reload.
+  useEffect(() => {
+    if (!isEditing || !companySlug) return;
+    let cancelled = false;
+    (async () => {
+      const [scansRes, itemsRes] = await Promise.all([
+        supabase
+          .from("rfid_scans")
+          .select("location")
+          .eq("company_slug", companySlug)
+          .not("location", "is", null),
+        supabase
+          .from("items")
+          .select("warehouse_location")
+          .eq("company_slug", companySlug)
+          .not("warehouse_location", "is", null),
+      ]);
+      if (cancelled) return;
+      const set = new Set<string>();
+      (scansRes.data ?? []).forEach((r) => {
+        const v = r.location?.trim();
+        if (v) set.add(v);
+      });
+      (itemsRes.data ?? []).forEach((r) => {
+        const v = r.warehouse_location?.trim();
+        if (v) set.add(v);
+      });
+      setExistingLocations(Array.from(set).sort((a, b) => a.localeCompare(b)));
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [isEditing, companySlug]);
+
+  // Close the dropdown when clicking outside
+  useEffect(() => {
+    if (!showDropdown) return;
+    const handler = (e: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(e.target as Node)) {
+        setShowDropdown(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [showDropdown]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -21,14 +75,22 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
       onLocationChange(val);
       setIsEditing(false);
       setIsBarcodeMode(false);
+      setShowDropdown(false);
     }
+  };
+
+  const handlePickExisting = (loc: string) => {
+    setInputValue(loc);
+    onLocationChange(loc);
+    setIsEditing(false);
+    setIsBarcodeMode(false);
+    setShowDropdown(false);
   };
 
   const handleBarcodeScan = () => {
     setIsBarcodeMode(true);
     setIsEditing(true);
     setInputValue("");
-    // Focus the input — the barcode scanner will type into it via keyboard wedge
     setTimeout(() => inputRef.current?.focus(), 100);
   };
 
@@ -37,24 +99,67 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
     setInputValue("");
     setIsEditing(false);
     setIsBarcodeMode(false);
+    setShowDropdown(false);
   };
+
+  const filteredLocations = inputValue.trim()
+    ? existingLocations.filter((l) =>
+        l.toLowerCase().includes(inputValue.trim().toLowerCase()),
+      )
+    : existingLocations;
 
   if (isEditing) {
     return (
-      <div className="rounded-lg border border-primary/40 bg-card p-3 space-y-2">
+      <div
+        ref={containerRef}
+        className="rounded-lg border border-primary/40 bg-card p-3 space-y-2 relative"
+      >
         <div className="flex items-center gap-2 text-xs text-muted-foreground">
           <MapPin className="h-3.5 w-3.5 text-primary" />
-          <span>{isBarcodeMode ? "Scan barcode or type location" : "Enter location"}</span>
+          <span>{isBarcodeMode ? "Scan barcode or pick location" : "Enter or pick location"}</span>
         </div>
         <form onSubmit={handleSubmit} className="flex gap-2">
-          <Input
-            ref={inputRef}
-            value={inputValue}
-            onChange={(e) => setInputValue(e.target.value)}
-            placeholder={isBarcodeMode ? "Scan barcode now..." : ""}
-            className="font-mono text-xs flex-1"
-            autoFocus
-          />
+          <div className="relative flex-1">
+            <Input
+              ref={inputRef}
+              value={inputValue}
+              onChange={(e) => {
+                setInputValue(e.target.value);
+                setShowDropdown(true);
+              }}
+              onFocus={() => setShowDropdown(true)}
+              placeholder={isBarcodeMode ? "Scan barcode now..." : ""}
+              className="font-mono text-xs pr-8"
+              autoFocus
+            />
+            {existingLocations.length > 0 && (
+              <Button
+                type="button"
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowDropdown((v) => !v)}
+                className="absolute right-0 top-0 h-full w-8 p-0 hover:bg-transparent"
+                tabIndex={-1}
+              >
+                <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
+              </Button>
+            )}
+            {showDropdown && filteredLocations.length > 0 && (
+              <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
+                {filteredLocations.map((loc) => (
+                  <button
+                    key={loc}
+                    type="button"
+                    onClick={() => handlePickExisting(loc)}
+                    className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-mono hover:bg-accent hover:text-accent-foreground"
+                  >
+                    <MapPin className="h-3 w-3 shrink-0 text-primary" />
+                    <span className="truncate">{loc}</span>
+                  </button>
+                ))}
+              </div>
+            )}
+          </div>
           <Button type="submit" size="sm" disabled={!inputValue.trim()}>
             Set
           </Button>
@@ -65,6 +170,7 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
             onClick={() => {
               setIsEditing(false);
               setIsBarcodeMode(false);
+              setShowDropdown(false);
               setInputValue(location);
             }}
           >
