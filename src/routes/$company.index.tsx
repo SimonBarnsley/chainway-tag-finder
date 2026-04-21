@@ -273,7 +273,11 @@ function ScannerPage() {
         <LocationSelector location={location} onLocationChange={setLocation} />
 
         {(() => {
-          const rfdOff = zebra.isNativeSdkAvailable && zebra.status !== "ready";
+          const simulateOff =
+            typeof window !== "undefined" &&
+            new URLSearchParams(window.location.search).get("simulate") === "rfd-off";
+          const rfdOff =
+            simulateOff || (zebra.isNativeSdkAvailable && zebra.status !== "ready");
           return (
             <Button
               onClick={() => setScanEnabled(!scanEnabled)}
