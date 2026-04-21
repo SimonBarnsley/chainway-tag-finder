@@ -21,6 +21,10 @@
  */
 package com.barcodewarehouse.uhftagfinder
 
+import android.content.ClipData
+import android.content.ClipboardManager
+import android.content.Context
+import android.content.Intent
 import android.util.Log
 import com.getcapacitor.JSObject
 import com.getcapacitor.Plugin
@@ -225,6 +229,56 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     /** Called from MainActivity.dispatchKeyEvent when the e-Connex trigger key is released. */
     fun notifyTriggerReleased() {
         notifyListeners("triggerReleased", JSObject())
+    }
+
+    /**
+     * Copy a string to the Android clipboard and (optionally) launch another
+     * installed app by package name. Used by the dashboard's
+     * "Copy & locate in 123RFID" button — copies the EPC, then opens
+     * 123RFID Mobile so the user can paste it into the Locate Tag field.
+     *
+     * Tries each provided package name in order and launches the first one
+     * that's installed. We can't auto-fill 123RFID's text fields (closed app,
+     * no public Intent / deep link), so manual paste is the final step.
+     */
+    @PluginMethod
+    fun copyAndLaunch(call: PluginCall) {
+        val text = call.getString("text") ?: ""
+        val packagesArr = call.getArray("packages")
+        val packageNames = mutableListOf<String>()
+        if (packagesArr != null) {
+            for (i in 0 until packagesArr.length()) {
+                packagesArr.optString(i, null)?.let { packageNames.add(it) }
+            }
+        }
+        val label = call.getString("label") ?: "EPC"
+
+        try {
+            if (text.isNotEmpty()) {
+                val cm = context.getSystemService(Context.CLIPBOARD_SERVICE) as ClipboardManager
+                cm.setPrimaryClip(ClipData.newPlainText(label, text))
+            }
+
+            var launchedPackage: String? = null
+            for (pkg in packageNames) {
+                val intent: Intent? = context.packageManager.getLaunchIntentForPackage(pkg)
+                if (intent != null) {
+                    intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+                    context.startActivity(intent)
+                    launchedPackage = pkg
+                    break
+                }
+            }
+
+            val ret = JSObject()
+            ret.put("copied", text.isNotEmpty())
+            ret.put("launched", launchedPackage != null)
+            launchedPackage?.let { ret.put("package", it) }
+            call.resolve(ret)
+        } catch (e: Throwable) {
+            Log.e(TAG, "copyAndLaunch failed", e)
+            resolveError(call, e.message ?: "copyAndLaunch failed")
+        }
     }
 
     private fun resolveError(call: PluginCall, message: String) {
