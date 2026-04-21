@@ -412,25 +412,6 @@ function Editor() {
               </p>
             </CardContent>
           </Card>
-          <Card>
-            <CardContent className="p-6 text-center space-y-3">
-              <Upload className="h-8 w-8 text-muted-foreground mx-auto" />
-              <p className="text-sm text-foreground">Upload a JPG or PNG floor plan for this location</p>
-              <input
-                ref={fileRef}
-                type="file"
-                accept="image/jpeg,image/png,image/webp"
-                className="hidden"
-                onChange={(e) => {
-                  const f = e.target.files?.[0];
-                  if (f) handleUpload(f);
-                }}
-              />
-              <Button onClick={() => fileRef.current?.click()} disabled={uploading} className="gap-1">
-                <Upload className="h-4 w-4" /> {uploading ? "Uploading…" : "Choose File"}
-              </Button>
-            </CardContent>
-          </Card>
         ) : (
           <>
             <Card>
