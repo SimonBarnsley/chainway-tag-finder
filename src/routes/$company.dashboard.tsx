@@ -53,10 +53,10 @@ export const Route = createFileRoute("/$company/dashboard")({
   component: DashboardPage,
   head: () => ({
     meta: [
-      { title: "RFID Dashboard — Tag Reads" },
-      { name: "description", content: "Real-time dashboard for UHF RFID tag scan data" },
-      { property: "og:title", content: "RFID Dashboard — Tag Reads" },
-      { property: "og:description", content: "Real-time dashboard for UHF RFID tag scan data" },
+      { title: "Mobile Dashboard — RFID Tag Reads" },
+      { name: "description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },
+      { property: "og:title", content: "Mobile Dashboard — RFID Tag Reads" },
+      { property: "og:description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },
     ],
   }),
 });
