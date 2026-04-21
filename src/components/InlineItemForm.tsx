@@ -82,6 +82,7 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
         category: category || null,
         sku: sku || null,
         gtin: gtin || null,
+        company_prefix: companyPrefix.trim() || null,
         price: price ? Number(price) : null,
         warehouse_location: warehouseLocation || null,
         image_url: imageUrl,
