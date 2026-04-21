@@ -23,6 +23,7 @@ import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
 import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
 import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboard'
 import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
+import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
 
@@ -96,6 +97,11 @@ const CompanyBulkUploadRoute = CompanyBulkUploadRouteImport.update({
   path: '/bulk-upload',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyAdminDashboardRoute = CompanyAdminDashboardRouteImport.update({
+  id: '/admin-dashboard',
+  path: '/admin-dashboard',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyAdminRoute = CompanyAdminRouteImport.update({
   id: '/admin',
   path: '/admin',
@@ -114,6 +120,7 @@ export interface FileRoutesByFullPath {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
+  '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
@@ -131,6 +138,7 @@ export interface FileRoutesByTo {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
+  '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
@@ -150,6 +158,7 @@ export interface FileRoutesById {
   '/login': typeof LoginRoute
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
+  '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
@@ -170,6 +179,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/$company/admin'
+    | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
     | '/$company/dashboard'
     | '/$company/decoder'
@@ -187,6 +197,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/$company/admin'
+    | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
     | '/$company/dashboard'
     | '/$company/decoder'
@@ -205,6 +216,7 @@ export interface FileRouteTypes {
     | '/login'
     | '/signup'
     | '/$company/admin'
+    | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
     | '/$company/dashboard'
     | '/$company/decoder'
@@ -326,6 +338,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyBulkUploadRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/admin-dashboard': {
+      id: '/$company/admin-dashboard'
+      path: '/admin-dashboard'
+      fullPath: '/$company/admin-dashboard'
+      preLoaderRoute: typeof CompanyAdminDashboardRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/admin': {
       id: '/$company/admin'
       path: '/admin'
@@ -345,6 +364,7 @@ declare module '@tanstack/react-router' {
 
 interface CompanyRouteChildren {
   CompanyAdminRoute: typeof CompanyAdminRoute
+  CompanyAdminDashboardRoute: typeof CompanyAdminDashboardRoute
   CompanyBulkUploadRoute: typeof CompanyBulkUploadRoute
   CompanyDashboardRoute: typeof CompanyDashboardRoute
   CompanyDecoderRoute: typeof CompanyDecoderRoute
@@ -358,6 +378,7 @@ interface CompanyRouteChildren {
 
 const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyAdminRoute: CompanyAdminRoute,
+  CompanyAdminDashboardRoute: CompanyAdminDashboardRoute,
   CompanyBulkUploadRoute: CompanyBulkUploadRoute,
   CompanyDashboardRoute: CompanyDashboardRoute,
   CompanyDecoderRoute: CompanyDecoderRoute,
