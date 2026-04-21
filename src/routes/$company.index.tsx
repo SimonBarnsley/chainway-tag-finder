@@ -97,9 +97,10 @@ function ScannerPage() {
 
   }, [geigerEpc]);
 
-  const { isListening, wedgeStatus, addManualTag } = useRfidScanner({
+  useRfidScanner({
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
+  });
   });
 
   // Native Zebra RFD40 SDK bridge — active only inside the Capacitor APK on a TC22
