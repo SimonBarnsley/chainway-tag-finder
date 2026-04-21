@@ -19,6 +19,7 @@ import { Route as CompanyUsersRouteImport } from './routes/$company.users'
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
+import { Route as CompanyMapsRouteImport } from './routes/$company.maps'
 import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
 import { Route as CompanyItemsRouteImport } from './routes/$company.items'
 import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
@@ -77,6 +78,11 @@ const CompanyReadersRoute = CompanyReadersRouteImport.update({
 const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
   id: '/reader-debug',
   path: '/reader-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyMapsRoute = CompanyMapsRouteImport.update({
+  id: '/maps',
+  path: '/maps',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
@@ -139,6 +145,7 @@ export interface FileRoutesByFullPath {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/maps': typeof CompanyMapsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -159,6 +166,7 @@ export interface FileRoutesByTo {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/maps': typeof CompanyMapsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -181,6 +189,7 @@ export interface FileRoutesById {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/maps': typeof CompanyMapsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -204,6 +213,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -224,6 +234,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -245,6 +256,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -334,6 +346,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyReaderDebugRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/maps': {
+      id: '/$company/maps'
+      path: '/maps'
+      fullPath: '/$company/maps'
+      preLoaderRoute: typeof CompanyMapsRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/locations': {
       id: '/$company/locations'
       path: '/locations'
@@ -409,6 +428,7 @@ interface CompanyRouteChildren {
   CompanyHistoryRoute: typeof CompanyHistoryRoute
   CompanyItemsRoute: typeof CompanyItemsRoute
   CompanyLocationsRoute: typeof CompanyLocationsRoute
+  CompanyMapsRoute: typeof CompanyMapsRoute
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
@@ -425,6 +445,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyHistoryRoute: CompanyHistoryRoute,
   CompanyItemsRoute: CompanyItemsRoute,
   CompanyLocationsRoute: CompanyLocationsRoute,
+  CompanyMapsRoute: CompanyMapsRoute,
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
