@@ -442,6 +442,15 @@ function ItemsPage() {
                         {item.category && <span>{item.category}</span>}
                         {item.price != null && <span>{item.price} {item.currency}</span>}
                         {item.warehouse_location && <span>📍 {item.warehouse_location}</span>}
+                        {itemTagCounts[item.id] > 0 && (
+                          <span
+                            className="inline-flex items-center gap-1 rounded-full bg-emerald-500/15 px-2 py-0.5 text-emerald-600 dark:text-emerald-400 font-semibold"
+                            title={(itemTagEpcs[item.id] || []).join("\n")}
+                          >
+                            <LinkIcon className="h-2.5 w-2.5" />
+                            {itemTagCounts[item.id]} {itemTagCounts[item.id] === 1 ? "tag" : "tags"}
+                          </span>
+                        )}
                       </div>
                       {itemLocationCounts[item.id] && Object.keys(itemLocationCounts[item.id]).length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mt-1.5">
