@@ -5,7 +5,6 @@ import { AppHeader } from "@/components/AppHeader";
 import {
   Upload,
   FileSpreadsheet,
-  Zap,
   Check,
   AlertCircle,
   Loader2,
@@ -18,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateRandomSgtin96 } from "@/lib/sgtin-decoder";
 
 export const Route = createFileRoute("/$company/bulk-upload")({
   component: BulkUploadPage,
@@ -64,8 +62,6 @@ const EMPTY_ROW: BulkItem = {
 function BulkUploadPage() {
   const { company } = Route.useParams();
   const [items, setItems] = useState<BulkItem[]>([]);
-  const [defaultPrefix, setDefaultPrefix] = useState("0000000");
-  const [defaultFilter, setDefaultFilter] = useState("1");
   const [uploading, setUploading] = useState(false);
   const [progress, setProgress] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
@@ -82,14 +78,11 @@ function BulkUploadPage() {
         const idx = headers.indexOf(key);
         return idx >= 0 && idx < values.length ? values[idx].trim() : "";
       };
-      const cp = get("company_prefix") || get("companyprefix") || defaultPrefix;
-      const ir = get("item_reference") || get("itemreference") || "";
-      const f = get("filter") || defaultFilter;
       rows.push({
         name: get("name"), description: get("description"), category: get("category"),
         sku: get("sku"), gtin: get("gtin"), price: get("price"),
         warehouse_location: get("warehouse_location") || get("warehouselocation") || get("location"),
-        company_prefix: cp, item_reference: ir, filter: f,
+        company_prefix: "", item_reference: "", filter: "",
         generated_epc: "", status: "pending",
       });
     }
@@ -125,7 +118,7 @@ function BulkUploadPage() {
   };
 
   const addRow = () => {
-    setItems((prev) => [...prev, { ...EMPTY_ROW, company_prefix: defaultPrefix, filter: defaultFilter }]);
+    setItems((prev) => [...prev, { ...EMPTY_ROW }]);
   };
 
   const updateItem = (index: number, field: keyof BulkItem, value: string) => {
@@ -141,23 +134,7 @@ function BulkUploadPage() {
   };
 
   const handleBulkInsert = async () => {
-    // Auto-generate EPCs for any rows that don't yet have one
-    const withEpcs = items.map((it) => {
-      if (!it.name.trim() || it.generated_epc) return it;
-      try {
-        const epc = generateRandomSgtin96({
-          companyPrefix: it.company_prefix || defaultPrefix,
-          itemReference: it.item_reference || undefined,
-          filter: Number(it.filter) || Number(defaultFilter),
-        });
-        return { ...it, generated_epc: epc, status: "pending" as const, error: undefined };
-      } catch (err: unknown) {
-        return { ...it, status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
-      }
-    });
-    setItems(withEpcs);
-
-    const valid = withEpcs.filter((i) => i.name.trim() && i.generated_epc);
+    const valid = items.filter((i) => i.name.trim());
     if (valid.length === 0) { toast.error("No valid items to upload (need a name)"); return; }
 
     // Pre-flight: in-batch duplicate detection (name / sku / gtin)
@@ -166,7 +143,7 @@ function BulkUploadPage() {
     const seenGtins = new Map<string, number>();
     const inBatchDupes: number[] = [];
     valid.forEach((it) => {
-      const idx = withEpcs.indexOf(it);
+      const idx = items.indexOf(it);
       const n = it.name.trim().toLowerCase();
       const s = it.sku.trim().toLowerCase();
       const g = it.gtin.trim();
@@ -191,7 +168,7 @@ function BulkUploadPage() {
     let successCount = 0;
     for (let i = 0; i < valid.length; i++) {
       const item = valid[i];
-      const idx = withEpcs.indexOf(item);
+      const idx = items.indexOf(item);
       try {
         // DB duplicate check (name / sku / gtin within company)
         const orParts: string[] = [`name.eq.${item.name.trim()}`];
@@ -212,14 +189,12 @@ function BulkUploadPage() {
           throw new Error(`Duplicate ${reason} already exists`);
         }
 
-        const { data: created, error: itemErr } = await supabase.from("items").insert({
+        const { error: itemErr } = await supabase.from("items").insert({
           name: item.name.trim(), description: item.description || null, category: item.category || null,
           sku: item.sku || null, gtin: item.gtin || null, price: item.price ? Number(item.price) : null,
           warehouse_location: item.warehouse_location || null, company_slug: company,
         }).select("id").single();
         if (itemErr) throw itemErr;
-        await supabase.from("rfid_scans").upsert({ epc: item.generated_epc, scan_count: 0, device_name: "Bulk Upload", notes: `Bulk generated for: ${item.name.trim()}`, location: item.warehouse_location || null, company_slug: company }, { onConflict: "epc" });
-        await supabase.from("tag_items").upsert({ epc: item.generated_epc, item_id: created.id, gtin: item.gtin || null, company_slug: company }, { onConflict: "epc,item_id" });
         setItems((prev) => { const u = [...prev]; u[idx] = { ...u[idx], status: "success" }; return u; });
         successCount++;
       } catch (err: unknown) {
@@ -233,9 +208,9 @@ function BulkUploadPage() {
 
   const downloadTemplate = () => {
     const csv =
-      "name,description,category,sku,gtin,price,warehouse_location,company_prefix,item_reference,filter\n" +
-      '"Widget A","A sample widget","Electronics","WDG-001","00614141000012","29.99","Aisle 3","0614141","200001","1"\n' +
-      '"Widget B","Another widget","Electronics","WDG-002","00614141000029","39.99","Aisle 4","0614141","200002","1"';
+      "name,description,category,sku,gtin,price,warehouse_location\n" +
+      '"Widget A","A sample widget","Electronics","WDG-001","00614141000012","29.99","Aisle 3"\n' +
+      '"Widget B","Another widget","Electronics","WDG-002","00614141000029","39.99","Aisle 4"';
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
@@ -247,9 +222,9 @@ function BulkUploadPage() {
 
   const exportItemsCSV = () => {
     const escCSV = (v: string) => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
-    const header = "name,description,category,sku,gtin,price,warehouse_location,company_prefix,item_reference,filter,generated_epc,status";
+    const header = "name,description,category,sku,gtin,price,warehouse_location,status";
     const rows = items.map((i) =>
-      [i.name, i.description, i.category, i.sku, i.gtin, i.price, i.warehouse_location, i.company_prefix, i.item_reference, i.filter, i.generated_epc, i.status]
+      [i.name, i.description, i.category, i.sku, i.gtin, i.price, i.warehouse_location, i.status]
         .map((v) => escCSV(v)).join(",")
     );
     const csv = [header, ...rows].join("\n");
@@ -277,24 +252,6 @@ function BulkUploadPage() {
       } />
 
       <main className="flex-1 px-4 py-4 space-y-4 max-w-7xl mx-auto w-full">
-        <Card>
-          <CardContent className="p-3 space-y-3">
-            <div className="flex items-center gap-1.5 text-xs font-medium text-primary">
-              <Zap className="h-3.5 w-3.5" /> GS1 SGTIN-96 Defaults
-            </div>
-            <div className="grid grid-cols-2 gap-2">
-              <div>
-                <label className="text-[10px] text-muted-foreground">Default Company Prefix</label>
-                <Input value={defaultPrefix} onChange={(e) => setDefaultPrefix(e.target.value.replace(/\D/g, ""))} placeholder="0614141" className="text-xs font-mono h-8" maxLength={12} />
-              </div>
-              <div>
-                <label className="text-[10px] text-muted-foreground">Default Filter (0-7)</label>
-                <Input value={defaultFilter} onChange={(e) => setDefaultFilter(e.target.value)} type="number" min={0} max={7} className="text-xs font-mono h-8" />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
-
         <div className="grid grid-cols-3 gap-2">
           <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-1.5 text-xs h-12 flex-col">
             <Upload className="h-4 w-4" /> Upload CSV
@@ -359,26 +316,6 @@ function BulkUploadPage() {
                       <Input value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price" type="number" className="text-xs h-7" />
                     </div>
                     <Input value={item.warehouse_location} onChange={(e) => updateItem(idx, "warehouse_location", e.target.value)} placeholder="Warehouse location" className="text-xs h-7" />
-                    <div className="grid grid-cols-3 gap-1.5">
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Company Prefix</label>
-                        <Input value={item.company_prefix} onChange={(e) => updateItem(idx, "company_prefix", e.target.value.replace(/\D/g, ""))} className="text-xs font-mono h-7" maxLength={12} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Item Ref</label>
-                        <Input value={item.item_reference} onChange={(e) => updateItem(idx, "item_reference", e.target.value.replace(/\D/g, ""))} placeholder="Auto" className="text-xs font-mono h-7" maxLength={7} />
-                      </div>
-                      <div>
-                        <label className="text-[10px] text-muted-foreground">Filter</label>
-                        <Input value={item.filter} onChange={(e) => updateItem(idx, "filter", e.target.value)} type="number" min={0} max={7} className="text-xs font-mono h-7" />
-                      </div>
-                    </div>
-                    {item.generated_epc && (
-                      <div className="rounded border border-primary/20 bg-primary/5 px-2 py-1">
-                        <p className="text-[10px] text-muted-foreground">Generated EPC</p>
-                        <p className="font-mono text-xs text-primary font-bold break-all">{item.generated_epc}</p>
-                      </div>
-                    )}
                   </CardContent>
                 </Card>
               ))}
@@ -391,7 +328,7 @@ function BulkUploadPage() {
             <FileSpreadsheet className="h-12 w-12 mb-3 opacity-30" />
             <p className="text-sm font-medium">No items loaded</p>
             <p className="text-xs mt-1 text-center max-w-xs">
-              Upload a CSV file or add rows manually. Each item gets a unique SGTIN-96 EPC generated automatically.
+              Upload a CSV file or add rows manually. Items are created without EPCs — link tags later from the Items page.
             </p>
             <Button onClick={downloadTemplate} variant="link" className="mt-3 gap-1.5 text-xs">
               <Download className="h-3.5 w-3.5" /> Download CSV template
