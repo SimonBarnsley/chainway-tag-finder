@@ -222,9 +222,9 @@ function BulkUploadPage() {
 
   const exportItemsCSV = () => {
     const escCSV = (v: string) => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
-    const header = "name,description,category,sku,gtin,price,warehouse_location,company_prefix,item_reference,filter,generated_epc,status";
+    const header = "name,description,category,sku,gtin,price,warehouse_location,status";
     const rows = items.map((i) =>
-      [i.name, i.description, i.category, i.sku, i.gtin, i.price, i.warehouse_location, i.company_prefix, i.item_reference, i.filter, i.generated_epc, i.status]
+      [i.name, i.description, i.category, i.sku, i.gtin, i.price, i.warehouse_location, i.status]
         .map((v) => escCSV(v)).join(",")
     );
     const csv = [header, ...rows].join("\n");
