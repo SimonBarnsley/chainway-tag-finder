@@ -323,15 +323,6 @@ function LocationsPage() {
 
           {/* Antenna mapping locations (read-only) */}
           <div className="space-y-2">
-            <div>
-              <h2 className="text-lg font-semibold text-foreground flex items-center gap-2">
-                <Radio className="h-5 w-5 text-primary" />
-                Antenna Mapping Locations
-              </h2>
-              <p className="text-xs text-muted-foreground">
-                Locations defined per reader antenna. Manage these on the Readers page.
-              </p>
-            </div>
             <div className="rounded-lg border border-border bg-card">
               {isLoadingAntennas ? (
                 <div className="p-6 text-center text-sm text-muted-foreground">
