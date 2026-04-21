@@ -444,7 +444,7 @@ function DashboardPage() {
               <tbody>
                 {loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center">
                       <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
                       <p className="text-muted-foreground">Loading...</p>
                     </td>
