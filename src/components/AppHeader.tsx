@@ -84,6 +84,18 @@ export function AppHeader({ actions }: AppHeaderProps) {
                       {item.label}
                     </Link>
                   ))}
+                  {isAdmin && (
+                    <Link
+                      to="/$company/admin-dashboard"
+                      params={{ company }}
+                      onClick={() => setOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                    >
+                      <Shield className="h-4 w-4" />
+                      Admin Dashboard
+                    </Link>
+                  )}
                   {isSuperAdmin && (
                     <Link
                       to="/$company/admin"
