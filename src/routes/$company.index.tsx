@@ -191,8 +191,12 @@ function ScannerPage() {
       const summary: string[] = [`${okCount} saved`];
       if (allocatedCount) summary.push(`${allocatedCount} allocated to "${selectedLocation}"`);
 
-      // Auto-link saved EPCs to items (creates placeholder items for unknown EPCs)
-      const savedEpcs = Array.from(savedSet);
+      // Auto-link all EPCs currently in the scan buffer, not just freshly saved rows.
+      // This lets previously-saved but still-unlinked tags retry automatically
+      // instead of requiring the manual "Link to items" action from the dashboard.
+      const savedEpcs = Array.from(
+        new Set(allTags.map((tag) => tag.epc.toUpperCase()))
+      );
       let linkDetails: Array<{ epc: string; itemId: string; itemName: string | null; location: string | null }> = [];
       if (savedEpcs.length > 0) {
         try {
