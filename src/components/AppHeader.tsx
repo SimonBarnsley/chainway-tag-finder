@@ -18,7 +18,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
 
   const navItems = [
     { label: "Scanner", to: "/$company" as const, icon: Radio },
-    { label: "Dashboard", to: "/$company/dashboard" as const, icon: BarChart3 },
+    { label: "Mobile Dashboard", to: "/$company/dashboard" as const, icon: BarChart3 },
     { label: "Items", to: "/$company/items" as const, icon: Package },
     { label: "Locations", to: "/$company/locations" as const, icon: MapPin },
     { label: "History", to: "/$company/history" as const, icon: History },
