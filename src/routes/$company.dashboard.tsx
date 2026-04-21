@@ -21,7 +21,9 @@ import {
   ChevronRight,
   Link2,
   Trash2,
+  Crosshair,
 } from "lucide-react";
+import { copyEpcAndOpen123RFID } from "@/lib/launch-external-app";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -661,46 +663,58 @@ function ScanRow({
         {new Date(r.first_seen).toLocaleString()}
       </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
-        <AlertDialog>
-          <AlertDialogTrigger asChild>
-            <button
-              className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
-              title="Delete tag"
-            >
-              <Trash2 className="h-3.5 w-3.5" />
-            </button>
-          </AlertDialogTrigger>
-          <AlertDialogContent>
-            <AlertDialogHeader>
-              <AlertDialogTitle>Delete this tag scan?</AlertDialogTitle>
-              <AlertDialogDescription>
-                This will permanently remove the scan record for EPC{" "}
-                <span className="font-mono text-xs">{r.epc}</span> and unlink it
-                from any item. This action cannot be undone.
-              </AlertDialogDescription>
-            </AlertDialogHeader>
-            <AlertDialogFooter>
-              <AlertDialogCancel>Cancel</AlertDialogCancel>
-              <AlertDialogAction
-                onClick={async () => {
-                  const [scanRes, tagRes] = await Promise.all([
-                    supabase.from("rfid_scans").delete().eq("id", r.id),
-                    supabase.from("tag_items").delete().eq("epc", r.epc).eq("company_slug", companySlug),
-                  ]);
-                  if (scanRes.error || tagRes.error) {
-                    toast.error("Failed to delete tag");
-                    return;
-                  }
-                  toast.success("Tag deleted");
-                  fetchRecords();
-                }}
-                className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+        <div className="inline-flex items-center gap-1">
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              copyEpcAndOpen123RFID(r.epc);
+            }}
+            className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+            title="Copy EPC & open 123RFID Mobile"
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </button>
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                title="Delete tag"
               >
-                Delete
-              </AlertDialogAction>
-            </AlertDialogFooter>
-          </AlertDialogContent>
-        </AlertDialog>
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this tag scan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the scan record for EPC{" "}
+                  <span className="font-mono text-xs">{r.epc}</span> and unlink it
+                  from any item. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={async () => {
+                    const [scanRes, tagRes] = await Promise.all([
+                      supabase.from("rfid_scans").delete().eq("id", r.id),
+                      supabase.from("tag_items").delete().eq("epc", r.epc).eq("company_slug", companySlug),
+                    ]);
+                    if (scanRes.error || tagRes.error) {
+                      toast.error("Failed to delete tag");
+                      return;
+                    }
+                    toast.success("Tag deleted");
+                    fetchRecords();
+                  }}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        </div>
       </td>
     </tr>
   );
