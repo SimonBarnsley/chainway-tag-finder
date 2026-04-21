@@ -208,9 +208,9 @@ function BulkUploadPage() {
 
   const downloadTemplate = () => {
     const csv =
-      "name,description,category,sku,gtin,price,warehouse_location,company_prefix,item_reference,filter\n" +
-      '"Widget A","A sample widget","Electronics","WDG-001","00614141000012","29.99","Aisle 3","0614141","200001","1"\n' +
-      '"Widget B","Another widget","Electronics","WDG-002","00614141000029","39.99","Aisle 4","0614141","200002","1"';
+      "name,description,category,sku,gtin,price,warehouse_location\n" +
+      '"Widget A","A sample widget","Electronics","WDG-001","00614141000012","29.99","Aisle 3"\n' +
+      '"Widget B","Another widget","Electronics","WDG-002","00614141000029","39.99","Aisle 4"';
     const blob = new Blob([csv], { type: "text/csv" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
