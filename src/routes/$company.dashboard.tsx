@@ -479,7 +479,7 @@ function DashboardPage() {
                               <span className="text-muted-foreground">— {group.item_name}</span>
                             )}
                             <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary font-medium ml-2">
-                              {group.records.length} tag{group.records.length !== 1 ? "s" : ""} · {group.totalScans} scans
+                              {group.records.length} tag{group.records.length !== 1 ? "s" : ""}
                             </span>
                           </div>
                         </td>
