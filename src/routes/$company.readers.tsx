@@ -197,6 +197,8 @@ function ReadersContent() {
           </Button>
         </div>
 
+        <EndpointUrlCard company={company} />
+
         {showAddForm && (
           <Card>
             <CardContent className="p-4">
