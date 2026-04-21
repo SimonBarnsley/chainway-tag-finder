@@ -220,6 +220,7 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     @PluginMethod
     fun release(call: PluginCall) {
         try {
+            heartbeatHandler.removeCallbacks(heartbeatRunnable)
             isInventorying = false
             reader?.Actions?.Inventory?.stop()
             reader?.Events?.removeEventsListener(eventsListener)
