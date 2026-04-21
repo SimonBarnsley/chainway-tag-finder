@@ -436,7 +436,7 @@ function DashboardPage() {
                   <SortHeader label="EPC" field="epc" current={sortField} dir={sortDir} onSort={toggleSort} />
                   {groupBySku && <th className="px-3 py-2 text-left font-medium text-muted-foreground">SKU</th>}
                   <SortHeader label="Scans" field="scan_count" current={sortField} dir={sortDir} onSort={toggleSort} />
-                  <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />
+                  {groupBySku && <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />}
                   <SortHeader label="Last Seen" field="last_seen" current={sortField} dir={sortDir} onSort={toggleSort} />
                   <th className="px-3 py-2 text-right font-medium text-muted-foreground">Actions</th>
                 </tr>
@@ -444,14 +444,14 @@ function DashboardPage() {
               <tbody>
                 {loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center">
                       <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
                       <p className="text-muted-foreground">Loading...</p>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 6 : 5} className="px-3 py-12 text-center text-muted-foreground">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center text-muted-foreground">
                       No tag reads found
                     </td>
                   </tr>
@@ -640,16 +640,18 @@ function ScanRow({
           {r.scan_count}
         </span>
       </td>
-      <td className="px-3 py-2.5 whitespace-nowrap">
-        {r.location ? (
-          <span className="inline-flex items-center gap-1 text-primary">
-            <MapPin className="h-3 w-3" />
-            {r.location}
-          </span>
-        ) : (
-          <span className="text-muted-foreground">—</span>
-        )}
-      </td>
+      {showSku && (
+        <td className="px-3 py-2.5 whitespace-nowrap">
+          {r.location ? (
+            <span className="inline-flex items-center gap-1 text-primary">
+              <MapPin className="h-3 w-3" />
+              {r.location}
+            </span>
+          ) : (
+            <span className="text-muted-foreground">—</span>
+          )}
+        </td>
+      )}
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
       </td>
