@@ -169,13 +169,18 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
               <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
                 {filteredLocations.map((loc) => (
                   <button
-                    key={loc}
+                    key={loc.name}
                     type="button"
-                    onClick={() => handlePickExisting(loc)}
+                    onClick={() => handlePickExisting(loc.name)}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-mono hover:bg-accent hover:text-accent-foreground"
                   >
                     <MapPin className="h-3 w-3 shrink-0 text-primary" />
-                    <span className="truncate">{loc}</span>
+                    <span className="truncate flex-1">{loc.name}</span>
+                    {loc.barcode && (
+                      <span className="truncate text-[10px] text-muted-foreground shrink-0">
+                        {loc.barcode}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>
