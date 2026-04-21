@@ -321,7 +321,6 @@ function BulkUploadPage() {
                       <Input value={item.price} onChange={(e) => updateItem(idx, "price", e.target.value)} placeholder="Price" type="number" className="text-xs h-7" />
                     </div>
                     <Input value={item.warehouse_location} onChange={(e) => updateItem(idx, "warehouse_location", e.target.value)} placeholder="Warehouse location" className="text-xs h-7" />
-                    <div className="grid grid-cols-3 gap-1.5">
                   </CardContent>
                 </Card>
               ))}
