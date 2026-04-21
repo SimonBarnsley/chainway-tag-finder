@@ -272,69 +272,6 @@ function ScannerPage() {
       <main className="flex-1 px-4 py-4 space-y-4">
         <LocationSelector location={location} onLocationChange={setLocation} />
 
-        {(() => {
-          const simulateOff =
-            typeof window !== "undefined" &&
-            new URLSearchParams(window.location.search).get("simulate") === "rfd-off";
-          // Detect "RFD40 not connected / powered off":
-          //  - explicit ?simulate=rfd-off URL flag (browser testing), OR
-          //  - native Capacitor app on Android where the Zebra SDK is reachable
-          //    but the sled isn't in the "ready" state (init failed, disconnected,
-          //    powered off, or still initializing), OR
-          //  - running inside the native APK but the ZebraRFID plugin never
-          //    injected at all (e.g. plugin failed to register / TC22 didn't
-          //    expose the e-Connex serial transport).
-          const isNativePlatform =
-            typeof window !== "undefined" &&
-            window.Capacitor?.isNativePlatform?.() === true;
-          const rfdOff =
-            simulateOff ||
-            (zebra.isNativeSdkAvailable && zebra.status !== "ready") ||
-            (isNativePlatform && !zebra.isNativeSdkAvailable);
-          return (
-            <Button
-              onClick={() => setScanEnabled(!scanEnabled)}
-              variant={scanEnabled && !rfdOff ? "default" : "outline"}
-              className={`w-full h-14 text-base font-bold gap-2 ${
-                rfdOff
-                  ? "bg-destructive text-destructive-foreground shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:bg-destructive/90"
-                  : scanEnabled
-                    ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(34,197,94,0.3)]"
-                    : ""
-              }`}
-            >
-              {rfdOff ? (
-                <>
-                  <PowerOff className="h-5 w-5" />
-                  SCANNER NOT ON
-                </>
-              ) : scanEnabled ? (
-                <>
-                  <Power className="h-5 w-5" />
-                  SCANNING ACTIVE
-                </>
-              ) : (
-                <>
-                  <PowerOff className="h-5 w-5" />
-                  SCANNER OFF
-                </>
-              )}
-            </Button>
-          );
-        })()}
-
-        <ScannerStatus
-          isListening={isListening}
-          tagCount={totalScans}
-          uniqueCount={tags.size}
-          wedgeStatus={wedgeStatus}
-          sdkAvailable={zebra.isNativeSdkAvailable}
-          sdkStatus={zebra.status}
-          sdkError={zebra.errorMessage}
-          sdkScanning={zebra.isScanning}
-          readerName={zebra.readerName}
-        />
-
         <div className="flex gap-2">
           <Button
             onClick={handleSaveAll}
