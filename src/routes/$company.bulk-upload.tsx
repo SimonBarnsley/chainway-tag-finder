@@ -323,11 +323,8 @@ function BulkUploadPage() {
             </div>
 
             <div className="flex gap-2">
-              <Button onClick={generateAllEpcs} variant="outline" size="sm" className="gap-1.5 flex-1 text-xs">
-                <Zap className="h-3.5 w-3.5" /> Generate All EPCs
-              </Button>
-              <Button onClick={handleBulkInsert} size="sm" className="gap-1.5 flex-1 text-xs" disabled={uploading || validCount === 0}>
-                {uploading ? (<><Loader2 className="h-3.5 w-3.5 animate-spin" />{progress}%</>) : (<><Upload className="h-3.5 w-3.5" />Upload {validCount} Items</>)}
+              <Button onClick={handleBulkInsert} size="sm" className="gap-1.5 flex-1 text-xs" disabled={uploading || items.filter((i) => i.name.trim()).length === 0}>
+                {uploading ? (<><Loader2 className="h-3.5 w-3.5 animate-spin" />{progress}%</>) : (<><Upload className="h-3.5 w-3.5" />Upload {items.filter((i) => i.name.trim()).length} Items</>)}
               </Button>
             </div>
 
