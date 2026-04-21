@@ -485,7 +485,17 @@ function EndpointUrlCard({ company }: { company: string }) {
   const copyWithServerKey = async (kind: "path" | "query") => {
     setFetchingKey(true);
     try {
-      const res = await getZebraApiKeyFn();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) {
+        toast.error("You must be signed in to copy the API key");
+        return;
+      }
+      const res = await getZebraApiKeyFn({ data: { accessToken } });
+      if (res.error === "unauthorized") {
+        toast.error("Session expired — please sign in again");
+        return;
+      }
       if (!res.configured || !res.apiKey) {
         toast.error("ZEBRA_READER_API_KEY is not set in backend secrets");
         return;
