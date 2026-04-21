@@ -123,27 +123,6 @@ function DashboardPage() {
     }
   };
 
-  const handleLinkUngrouped = async (epcs: string[]) => {
-    if (epcs.length === 0) {
-      toast.info("No ungrouped tags to link");
-      return;
-    }
-    setLinkingUngrouped(true);
-    try {
-      const res = await linkSavedEpcsFn({ data: { epcs } });
-      const summary: string[] = [];
-      if (res.linked) summary.push(`${res.linked} linked`);
-      if (res.itemsCreated) summary.push(`${res.itemsCreated} new item${res.itemsCreated === 1 ? "" : "s"} created`);
-      if (res.skipped) summary.push(`${res.skipped} already linked`);
-      toast.success(summary.length ? summary.join(" · ") : "Nothing to link");
-      await fetchRecords();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Link failed");
-    } finally {
-      setLinkingUngrouped(false);
-    }
-  };
-
   const handleCopyEpc = (epc: string, e: React.MouseEvent) => {
     e.stopPropagation();
     navigator.clipboard.writeText(epc);
