@@ -15,19 +15,26 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
   const [isEditing, setIsEditing] = useState(false);
   const [inputValue, setInputValue] = useState(location);
   const [isBarcodeMode, setIsBarcodeMode] = useState(false);
-  const [existingLocations, setExistingLocations] = useState<string[]>([]);
+  const [existingLocations, setExistingLocations] = useState<
+    Array<{ name: string; barcode: string | null }>
+  >([]);
   const [showDropdown, setShowDropdown] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
 
-  // Fetch the union of distinct locations from rfid_scans + items.warehouse_location
-  // for the current company. Refetched whenever the user enters edit mode so newly
-  // saved locations show up without a page reload.
+  // Fetch the company's managed location list (from the locations table).
+  // Falls back to merging in legacy values from rfid_scans / items.warehouse_location
+  // so locations created before this feature still appear in the dropdown.
   useEffect(() => {
     if (!isEditing || !companySlug) return;
     let cancelled = false;
     (async () => {
-      const [scansRes, itemsRes] = await Promise.all([
+      const [locsRes, scansRes, itemsRes] = await Promise.all([
+        supabase
+          .from("locations")
+          .select("name, barcode")
+          .eq("company_slug", companySlug)
+          .order("name", { ascending: true }),
         supabase
           .from("rfid_scans")
           .select("location")
@@ -40,16 +47,22 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
           .not("warehouse_location", "is", null),
       ]);
       if (cancelled) return;
-      const set = new Set<string>();
+      const map = new Map<string, { name: string; barcode: string | null }>();
+      (locsRes.data ?? []).forEach((r) => {
+        const v = r.name?.trim();
+        if (v) map.set(v.toLowerCase(), { name: v, barcode: r.barcode ?? null });
+      });
       (scansRes.data ?? []).forEach((r) => {
         const v = r.location?.trim();
-        if (v) set.add(v);
+        if (v && !map.has(v.toLowerCase())) map.set(v.toLowerCase(), { name: v, barcode: null });
       });
       (itemsRes.data ?? []).forEach((r) => {
         const v = r.warehouse_location?.trim();
-        if (v) set.add(v);
+        if (v && !map.has(v.toLowerCase())) map.set(v.toLowerCase(), { name: v, barcode: null });
       });
-      setExistingLocations(Array.from(set).sort((a, b) => a.localeCompare(b)));
+      setExistingLocations(
+        Array.from(map.values()).sort((a, b) => a.name.localeCompare(b.name)),
+      );
     })();
     return () => {
       cancelled = true;
@@ -71,17 +84,21 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = inputValue.trim();
-    if (val) {
-      onLocationChange(val);
-      setIsEditing(false);
-      setIsBarcodeMode(false);
-      setShowDropdown(false);
-    }
+    if (!val) return;
+    // If the typed/scanned value matches a known location's barcode, resolve to its name
+    const byBarcode = existingLocations.find(
+      (l) => l.barcode && l.barcode.trim().toLowerCase() === val.toLowerCase(),
+    );
+    const finalValue = byBarcode?.name ?? val;
+    onLocationChange(finalValue);
+    setIsEditing(false);
+    setIsBarcodeMode(false);
+    setShowDropdown(false);
   };
 
-  const handlePickExisting = (loc: string) => {
-    setInputValue(loc);
-    onLocationChange(loc);
+  const handlePickExisting = (name: string) => {
+    setInputValue(name);
+    onLocationChange(name);
     setIsEditing(false);
     setIsBarcodeMode(false);
     setShowDropdown(false);
@@ -103,9 +120,13 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
   };
 
   const filteredLocations = inputValue.trim()
-    ? existingLocations.filter((l) =>
-        l.toLowerCase().includes(inputValue.trim().toLowerCase()),
-      )
+    ? existingLocations.filter((l) => {
+        const q = inputValue.trim().toLowerCase();
+        return (
+          l.name.toLowerCase().includes(q) ||
+          (l.barcode?.toLowerCase().includes(q) ?? false)
+        );
+      })
     : existingLocations;
 
   if (isEditing) {
@@ -148,13 +169,18 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
               <div className="absolute left-0 right-0 top-full mt-1 z-50 max-h-56 overflow-y-auto rounded-md border border-border bg-popover shadow-md">
                 {filteredLocations.map((loc) => (
                   <button
-                    key={loc}
+                    key={loc.name}
                     type="button"
-                    onClick={() => handlePickExisting(loc)}
+                    onClick={() => handlePickExisting(loc.name)}
                     className="flex w-full items-center gap-2 px-3 py-2 text-left text-xs font-mono hover:bg-accent hover:text-accent-foreground"
                   >
                     <MapPin className="h-3 w-3 shrink-0 text-primary" />
-                    <span className="truncate">{loc}</span>
+                    <span className="truncate flex-1">{loc.name}</span>
+                    {loc.barcode && (
+                      <span className="truncate text-[10px] text-muted-foreground shrink-0">
+                        {loc.barcode}
+                      </span>
+                    )}
                   </button>
                 ))}
               </div>

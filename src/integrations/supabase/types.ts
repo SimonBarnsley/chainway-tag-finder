@@ -119,6 +119,36 @@ export type Database = {
         }
         Relationships: []
       }
+      locations: {
+        Row: {
+          barcode: string | null
+          company_slug: string
+          created_at: string
+          description: string | null
+          id: string
+          name: string
+          updated_at: string
+        }
+        Insert: {
+          barcode?: string | null
+          company_slug: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name: string
+          updated_at?: string
+        }
+        Update: {
+          barcode?: string | null
+          company_slug?: string
+          created_at?: string
+          description?: string | null
+          id?: string
+          name?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           company_name: string | null
