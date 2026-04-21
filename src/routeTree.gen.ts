@@ -17,6 +17,7 @@ import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
+import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
 import { Route as CompanyItemsRouteImport } from './routes/$company.items'
 import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
 import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
@@ -63,6 +64,11 @@ const CompanyReadersRoute = CompanyReadersRouteImport.update({
 const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
   id: '/reader-debug',
   path: '/reader-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyItemsRoute = CompanyItemsRouteImport.update({
@@ -113,6 +119,7 @@ export interface FileRoutesByFullPath {
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
+  '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -129,6 +136,7 @@ export interface FileRoutesByTo {
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
+  '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -147,6 +155,7 @@ export interface FileRoutesById {
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
+  '/$company/locations': typeof CompanyLocationsRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -166,6 +175,7 @@ export interface FileRouteTypes {
     | '/$company/decoder'
     | '/$company/history'
     | '/$company/items'
+    | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/api/zebra-reader'
@@ -182,6 +192,7 @@ export interface FileRouteTypes {
     | '/$company/decoder'
     | '/$company/history'
     | '/$company/items'
+    | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/api/zebra-reader'
@@ -199,6 +210,7 @@ export interface FileRouteTypes {
     | '/$company/decoder'
     | '/$company/history'
     | '/$company/items'
+    | '/$company/locations'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/api/zebra-reader'
@@ -272,6 +284,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyReaderDebugRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/locations': {
+      id: '/$company/locations'
+      path: '/locations'
+      fullPath: '/$company/locations'
+      preLoaderRoute: typeof CompanyLocationsRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/items': {
       id: '/$company/items'
       path: '/items'
@@ -331,6 +350,7 @@ interface CompanyRouteChildren {
   CompanyDecoderRoute: typeof CompanyDecoderRoute
   CompanyHistoryRoute: typeof CompanyHistoryRoute
   CompanyItemsRoute: typeof CompanyItemsRoute
+  CompanyLocationsRoute: typeof CompanyLocationsRoute
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
@@ -343,6 +363,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyDecoderRoute: CompanyDecoderRoute,
   CompanyHistoryRoute: CompanyHistoryRoute,
   CompanyItemsRoute: CompanyItemsRoute,
+  CompanyLocationsRoute: CompanyLocationsRoute,
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
