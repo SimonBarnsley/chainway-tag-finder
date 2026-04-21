@@ -41,5 +41,28 @@ export const linkSavedEpcs = createServerFn({ method: "POST" })
       console.error("[linkSavedEpcs] sync-item-locations failed:", e);
     }
 
-    return { ok: true as const, ...result };
+    // Resolve per-EPC link details (item name + current scan location) for UI feedback
+    const { data: links } = await supabaseAdmin
+      .from("tag_items")
+      .select("epc, item_id, items:item_id (name)")
+      .eq("company_slug", companySlug)
+      .in("epc", epcs);
+
+    const { data: scans } = await supabaseAdmin
+      .from("rfid_scans")
+      .select("epc, location")
+      .eq("company_slug", companySlug)
+      .in("epc", epcs);
+
+    const locByEpc = new Map((scans || []).map((s) => [s.epc, s.location]));
+
+    type LinkRow = { epc: string; item_id: string; items: { name: string } | null };
+    const details = ((links as unknown as LinkRow[]) || []).map((l) => ({
+      epc: l.epc,
+      itemId: l.item_id,
+      itemName: l.items?.name ?? null,
+      location: locByEpc.get(l.epc) ?? null,
+    }));
+
+    return { ok: true as const, ...result, details };
   });

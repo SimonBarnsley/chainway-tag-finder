@@ -193,11 +193,13 @@ function ScannerPage() {
 
       // Auto-link saved EPCs to items (creates placeholder items for unknown EPCs)
       const savedEpcs = Array.from(savedSet);
+      let linkDetails: Array<{ epc: string; itemId: string; itemName: string | null; location: string | null }> = [];
       if (savedEpcs.length > 0) {
         try {
           const linkRes = await linkSavedEpcsFn({ data: { epcs: savedEpcs } });
           if (linkRes?.linked) summary.push(`${linkRes.linked} linked`);
           if (linkRes?.itemsCreated) summary.push(`${linkRes.itemsCreated} new item${linkRes.itemsCreated === 1 ? "" : "s"} created`);
+          linkDetails = linkRes?.details ?? [];
         } catch (linkErr) {
           console.error("[scanner] linkSavedEpcs failed:", linkErr);
         }
@@ -210,6 +212,19 @@ function ScannerPage() {
       }
       if (okCount > 0) {
         toast.success(summary.join(" · "));
+
+        // Per-EPC confirmation toasts: show item name + saved location
+        const detailByEpc = new Map(linkDetails.map((d) => [d.epc, d]));
+        for (const tag of tagsToProcess) {
+          const epc = tag.epc.toUpperCase();
+          if (!savedSet.has(epc)) continue;
+          const d = detailByEpc.get(epc);
+          const itemLabel = d?.itemName ?? `Item ${d?.itemId?.slice(0, 8) ?? "—"}`;
+          const loc = d?.location ?? selectedLocation ?? "no location";
+          toast.success(itemLabel, {
+            description: `EPC ${epc.slice(-12)} · ${loc}`,
+          });
+        }
       }
     } catch (error) {
       toast.error(error instanceof Error ? error.message : "Failed to save scans");
