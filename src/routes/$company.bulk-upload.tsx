@@ -185,7 +185,7 @@ function BulkUploadPage() {
     const seenGtins = new Map<string, number>();
     const inBatchDupes: number[] = [];
     valid.forEach((it) => {
-      const idx = items.indexOf(it);
+      const idx = withEpcs.indexOf(it);
       const n = it.name.trim().toLowerCase();
       const s = it.sku.trim().toLowerCase();
       const g = it.gtin.trim();
@@ -210,7 +210,7 @@ function BulkUploadPage() {
     let successCount = 0;
     for (let i = 0; i < valid.length; i++) {
       const item = valid[i];
-      const idx = items.indexOf(item);
+      const idx = withEpcs.indexOf(item);
       try {
         // DB duplicate check (name / sku / gtin within company)
         const orParts: string[] = [`name.eq.${item.name.trim()}`];
