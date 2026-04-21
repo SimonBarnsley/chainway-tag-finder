@@ -56,25 +56,33 @@ export async function autoLinkEpcsToItems(
     return "error" in d ? { epc, decoded: null } : { epc, decoded: d };
   });
 
-  // Build candidate SKU lookup set from decodable EPCs.
-  // Match strategy: itemReference OR companyPrefix+itemReference against items.sku.
+  // Build candidate lookup set from decodable EPCs.
+  // Match strategy: itemReference OR companyPrefix+itemReference OR gtin14
+  // against items.sku OR items.gtin.
   const candidates = new Set<string>();
   for (const e of decodedEntries) {
     if (!e.decoded) continue;
     candidates.add(e.decoded.itemReference);
     candidates.add(e.decoded.companyPrefix + e.decoded.itemReference);
+    candidates.add(e.decoded.gtin14);
   }
 
-  const skuMap = new Map<string, string>();
+  // Map candidate string → item id (matched via sku or gtin)
+  const lookupMap = new Map<string, string>();
   if (candidates.size > 0) {
     const candidateList = Array.from(candidates);
-    const { data: items } = await supabaseAdmin
+    const orFilter = `sku.in.(${candidateList.map((c) => `"${c}"`).join(",")}),gtin.in.(${candidateList.map((c) => `"${c}"`).join(",")})`;
+    const { data: items, error: itemsErr } = await supabaseAdmin
       .from("items")
-      .select("id, sku")
+      .select("id, sku, gtin")
       .eq("company_slug", companySlug)
-      .in("sku", candidateList);
+      .or(orFilter);
+    if (itemsErr) {
+      console.error("[autoLinkEpcsToItems] items lookup error:", itemsErr.message);
+    }
     for (const it of items || []) {
-      if (it.sku) skuMap.set(it.sku, it.id);
+      if (it.sku) lookupMap.set(it.sku, it.id);
+      if (it.gtin) lookupMap.set(it.gtin, it.id);
     }
   }
 
@@ -88,10 +96,14 @@ export async function autoLinkEpcsToItems(
 
     const { companyPrefix, itemReference, gtin14 } = entry.decoded;
     const itemId =
-      skuMap.get(itemReference) || skuMap.get(companyPrefix + itemReference);
+      lookupMap.get(itemReference) ||
+      lookupMap.get(companyPrefix + itemReference) ||
+      lookupMap.get(gtin14);
 
     if (!itemId) {
-      // No SKU match — do NOT auto-create items. Skip.
+      console.warn(
+        `[autoLinkEpcsToItems] no match for EPC ${entry.epc} (sku candidates: ${itemReference}, ${companyPrefix + itemReference}, gtin: ${gtin14})`
+      );
       result.unmatched++;
       continue;
     }

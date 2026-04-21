@@ -199,6 +199,7 @@ function ScannerPage() {
           const linkRes = await linkSavedEpcsFn({ data: { epcs: savedEpcs } });
           if (linkRes?.linked) summary.push(`${linkRes.linked} linked`);
           if (linkRes?.itemsCreated) summary.push(`${linkRes.itemsCreated} new item${linkRes.itemsCreated === 1 ? "" : "s"} created`);
+          if (linkRes?.unmatched) summary.push(`${linkRes.unmatched} unmatched`);
           linkDetails = linkRes?.details ?? [];
         } catch (linkErr) {
           console.error("[scanner] linkSavedEpcs failed:", linkErr);
