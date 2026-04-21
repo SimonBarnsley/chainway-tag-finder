@@ -82,6 +82,8 @@ function ItemsPage() {
   const [items, setItems] = useState<Item[]>([]);
   const [itemScanLocations, setItemScanLocations] = useState<Record<string, string[]>>({});
   const [itemLocationCounts, setItemLocationCounts] = useState<Record<string, Record<string, number>>>({});
+  const [itemTagCounts, setItemTagCounts] = useState<Record<string, number>>({});
+  const [itemTagEpcs, setItemTagEpcs] = useState<Record<string, string[]>>({});
   const [allLocations, setAllLocations] = useState<string[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
