@@ -1,12 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { useState, useCallback, useEffect } from "react";
-import { Save, Trash2, Power, PowerOff } from "lucide-react";
+import { Save, Trash2 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
-import { ScannerStatus } from "@/components/ScannerStatus";
 import { TagList } from "@/components/TagList";
-import { ManualEntry } from "@/components/ManualEntry";
 import { LocationSelector } from "@/components/LocationSelector";
 
 import { GeigerSearch } from "@/components/GeigerSearch";
