@@ -272,27 +272,39 @@ function ScannerPage() {
       <main className="flex-1 px-4 py-4 space-y-4">
         <LocationSelector location={location} onLocationChange={setLocation} />
 
-        <Button
-          onClick={() => setScanEnabled(!scanEnabled)}
-          variant={scanEnabled ? "default" : "outline"}
-          className={`w-full h-14 text-base font-bold gap-2 ${
-            scanEnabled
-              ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(34,197,94,0.3)]"
-              : ""
-          }`}
-        >
-          {scanEnabled ? (
-            <>
-              <Power className="h-5 w-5" />
-              SCANNING ACTIVE
-            </>
-          ) : (
-            <>
-              <PowerOff className="h-5 w-5" />
-              SCANNER OFF
-            </>
-          )}
-        </Button>
+        {(() => {
+          const rfdOff = zebra.isNativeSdkAvailable && zebra.status !== "ready";
+          return (
+            <Button
+              onClick={() => setScanEnabled(!scanEnabled)}
+              variant={scanEnabled && !rfdOff ? "default" : "outline"}
+              className={`w-full h-14 text-base font-bold gap-2 ${
+                rfdOff
+                  ? "bg-destructive text-destructive-foreground shadow-[0_0_20px_rgba(239,68,68,0.4)] hover:bg-destructive/90"
+                  : scanEnabled
+                    ? "bg-primary text-primary-foreground shadow-[0_0_20px_rgba(34,197,94,0.3)]"
+                    : ""
+              }`}
+            >
+              {rfdOff ? (
+                <>
+                  <PowerOff className="h-5 w-5" />
+                  SCANNER NOT ON
+                </>
+              ) : scanEnabled ? (
+                <>
+                  <Power className="h-5 w-5" />
+                  SCANNING ACTIVE
+                </>
+              ) : (
+                <>
+                  <PowerOff className="h-5 w-5" />
+                  SCANNER OFF
+                </>
+              )}
+            </Button>
+          );
+        })()}
 
         <ScannerStatus
           isListening={isListening}
