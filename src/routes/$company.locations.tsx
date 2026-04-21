@@ -176,6 +176,46 @@ function LocationsPage() {
     }
   };
 
+  const handleEditAntennaMapping = async (m: AntennaMappingRow) => {
+    const next = window.prompt(
+      `Rename location for ${m.reader_name} · A${m.antenna_port}`,
+      m.location,
+    );
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) {
+      toast.error("Location cannot be empty");
+      return;
+    }
+    if (trimmed === m.location) return;
+    const { error } = await supabase
+      .from("reader_antennas")
+      .update({ location: trimmed })
+      .eq("id", m.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Antenna location updated");
+      fetchAntennaMappings();
+    }
+  };
+
+  const handleDeleteAntennaMapping = async (m: AntennaMappingRow) => {
+    if (
+      !confirm(
+        `Remove antenna mapping "${m.reader_name} · A${m.antenna_port} · ${m.location}"? This cannot be undone.`,
+      )
+    )
+      return;
+    const { error } = await supabase.from("reader_antennas").delete().eq("id", m.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Antenna mapping removed");
+      fetchAntennaMappings();
+    }
+  };
+
   return (
     <AuthGuard>
       <div className="flex min-h-screen flex-col bg-background">
@@ -362,13 +402,29 @@ function LocationsPage() {
                               <Radio className="h-3 w-3 shrink-0" />
                               <span className="font-mono">A{r.antenna_port}</span>
                               <span>·</span>
-                              <span className="truncate">{r.reader_name}</span>
+                              <span className="truncate flex-1 min-w-0">{r.reader_name}</span>
                               {r.description && (
                                 <>
                                   <span>·</span>
                                   <span className="truncate italic">{r.description}</span>
                                 </>
                               )}
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleEditAntennaMapping(r)}
+                                className="h-7 w-7 p-0 shrink-0"
+                              >
+                                <Edit3 className="h-3.5 w-3.5" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => handleDeleteAntennaMapping(r)}
+                                className="h-7 w-7 p-0 shrink-0 text-destructive hover:text-destructive"
+                              >
+                                <Trash2 className="h-3.5 w-3.5" />
+                              </Button>
                             </div>
                           ))}
                         </div>
