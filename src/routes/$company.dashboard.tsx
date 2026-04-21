@@ -34,7 +34,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { backfillTagItems } from "@/lib/backfill-tag-items";
-import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -102,9 +102,7 @@ function DashboardPage() {
   const [groupBySku, setGroupBySku] = useState(true);
   const [expandedSku, setExpandedSku] = useState<string | null>(null);
   const [backfilling, setBackfilling] = useState(false);
-  const [linkingUngrouped, setLinkingUngrouped] = useState(false);
   const backfillFn = useServerFn(backfillTagItems);
-  const linkSavedEpcsFn = useServerFn(linkSavedEpcs);
 
   const handleBackfill = async () => {
     setBackfilling(true);
@@ -122,27 +120,6 @@ function DashboardPage() {
       toast.error(e instanceof Error ? e.message : "Backfill failed");
     } finally {
       setBackfilling(false);
-    }
-  };
-
-  const handleLinkUngrouped = async (epcs: string[]) => {
-    if (epcs.length === 0) {
-      toast.info("No ungrouped tags to link");
-      return;
-    }
-    setLinkingUngrouped(true);
-    try {
-      const res = await linkSavedEpcsFn({ data: { epcs } });
-      const summary: string[] = [];
-      if (res.linked) summary.push(`${res.linked} linked`);
-      if (res.itemsCreated) summary.push(`${res.itemsCreated} new item${res.itemsCreated === 1 ? "" : "s"} created`);
-      if (res.skipped) summary.push(`${res.skipped} already linked`);
-      toast.success(summary.length ? summary.join(" · ") : "Nothing to link");
-      await fetchRecords();
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Link failed");
-    } finally {
-      setLinkingUngrouped(false);
     }
   };
 
@@ -497,19 +474,6 @@ function DashboardPage() {
                             </span>
                             {group.sku === "__ungrouped__" && (
                               <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={linkingUngrouped}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLinkUngrouped(group.records.map((r) => r.epc));
-                                  }}
-                                  className="h-7 gap-1.5"
-                                >
-                                  <Link2 className="h-3.5 w-3.5" />
-                                  {linkingUngrouped ? "Linking..." : "Link to items"}
-                                </Button>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
