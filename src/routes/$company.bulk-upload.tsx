@@ -139,23 +139,7 @@ function BulkUploadPage() {
   };
 
   const handleBulkInsert = async () => {
-    // Auto-generate EPCs for any rows that don't yet have one
-    const withEpcs = items.map((it) => {
-      if (!it.name.trim() || it.generated_epc) return it;
-      try {
-        const epc = generateRandomSgtin96({
-          companyPrefix: it.company_prefix || defaultPrefix,
-          itemReference: it.item_reference || undefined,
-          filter: Number(it.filter) || Number(defaultFilter),
-        });
-        return { ...it, generated_epc: epc, status: "pending" as const, error: undefined };
-      } catch (err: unknown) {
-        return { ...it, status: "error" as const, error: err instanceof Error ? err.message : "EPC generation failed" };
-      }
-    });
-    setItems(withEpcs);
-
-    const valid = withEpcs.filter((i) => i.name.trim() && i.generated_epc);
+    const valid = items.filter((i) => i.name.trim());
     if (valid.length === 0) { toast.error("No valid items to upload (need a name)"); return; }
 
     // Pre-flight: in-batch duplicate detection (name / sku / gtin)
@@ -164,7 +148,7 @@ function BulkUploadPage() {
     const seenGtins = new Map<string, number>();
     const inBatchDupes: number[] = [];
     valid.forEach((it) => {
-      const idx = withEpcs.indexOf(it);
+      const idx = items.indexOf(it);
       const n = it.name.trim().toLowerCase();
       const s = it.sku.trim().toLowerCase();
       const g = it.gtin.trim();
@@ -189,7 +173,7 @@ function BulkUploadPage() {
     let successCount = 0;
     for (let i = 0; i < valid.length; i++) {
       const item = valid[i];
-      const idx = withEpcs.indexOf(item);
+      const idx = items.indexOf(item);
       try {
         // DB duplicate check (name / sku / gtin within company)
         const orParts: string[] = [`name.eq.${item.name.trim()}`];
@@ -210,14 +194,12 @@ function BulkUploadPage() {
           throw new Error(`Duplicate ${reason} already exists`);
         }
 
-        const { data: created, error: itemErr } = await supabase.from("items").insert({
+        const { error: itemErr } = await supabase.from("items").insert({
           name: item.name.trim(), description: item.description || null, category: item.category || null,
           sku: item.sku || null, gtin: item.gtin || null, price: item.price ? Number(item.price) : null,
           warehouse_location: item.warehouse_location || null, company_slug: company,
         }).select("id").single();
         if (itemErr) throw itemErr;
-        await supabase.from("rfid_scans").upsert({ epc: item.generated_epc, scan_count: 0, device_name: "Bulk Upload", notes: `Bulk generated for: ${item.name.trim()}`, location: item.warehouse_location || null, company_slug: company }, { onConflict: "epc" });
-        await supabase.from("tag_items").upsert({ epc: item.generated_epc, item_id: created.id, gtin: item.gtin || null, company_slug: company }, { onConflict: "epc,item_id" });
         setItems((prev) => { const u = [...prev]; u[idx] = { ...u[idx], status: "success" }; return u; });
         successCount++;
       } catch (err: unknown) {
