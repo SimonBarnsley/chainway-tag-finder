@@ -252,7 +252,7 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
         variant="outline"
         size="sm"
         onClick={handleBarcodeScan}
-        className="flex-1 gap-2 border-dashed"
+        className="flex-1 gap-2 border-dashed border-4 border-yellow-300 text-xl font-mono"
       >
         <ScanBarcode className="h-4 w-4" />
         Scan Location Barcode
