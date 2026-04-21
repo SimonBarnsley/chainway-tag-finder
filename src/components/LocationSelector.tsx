@@ -255,7 +255,7 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
         className="flex-1 gap-2 border-solid border-4 border-yellow-300 text-xl font-mono"
       >
         <ScanBarcode className="h-4 w-4" />
-        Scan Location Barcode
+        Select Location
       </Button>
     </div>
   );
