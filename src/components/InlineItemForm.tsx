@@ -19,6 +19,7 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
   const [category, setCategory] = useState("");
   const [sku, setSku] = useState("");
   const [gtin, setGtin] = useState("");
+  const [companyPrefix, setCompanyPrefix] = useState("");
   const [price, setPrice] = useState("");
   const [warehouseLocation, setWarehouseLocation] = useState("");
   const [imageUrl, setImageUrl] = useState<string | null>(null);
