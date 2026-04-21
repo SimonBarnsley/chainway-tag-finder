@@ -55,6 +55,31 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     private val reader get() = readerDevice?.rfidReader
     @Volatile private var isInventorying = false
 
+    // Heartbeat: the Zebra SDK doesn't always fire DISCONNECTION_EVENT promptly
+    // when the RFD40 sled is powered off via its physical switch (vs. unplugged).
+    // We poll reader.isConnected every 2s and emit readerStatus so the UI can
+    // reliably show "SCANNER NOT ON" within a couple of seconds of power loss.
+    private val heartbeatHandler = android.os.Handler(android.os.Looper.getMainLooper())
+    @Volatile private var lastConnectedState: Boolean = false
+    private val heartbeatRunnable = object : Runnable {
+        override fun run() {
+            try {
+                val connected = try { reader?.isConnected == true } catch (_: Throwable) { false }
+                if (connected != lastConnectedState) {
+                    lastConnectedState = connected
+                    val payload = JSObject()
+                    payload.put("connected", connected)
+                    readerDevice?.name?.let { payload.put("name", it) }
+                    notifyListeners("readerStatus", payload)
+                }
+            } catch (e: Throwable) {
+                Log.w(TAG, "heartbeat error", e)
+            } finally {
+                heartbeatHandler.postDelayed(this, 2000L)
+            }
+        }
+    }
+
     companion object {
         private const val TAG = "ZebraRFD40Plugin"
         // Singleton handle so MainActivity can forward trigger key events
