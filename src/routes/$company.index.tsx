@@ -113,6 +113,12 @@ function ScannerPage() {
   const handleSaveAll = async () => {
     const selectedLocation = location.trim();
     const allTags = Array.from(tags.values());
+
+    if (allTags.length > 0 && !selectedLocation) {
+      toast.error("Please select a location before saving scanned tags.");
+      return;
+    }
+
     const tagsToProcess = selectedLocation
       ? allTags
       : allTags.filter((t) => !t.saved);
