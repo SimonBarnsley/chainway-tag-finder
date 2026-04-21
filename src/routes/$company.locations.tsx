@@ -124,7 +124,47 @@ function LocationsPage() {
       description: form.description.trim() || null,
       barcode: form.barcode.trim() || null,
       company_slug: companySlug,
-    };
+  };
+
+  const handleEditAntennaMapping = async (m: AntennaMappingRow) => {
+    const next = window.prompt(
+      `Rename location for ${m.reader_name} · A${m.antenna_port}`,
+      m.location,
+    );
+    if (next === null) return;
+    const trimmed = next.trim();
+    if (!trimmed) {
+      toast.error("Location cannot be empty");
+      return;
+    }
+    if (trimmed === m.location) return;
+    const { error } = await supabase
+      .from("reader_antennas")
+      .update({ location: trimmed })
+      .eq("id", m.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Antenna location updated");
+      fetchAntennaMappings();
+    }
+  };
+
+  const handleDeleteAntennaMapping = async (m: AntennaMappingRow) => {
+    if (
+      !confirm(
+        `Remove antenna mapping "${m.reader_name} · A${m.antenna_port} · ${m.location}"? This cannot be undone.`,
+      )
+    )
+      return;
+    const { error } = await supabase.from("reader_antennas").delete().eq("id", m.id);
+    if (error) {
+      toast.error(error.message);
+    } else {
+      toast.success("Antenna mapping removed");
+      fetchAntennaMappings();
+    }
+  };
 
     if (editingId) {
       const { error } = await supabase
