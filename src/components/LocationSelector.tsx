@@ -51,7 +51,7 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
             ref={inputRef}
             value={inputValue}
             onChange={(e) => setInputValue(e.target.value)}
-            placeholder={isBarcodeMode ? "Scan barcode now..." : "e.g. Warehouse A, Shelf 3"}
+            placeholder={isBarcodeMode ? "Scan barcode now..." : ""}
             className="font-mono text-xs flex-1"
             autoFocus
           />
