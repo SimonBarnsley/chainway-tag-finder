@@ -466,7 +466,7 @@ function DashboardPage() {
                             ) : (
                               <ChevronRight className="h-3.5 w-3.5 text-muted-foreground" />
                             )}
-                            <Package className="h-3.5 w-3.5 text-primary" />
+                            
                             <span className="font-medium text-foreground">
                               {group.sku === "__ungrouped__" ? "Ungrouped Tags" : `SKU: ${group.sku}`}
                             </span>
