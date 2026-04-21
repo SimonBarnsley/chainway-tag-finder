@@ -5,7 +5,6 @@ import { AppHeader } from "@/components/AppHeader";
 import {
   Upload,
   FileSpreadsheet,
-  Zap,
   Check,
   AlertCircle,
   Loader2,
@@ -18,7 +17,6 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import { generateRandomSgtin96 } from "@/lib/sgtin-decoder";
 
 export const Route = createFileRoute("/$company/bulk-upload")({
   component: BulkUploadPage,
