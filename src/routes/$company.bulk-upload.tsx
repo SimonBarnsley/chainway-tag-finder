@@ -118,7 +118,7 @@ function BulkUploadPage() {
   };
 
   const addRow = () => {
-    setItems((prev) => [...prev, { ...EMPTY_ROW, company_prefix: defaultPrefix, filter: defaultFilter }]);
+    setItems((prev) => [...prev, { ...EMPTY_ROW }]);
   };
 
   const updateItem = (index: number, field: keyof BulkItem, value: string) => {
