@@ -53,6 +53,7 @@ export type Database = {
       items: {
         Row: {
           category: string | null
+          company_prefix: string | null
           company_slug: string | null
           created_at: string
           currency: string | null
@@ -74,6 +75,7 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          company_prefix?: string | null
           company_slug?: string | null
           created_at?: string
           currency?: string | null
@@ -95,6 +97,7 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          company_prefix?: string | null
           company_slug?: string | null
           created_at?: string
           currency?: string | null
