@@ -653,9 +653,6 @@ function ScanRow({
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
       </td>
-      <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-        {"​"}
-      </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1">
           <AlertDialog>
