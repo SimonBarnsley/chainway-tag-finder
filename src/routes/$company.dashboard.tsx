@@ -497,19 +497,6 @@ function DashboardPage() {
                             </span>
                             {group.sku === "__ungrouped__" && (
                               <>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  disabled={linkingUngrouped}
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    handleLinkUngrouped(group.records.map((r) => r.epc));
-                                  }}
-                                  className="h-7 gap-1.5"
-                                >
-                                  <Link2 className="h-3.5 w-3.5" />
-                                  {linkingUngrouped ? "Linking..." : "Link to items"}
-                                </Button>
                                 <AlertDialog>
                                   <AlertDialogTrigger asChild>
                                     <Button
