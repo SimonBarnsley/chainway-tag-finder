@@ -487,7 +487,7 @@ function DashboardPage() {
                           {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
                         </td>
                         <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
-                          {group.firstSeen ? new Date(group.firstSeen).toLocaleString() : "—"}
+                          {group.firstSeen ? "​" : "—"}
                         </td>
                         <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
                           {group.sku === "__ungrouped__" && (
@@ -658,7 +658,7 @@ function ScanRow({
         {new Date(r.last_seen).toLocaleString()}
       </td>
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
-        {new Date(r.first_seen).toLocaleString()}
+        {"​"}
       </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1">
