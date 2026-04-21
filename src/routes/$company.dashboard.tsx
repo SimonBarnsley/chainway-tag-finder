@@ -86,6 +86,7 @@ interface SkuGroup {
   records: ScanRecord[];
   totalScans: number;
   lastSeen: string;
+  firstSeen: string;
 }
 
 function DashboardPage() {
@@ -265,6 +266,9 @@ function DashboardPage() {
           if (new Date(r.last_seen) > new Date(existing.lastSeen)) {
             existing.lastSeen = r.last_seen;
           }
+          if (new Date(r.first_seen) < new Date(existing.firstSeen)) {
+            existing.firstSeen = r.first_seen;
+          }
         } else {
           groups.set(r.sku, {
             sku: r.sku,
@@ -273,6 +277,7 @@ function DashboardPage() {
             records: [r],
             totalScans: r.scan_count,
             lastSeen: r.last_seen,
+            firstSeen: r.first_seen,
           });
         }
       } else {
@@ -289,6 +294,9 @@ function DashboardPage() {
     }
 
     if (singletons.length > 0) {
+      const sortedFirst = [...singletons].sort(
+        (a, b) => new Date(a.first_seen).getTime() - new Date(b.first_seen).getTime()
+      );
       result.push({
         sku: "__ungrouped__",
         item_name: null,
@@ -296,6 +304,7 @@ function DashboardPage() {
         records: singletons,
         totalScans: singletons.reduce((s, r) => s + r.scan_count, 0),
         lastSeen: singletons[0]?.last_seen || "",
+        firstSeen: sortedFirst[0]?.first_seen || "",
       });
     }
 
@@ -455,7 +464,7 @@ function DashboardPage() {
                         className="bg-muted/40 border-b border-border cursor-pointer hover:bg-muted/60 transition-colors"
                         onClick={() => setExpandedSku(expandedSku === group.sku ? null : group.sku)}
                       >
-                        <td colSpan={groupBySku ? 7 : 6} className="px-3 py-2.5">
+                        <td colSpan={4} className="px-3 py-2.5">
                           <div className="flex items-center gap-2">
                             {expandedSku === group.sku ? (
                               <ChevronDown className="h-3.5 w-3.5 text-muted-foreground" />
@@ -469,64 +478,69 @@ function DashboardPage() {
                             {group.item_name && (
                               <span className="text-muted-foreground">— {group.item_name}</span>
                             )}
-                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary font-medium ml-auto">
+                            <span className="inline-flex items-center rounded-full bg-primary/10 px-2 py-0.5 text-primary font-medium ml-2">
                               {group.records.length} tag{group.records.length !== 1 ? "s" : ""} · {group.totalScans} scans
                             </span>
-                            {group.sku === "__ungrouped__" && (
-                              <>
-                                <AlertDialog>
-                                  <AlertDialogTrigger asChild>
-                                    <Button
-                                      size="sm"
-                                      variant="outline"
-                                      onClick={(e) => e.stopPropagation()}
-                                      className="h-7 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
-                                    >
-                                      <Trash2 className="h-3.5 w-3.5" />
-                                      Delete all
-                                    </Button>
-                                  </AlertDialogTrigger>
-                                  <AlertDialogContent onClick={(e) => e.stopPropagation()}>
-                                    <AlertDialogHeader>
-                                      <AlertDialogTitle>
-                                        Delete all {group.records.length} ungrouped tag{group.records.length !== 1 ? "s" : ""}?
-                                      </AlertDialogTitle>
-                                      <AlertDialogDescription>
-                                        This will permanently remove all ungrouped scan records
-                                        and unlink them from any items. This action cannot be undone.
-                                      </AlertDialogDescription>
-                                    </AlertDialogHeader>
-                                    <AlertDialogFooter>
-                                      <AlertDialogCancel>Cancel</AlertDialogCancel>
-                                      <AlertDialogAction
-                                        onClick={async () => {
-                                          const epcs = group.records.map((r) => r.epc);
-                                          const ids = group.records.map((r) => r.id);
-                                          const [scanRes, tagRes] = await Promise.all([
-                                            supabase.from("rfid_scans").delete().in("id", ids),
-                                            supabase
-                                              .from("tag_items")
-                                              .delete()
-                                              .eq("company_slug", company)
-                                              .in("epc", epcs),
-                                          ]);
-                                          if (scanRes.error || tagRes.error) {
-                                            toast.error("Failed to delete ungrouped tags");
-                                            return;
-                                          }
-                                          toast.success(`Deleted ${ids.length} ungrouped tag${ids.length !== 1 ? "s" : ""}`);
-                                          fetchRecords();
-                                        }}
-                                        className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
-                                      >
-                                        Delete all
-                                      </AlertDialogAction>
-                                    </AlertDialogFooter>
-                                  </AlertDialogContent>
-                                </AlertDialog>
-                              </>
-                            )}
                           </div>
+                        </td>
+                        <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
+                          {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
+                          {group.firstSeen ? new Date(group.firstSeen).toLocaleString() : "—"}
+                        </td>
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          {group.sku === "__ungrouped__" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Delete all
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete all {group.records.length} ungrouped tag{group.records.length !== 1 ? "s" : ""}?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove all ungrouped scan records
+                                    and unlink them from any items. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={async () => {
+                                      const epcs = group.records.map((r) => r.epc);
+                                      const ids = group.records.map((r) => r.id);
+                                      const [scanRes, tagRes] = await Promise.all([
+                                        supabase.from("rfid_scans").delete().in("id", ids),
+                                        supabase
+                                          .from("tag_items")
+                                          .delete()
+                                          .eq("company_slug", company)
+                                          .in("epc", epcs),
+                                      ]);
+                                      if (scanRes.error || tagRes.error) {
+                                        toast.error("Failed to delete ungrouped tags");
+                                        return;
+                                      }
+                                      toast.success(`Deleted ${ids.length} ungrouped tag${ids.length !== 1 ? "s" : ""}`);
+                                      fetchRecords();
+                                    }}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete all
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
                         </td>
                       </tr>
                       {expandedSku === group.sku && group.item_description && (
