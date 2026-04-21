@@ -84,17 +84,21 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     const val = inputValue.trim();
-    if (val) {
-      onLocationChange(val);
-      setIsEditing(false);
-      setIsBarcodeMode(false);
-      setShowDropdown(false);
-    }
+    if (!val) return;
+    // If the typed/scanned value matches a known location's barcode, resolve to its name
+    const byBarcode = existingLocations.find(
+      (l) => l.barcode && l.barcode.trim().toLowerCase() === val.toLowerCase(),
+    );
+    const finalValue = byBarcode?.name ?? val;
+    onLocationChange(finalValue);
+    setIsEditing(false);
+    setIsBarcodeMode(false);
+    setShowDropdown(false);
   };
 
-  const handlePickExisting = (loc: string) => {
-    setInputValue(loc);
-    onLocationChange(loc);
+  const handlePickExisting = (name: string) => {
+    setInputValue(name);
+    onLocationChange(name);
     setIsEditing(false);
     setIsBarcodeMode(false);
     setShowDropdown(false);
@@ -116,9 +120,13 @@ export function LocationSelector({ location, onLocationChange }: LocationSelecto
   };
 
   const filteredLocations = inputValue.trim()
-    ? existingLocations.filter((l) =>
-        l.toLowerCase().includes(inputValue.trim().toLowerCase()),
-      )
+    ? existingLocations.filter((l) => {
+        const q = inputValue.trim().toLowerCase();
+        return (
+          l.name.toLowerCase().includes(q) ||
+          (l.barcode?.toLowerCase().includes(q) ?? false)
+        );
+      })
     : existingLocations;
 
   if (isEditing) {
