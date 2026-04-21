@@ -363,14 +363,6 @@ function DashboardPage() {
       <AppHeader />
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
-        {isAdmin && (
-          <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-            <StatCard icon={<Tag className="h-5 w-5" />} label="Unique Tags" value={stats.totalTags.toString()} />
-            <StatCard icon={<Radio className="h-5 w-5" />} label="Total Scans" value={stats.totalScans.toString()} />
-            <StatCard icon={<MapPin className="h-5 w-5" />} label="Locations" value={stats.uniqueLocations.toString()} />
-            <StatCard icon={<Clock className="h-5 w-5" />} label="Latest Scan" value={stats.latest} small />
-          </div>
-        )}
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
