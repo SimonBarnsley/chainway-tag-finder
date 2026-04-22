@@ -59,13 +59,32 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [companyUpdating, setCompanyUpdating] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
+
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return undefined;
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await listCompanies({ headers });
+      if (res?.ok) setCompanies(res.companies);
+    } catch {
+      // non-fatal
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, email, display_name");
+        .select("user_id, email, display_name, company_slug, company_name");
       if (pErr) throw pErr;
 
       const { data: roles, error: rErr } = await supabase
