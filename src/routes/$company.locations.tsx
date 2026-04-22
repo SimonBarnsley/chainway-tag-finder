@@ -217,7 +217,7 @@ function LocationsPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="locations.view">
       <div className="flex min-h-screen flex-col bg-background">
         <AppHeader />
         <main className="flex-1 mx-auto w-full max-w-3xl px-4 py-4 space-y-4">

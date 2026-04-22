@@ -358,7 +358,7 @@ function DashboardPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="dashboard.admin">
     <div className="min-h-screen bg-background">
       <AppHeader />
 
