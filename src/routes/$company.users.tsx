@@ -6,15 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users as UsersIcon, Search, Trash2, MailCheck, Mail, Clock } from "lucide-react";
+import { Users as UsersIcon, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  listPendingUsers,
-  approveUserSignup,
-  resendConfirmationEmail,
-  type PendingUser,
-} from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/$company/users")({
   component: UsersPage,
@@ -58,63 +52,6 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingUser[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(true);
-  const [pendingBusy, setPendingBusy] = useState<string | null>(null);
-
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) throw new Error("Not authenticated");
-    return { Authorization: `Bearer ${token}` };
-  };
-
-  const fetchPending = async () => {
-    setPendingLoading(true);
-    try {
-      const headers = await getAuthHeaders();
-      const res = await listPendingUsers({ headers });
-      if (!res?.ok) {
-        toast.error(res?.error || "Failed to load pending users");
-        setPending([]);
-        return;
-      }
-      setPending(Array.isArray(res.users) ? res.users : []);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load pending users");
-      setPending([]);
-    } finally {
-      setPendingLoading(false);
-    }
-  };
-
-  const handleApprove = async (u: PendingUser) => {
-    setPendingBusy(u.id);
-    try {
-      const headers = await getAuthHeaders();
-      await approveUserSignup({ data: { userId: u.id }, headers });
-      toast.success(`Approved ${u.email ?? u.id}`);
-      await Promise.all([fetchPending(), fetchUsers()]);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to approve user");
-    } finally {
-      setPendingBusy(null);
-    }
-  };
-
-  const handleResend = async (u: PendingUser) => {
-    if (!u.email) return;
-    setPendingBusy(u.id);
-    try {
-      const headers = await getAuthHeaders();
-      await resendConfirmationEmail({ data: { email: u.email }, headers });
-      toast.success(`Sent confirmation email to ${u.email}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to resend email");
-    } finally {
-      setPendingBusy(null);
-    }
-  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -160,7 +97,6 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers();
-    fetchPending();
   }, []);
 
   const handleRoleChange = async (user: UserRow, newUi: UiRole) => {
@@ -232,62 +168,7 @@ function UsersContent() {
           />
         </div>
 
-        {/* Pending email confirmations */}
-        <div className="space-y-2">
-          <div className="flex items-center gap-2 flex-wrap">
-            <Clock className="h-4 w-4 text-warning" />
-            <h2 className="text-sm font-semibold text-foreground">
-              Pending email confirmation
-            </h2>
-            <span className="text-xs text-muted-foreground">
-              Approve users who didn't receive the verification email
-            </span>
-          </div>
-          {pendingLoading ? (
-            <p className="text-xs text-muted-foreground">Checking...</p>
-          ) : pending.length === 0 ? (
-            <p className="text-xs text-muted-foreground">
-              No pending sign-ups — all users have confirmed their email.
-            </p>
-          ) : (
-            <div className="space-y-2">
-              {pending.map((u) => (
-                <Card key={u.id} className="border-warning/40">
-                  <CardContent className="p-3 flex items-center justify-between gap-3">
-                    <div className="min-w-0 flex-1">
-                      <p className="text-sm font-medium text-foreground truncate">
-                        {u.display_name || u.email || u.id}
-                      </p>
-                      <p className="text-xs text-muted-foreground truncate">
-                        {u.email} · signed up{" "}
-                        {new Date(u.created_at).toLocaleString()}
-                      </p>
-                    </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleResend(u)}
-                        disabled={pendingBusy === u.id || !u.email}
-                      >
-                        <Mail className="h-4 w-4 mr-1" />
-                        Resend
-                      </Button>
-                      <Button
-                        size="sm"
-                        onClick={() => handleApprove(u)}
-                        disabled={pendingBusy === u.id}
-                      >
-                        <MailCheck className="h-4 w-4 mr-1" />
-                        Approve
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
-          )}
-        </div>
+
 
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading users...</p>
