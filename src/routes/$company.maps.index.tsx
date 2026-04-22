@@ -9,7 +9,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
 
-export const Route = createFileRoute("/$company/maps")({
+export const Route = createFileRoute("/$company/maps/")({
   component: MapsPage,
   head: () => ({
     meta: [
