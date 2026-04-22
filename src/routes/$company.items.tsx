@@ -390,7 +390,7 @@ function ItemsPage() {
   }
 
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="items.view">
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader actions={
         <Button size="sm" className="gap-1" onClick={() => { setEditing({ id: "", ...emptyItem } as Item); setIsNew(true); }}>
