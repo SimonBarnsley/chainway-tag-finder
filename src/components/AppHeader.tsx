@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck } from "lucide-react";
+import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug } from "lucide-react";
 import barcodeWarehouseLogo from "@/assets/barcode-warehouse-logo.jpg";
 import { useAuth } from "@/hooks/use-auth";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -149,6 +149,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
                           >
                             <MapIcon className="h-4 w-4" />
                             Floor Plan Maps
+                          </Link>
+                          <Link
+                            to="/$company/signup-debug"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Bug className="h-4 w-4" />
+                            Signup Debug
                           </Link>
                           {isSuperAdmin && (
                             <Link
