@@ -7,8 +7,11 @@ export type ZoneShape = RectShape | PolygonShape;
 export interface AntennaZone {
   id: string;
   map_id: string;
-  reader_id: string;
-  antenna_port: number;
+  // Legacy antenna-based zones (kept for backward compat in types)
+  reader_id: string | null;
+  antenna_port: number | null;
+  // New: location-based zones for the company-wide map
+  location_id: string | null;
   shape_kind: "rect" | "polygon";
   shape_data: unknown;
   label: string | null;
@@ -17,7 +20,7 @@ export interface AntennaZone {
 
 export interface LocationMap {
   id: string;
-  location_id: string;
+  location_id: string | null;
   image_path: string;
   image_width: number;
   image_height: number;
