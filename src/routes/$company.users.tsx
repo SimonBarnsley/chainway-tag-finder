@@ -52,63 +52,6 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
-  const [pending, setPending] = useState<PendingUser[]>([]);
-  const [pendingLoading, setPendingLoading] = useState(true);
-  const [pendingBusy, setPendingBusy] = useState<string | null>(null);
-
-  const getAuthHeaders = async () => {
-    const { data: { session } } = await supabase.auth.getSession();
-    const token = session?.access_token;
-    if (!token) throw new Error("Not authenticated");
-    return { Authorization: `Bearer ${token}` };
-  };
-
-  const fetchPending = async () => {
-    setPendingLoading(true);
-    try {
-      const headers = await getAuthHeaders();
-      const res = await listPendingUsers({ headers });
-      if (!res?.ok) {
-        toast.error(res?.error || "Failed to load pending users");
-        setPending([]);
-        return;
-      }
-      setPending(Array.isArray(res.users) ? res.users : []);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to load pending users");
-      setPending([]);
-    } finally {
-      setPendingLoading(false);
-    }
-  };
-
-  const handleApprove = async (u: PendingUser) => {
-    setPendingBusy(u.id);
-    try {
-      const headers = await getAuthHeaders();
-      await approveUserSignup({ data: { userId: u.id }, headers });
-      toast.success(`Approved ${u.email ?? u.id}`);
-      await Promise.all([fetchPending(), fetchUsers()]);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to approve user");
-    } finally {
-      setPendingBusy(null);
-    }
-  };
-
-  const handleResend = async (u: PendingUser) => {
-    if (!u.email) return;
-    setPendingBusy(u.id);
-    try {
-      const headers = await getAuthHeaders();
-      await resendConfirmationEmail({ data: { email: u.email }, headers });
-      toast.success(`Sent confirmation email to ${u.email}`);
-    } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to resend email");
-    } finally {
-      setPendingBusy(null);
-    }
-  };
 
   const fetchUsers = async () => {
     setLoading(true);
