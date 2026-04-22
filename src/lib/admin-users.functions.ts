@@ -22,43 +22,59 @@ async function assertAdmin(userId: string) {
   }
 }
 
+export interface ListPendingResult {
+  ok: boolean;
+  users: PendingUser[];
+  error?: string;
+}
+
 export const listPendingUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<PendingUser[]> => {
-    await assertAdmin(context.userId);
+  .handler(async ({ context }): Promise<ListPendingResult> => {
+    try {
+      await assertAdmin(context.userId);
 
-    // List auth users (paginated). Page through up to 1000 recent users.
-    const pending: PendingUser[] = [];
-    let page = 1;
-    const perPage = 200;
-    while (page <= 5) {
-      const { data, error } = await supabaseAdmin.auth.admin.listUsers({
-        page,
-        perPage,
-      });
-      if (error) throw new Response(error.message, { status: 500 });
-      for (const u of data.users) {
-        if (!u.email_confirmed_at) {
-          pending.push({
-            id: u.id,
-            email: u.email ?? null,
-            display_name:
-              (u.user_metadata?.display_name as string | undefined) ?? null,
-            created_at: u.created_at,
-            email_confirmed_at: u.email_confirmed_at ?? null,
-            last_sign_in_at: u.last_sign_in_at ?? null,
-          });
+      const pending: PendingUser[] = [];
+      let page = 1;
+      const perPage = 200;
+      while (page <= 5) {
+        const { data, error } = await supabaseAdmin.auth.admin.listUsers({
+          page,
+          perPage,
+        });
+        if (error) {
+          return { ok: false, users: [], error: error.message };
         }
+        for (const u of data.users) {
+          if (!u.email_confirmed_at) {
+            pending.push({
+              id: u.id,
+              email: u.email ?? null,
+              display_name:
+                (u.user_metadata?.display_name as string | undefined) ?? null,
+              created_at: u.created_at,
+              email_confirmed_at: u.email_confirmed_at ?? null,
+              last_sign_in_at: u.last_sign_in_at ?? null,
+            });
+          }
+        }
+        if (data.users.length < perPage) break;
+        page += 1;
       }
-      if (data.users.length < perPage) break;
-      page += 1;
+      pending.sort(
+        (a, b) =>
+          new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
+      );
+      return { ok: true, users: pending };
+    } catch (e) {
+      const msg = e instanceof Response
+        ? `${e.status}: ${await e.text().catch(() => e.statusText)}`
+        : e instanceof Error
+          ? e.message
+          : String(e);
+      console.error("listPendingUsers failed:", msg);
+      return { ok: false, users: [], error: msg };
     }
-    // Sort newest first
-    pending.sort(
-      (a, b) =>
-        new Date(b.created_at).getTime() - new Date(a.created_at).getTime()
-    );
-    return pending;
   });
 
 export const approveUserSignup = createServerFn({ method: "POST" })

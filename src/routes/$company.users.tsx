@@ -65,10 +65,16 @@ function UsersContent() {
   const fetchPending = async () => {
     setPendingLoading(true);
     try {
-      const rows = await listPendingUsers();
-      setPending(rows);
+      const res = await listPendingUsers();
+      if (!res?.ok) {
+        toast.error(res?.error || "Failed to load pending users");
+        setPending([]);
+        return;
+      }
+      setPending(Array.isArray(res.users) ? res.users : []);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load pending users");
+      setPending([]);
     } finally {
       setPendingLoading(false);
     }
