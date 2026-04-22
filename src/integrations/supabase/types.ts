@@ -16,40 +16,43 @@ export type Database = {
     Tables: {
       antenna_zones: {
         Row: {
-          antenna_port: number
+          antenna_port: number | null
           color: string
           company_slug: string
           created_at: string
           id: string
           label: string | null
+          location_id: string | null
           map_id: string
-          reader_id: string
+          reader_id: string | null
           shape_data: Json
           shape_kind: string
           updated_at: string
         }
         Insert: {
-          antenna_port: number
+          antenna_port?: number | null
           color?: string
           company_slug: string
           created_at?: string
           id?: string
           label?: string | null
+          location_id?: string | null
           map_id: string
-          reader_id: string
+          reader_id?: string | null
           shape_data: Json
           shape_kind: string
           updated_at?: string
         }
         Update: {
-          antenna_port?: number
+          antenna_port?: number | null
           color?: string
           company_slug?: string
           created_at?: string
           id?: string
           label?: string | null
+          location_id?: string | null
           map_id?: string
-          reader_id?: string
+          reader_id?: string | null
           shape_data?: Json
           shape_kind?: string
           updated_at?: string
@@ -184,7 +187,7 @@ export type Database = {
           image_height: number
           image_path: string
           image_width: number
-          location_id: string
+          location_id: string | null
           updated_at: string
         }
         Insert: {
@@ -194,7 +197,7 @@ export type Database = {
           image_height?: number
           image_path: string
           image_width?: number
-          location_id: string
+          location_id?: string | null
           updated_at?: string
         }
         Update: {
@@ -204,7 +207,7 @@ export type Database = {
           image_height?: number
           image_path?: string
           image_width?: number
-          location_id?: string
+          location_id?: string | null
           updated_at?: string
         }
         Relationships: []
