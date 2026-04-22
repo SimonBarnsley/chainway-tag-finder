@@ -58,10 +58,43 @@ export const Route = createRootRoute({
   notFoundComponent: NotFoundComponent,
 });
 
+// Runs before any other JS: redirects Supabase auth localStorage keys to sessionStorage
+// so each browser tab keeps an independent login session.
+const PER_TAB_AUTH_SCRIPT = `
+(function () {
+  try {
+    if (typeof window === 'undefined') return;
+    if (window.__perTabAuthInstalled) return;
+    window.__perTabAuthInstalled = true;
+    var isAuthKey = function (k) {
+      return typeof k === 'string' && (k.indexOf('sb-') === 0 || k.indexOf('supabase.auth.') === 0);
+    };
+    var ls = window.localStorage;
+    var ss = window.sessionStorage;
+    // If this tab has no session yet but localStorage has one (legacy), seed it once.
+    try {
+      for (var i = 0; i < ls.length; i++) {
+        var k = ls.key(i);
+        if (isAuthKey(k) && ss.getItem(k) === null) {
+          ss.setItem(k, ls.getItem(k));
+        }
+      }
+    } catch (e) {}
+    var origGet = ls.getItem.bind(ls);
+    var origSet = ls.setItem.bind(ls);
+    var origRemove = ls.removeItem.bind(ls);
+    ls.getItem = function (k) { return isAuthKey(k) ? ss.getItem(k) : origGet(k); };
+    ls.setItem = function (k, v) { return isAuthKey(k) ? ss.setItem(k, v) : origSet(k, v); };
+    ls.removeItem = function (k) { return isAuthKey(k) ? ss.removeItem(k) : origRemove(k); };
+  } catch (e) { /* no-op */ }
+})();
+`;
+
 function RootShell({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en">
       <head>
+        <script dangerouslySetInnerHTML={{ __html: PER_TAB_AUTH_SCRIPT }} />
         <HeadContent />
       </head>
       <body>
