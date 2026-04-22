@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Map as MapIcon, ArrowLeft, Pencil, RefreshCw, MapPin } from "lucide-react";
+import { Map as MapIcon, ArrowLeft, Pencil, RefreshCw, MapPin, Search, X } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -41,9 +42,36 @@ interface LocationRow {
   name: string;
 }
 
+interface ItemInfo {
+  name: string | null;
+  sku: string | null;
+  description: string | null;
+}
+
 // Pins for any tag whose latest scan location matches a zone (no time cutoff).
 // Recent scans get a "live" pulse; older ones render as static pins.
 const LIVE_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Wildcard match: supports `*` (any chars) and `?` (single char).
+ * If the query has no wildcard chars, it acts as a case-insensitive substring match.
+ */
+function wildcardMatch(value: string | null | undefined, query: string): boolean {
+  if (!value) return false;
+  const v = value.toLowerCase();
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (q.includes("*") || q.includes("?")) {
+    const escaped = q.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    const pattern = "^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$";
+    try {
+      return new RegExp(pattern).test(v);
+    } catch {
+      return v.includes(q);
+    }
+  }
+  return v.includes(q);
+}
 
 function ViewPage() {
   return (
