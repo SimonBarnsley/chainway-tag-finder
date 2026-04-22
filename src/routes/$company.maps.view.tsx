@@ -279,8 +279,8 @@ function Viewer() {
                   <span className="text-foreground font-medium">Live</span>
                 </span>
                 <span className="text-muted-foreground">
-                  {pins.length} active pin{pins.length === 1 ? "" : "s"} · {zones.length} zone
-                  {zones.length === 1 ? "" : "s"} · last 5 min
+                  {pins.length} tag{pins.length === 1 ? "" : "s"} ({pins.filter((p) => p.isLive).length} live) · {zones.length} zone
+                  {zones.length === 1 ? "" : "s"}
                 </span>
               </CardContent>
             </Card>
@@ -380,6 +380,12 @@ function Viewer() {
                           {isHover && (
                             <circle cx={cx} cy={cy} r={14} fill={p.color} fillOpacity={0.25} />
                           )}
+                          {p.isLive && (
+                            <circle cx={cx} cy={cy} r={7} fill={p.color} fillOpacity={0.5}>
+                              <animate attributeName="r" values="7;14;7" dur="1.6s" repeatCount="indefinite" />
+                              <animate attributeName="fill-opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite" />
+                            </circle>
+                          )}
                           <circle
                             cx={cx}
                             cy={cy}
@@ -387,6 +393,7 @@ function Viewer() {
                             fill={p.color}
                             stroke="white"
                             strokeWidth={2}
+                            opacity={p.isLive ? 1 : 0.85}
                           />
                           <circle cx={cx} cy={cy} r={2.5} fill="white" />
                         </g>
