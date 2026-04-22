@@ -114,3 +114,90 @@ export const resendConfirmationEmail = createServerFn({ method: "POST" })
     if (error) throw new Response(error.message, { status: 500 });
     return { ok: true };
   });
+
+export const updateUserCompany = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: { userId: string; companySlug: string | null }) => {
+      if (!input?.userId || typeof input.userId !== "string") {
+        throw new Response("userId required", { status: 400 });
+      }
+      if (
+        input.companySlug !== null &&
+        typeof input.companySlug !== "string"
+      ) {
+        throw new Response("companySlug must be string or null", {
+          status: 400,
+        });
+      }
+      return input;
+    }
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+
+    let companyName: string | null = null;
+    if (data.companySlug) {
+      // Look up the canonical company_name for this slug
+      const { data: existing } = await supabaseAdmin
+        .from("profiles")
+        .select("company_name")
+        .eq("company_slug", data.companySlug)
+        .not("company_name", "is", null)
+        .limit(1)
+        .maybeSingle();
+      companyName = existing?.company_name ?? null;
+      if (!companyName) {
+        throw new Response("Unknown company", { status: 400 });
+      }
+    }
+
+    const { error } = await supabaseAdmin
+      .from("profiles")
+      .update({
+        company_slug: data.companySlug,
+        company_name: companyName,
+        updated_at: new Date().toISOString(),
+      })
+      .eq("user_id", data.userId);
+
+    if (error) throw new Response(error.message, { status: 500 });
+    return { ok: true };
+  });
+
+export interface CompanyOption {
+  slug: string;
+  name: string;
+}
+
+export const listCompanies = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .handler(async ({ context }): Promise<{ ok: boolean; companies: CompanyOption[]; error?: string }> => {
+    try {
+      await assertAdmin(context.userId);
+      const { data, error } = await supabaseAdmin
+        .from("profiles")
+        .select("company_slug, company_name")
+        .not("company_slug", "is", null)
+        .not("company_name", "is", null);
+      if (error) throw new Response(error.message, { status: 500 });
+      const map = new Map<string, string>();
+      for (const r of data ?? []) {
+        if (r.company_slug && r.company_name && !map.has(r.company_slug)) {
+          map.set(r.company_slug, r.company_name);
+        }
+      }
+      const companies = Array.from(map.entries())
+        .map(([slug, name]) => ({ slug, name }))
+        .sort((a, b) => a.name.localeCompare(b.name));
+      return { ok: true, companies };
+    } catch (e) {
+      const msg =
+        e instanceof Response
+          ? `${e.status}: ${await e.text().catch(() => e.statusText)}`
+          : e instanceof Error
+            ? e.message
+            : String(e);
+      return { ok: false, companies: [], error: msg };
+    }
+  });
