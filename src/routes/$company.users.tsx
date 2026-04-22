@@ -6,15 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users as UsersIcon, Search, Trash2, MailCheck, Mail, Clock } from "lucide-react";
+import { Users as UsersIcon, Search, Trash2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
-import {
-  listPendingUsers,
-  approveUserSignup,
-  resendConfirmationEmail,
-  type PendingUser,
-} from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/$company/users")({
   component: UsersPage,
