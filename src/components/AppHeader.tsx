@@ -3,6 +3,7 @@ import { Link, useParams } from "@tanstack/react-router";
 import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug } from "lucide-react";
 import barcodeWarehouseLogo from "@/assets/barcode-warehouse-logo.jpg";
 import { useAuth } from "@/hooks/use-auth";
+import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
 
 interface AppHeaderProps {
@@ -14,19 +15,23 @@ export function AppHeader({ actions }: AppHeaderProps) {
   const [adminOpen, setAdminOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const { isAuthenticated, isAdmin, isSuperAdmin, user, signOut, companySlug } = useAuth();
+  const { has, loading: permLoading } = usePermissions();
   const params = useParams({ strict: false }) as { company?: string };
   const company = params.company || companySlug || "default";
 
-  const navItems = [
-    { label: "Scanner", to: "/$company" as const, icon: Radio },
-    { label: "Mobile Dashboard", to: "/$company/dashboard" as const, icon: BarChart3 },
-    { label: "Items", to: "/$company/items" as const, icon: Package },
-    { label: "Locations", to: "/$company/locations" as const, icon: MapPin },
-    { label: "Map", to: "/$company/maps/view" as const, icon: MapIcon },
-    { label: "History", to: "/$company/history" as const, icon: History },
-    { label: "Decoder", to: "/$company/decoder" as const, icon: Barcode },
-    { label: "Bulk Upload", to: "/$company/bulk-upload" as const, icon: Upload },
+  const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload"; icon: typeof Radio; perm: PermissionKey | null }[] = [
+    { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
+    { label: "Mobile Dashboard", to: "/$company/dashboard", icon: BarChart3, perm: "dashboard.admin" },
+    { label: "Items", to: "/$company/items", icon: Package, perm: "items.view" },
+    { label: "Locations", to: "/$company/locations", icon: MapPin, perm: "locations.view" },
+    { label: "Map", to: "/$company/maps/view", icon: MapIcon, perm: null },
+    { label: "History", to: "/$company/history", icon: History, perm: "history.view" },
+    { label: "Decoder", to: "/$company/decoder", icon: Barcode, perm: null },
+    { label: "Bulk Upload", to: "/$company/bulk-upload", icon: Upload, perm: "bulk_upload.use" },
   ];
+  const navItems = permLoading
+    ? allNavItems
+    : allNavItems.filter((item) => !item.perm || has(item.perm) || isSuperAdmin);
 
   useEffect(() => {
     if (!open) return;
