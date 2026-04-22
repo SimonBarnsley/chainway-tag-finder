@@ -216,6 +216,63 @@ function UsersContent() {
           />
         </div>
 
+        {/* Pending email confirmations */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="h-4 w-4 text-warning" />
+            <h2 className="text-sm font-semibold text-foreground">
+              Pending email confirmation
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              Approve users who didn't receive the verification email
+            </span>
+          </div>
+          {pendingLoading ? (
+            <p className="text-xs text-muted-foreground">Checking...</p>
+          ) : pending.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No pending sign-ups — all users have confirmed their email.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {pending.map((u) => (
+                <Card key={u.id} className="border-warning/40">
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {u.display_name || u.email || u.id}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {u.email} · signed up{" "}
+                        {new Date(u.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleResend(u)}
+                        disabled={pendingBusy === u.id || !u.email}
+                      >
+                        <Mail className="h-4 w-4 mr-1" />
+                        Resend
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(u)}
+                        disabled={pendingBusy === u.id}
+                      >
+                        <MailCheck className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
+        </div>
+
         {loading ? (
           <p className="text-sm text-muted-foreground">Loading users...</p>
         ) : filtered.length === 0 ? (
