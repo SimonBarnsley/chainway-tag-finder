@@ -6,9 +6,14 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users as UsersIcon, Search, Trash2 } from "lucide-react";
+import { Users as UsersIcon, Search, Trash2, Building2 } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  listCompanies,
+  updateUserCompany,
+  type CompanyOption,
+} from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/$company/users")({
   component: UsersPage,
@@ -25,6 +30,8 @@ interface UserRow {
   display_name: string | null;
   role_id: string | null;
   role: string | null; // raw db role
+  company_slug: string | null;
+  company_name: string | null;
 }
 
 const dbToUi = (r: string | null): UiRole => {
@@ -52,13 +59,32 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [companyUpdating, setCompanyUpdating] = useState<string | null>(null);
+  const [companies, setCompanies] = useState<CompanyOption[]>([]);
+
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) return undefined;
+    return { Authorization: `Bearer ${token}` };
+  };
+
+  const fetchCompanies = async () => {
+    try {
+      const headers = await getAuthHeaders();
+      const res = await listCompanies({ headers });
+      if (res?.ok) setCompanies(res.companies);
+    } catch {
+      // non-fatal
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
     try {
       const { data: profiles, error: pErr } = await supabase
         .from("profiles")
-        .select("user_id, email, display_name");
+        .select("user_id, email, display_name, company_slug, company_name");
       if (pErr) throw pErr;
 
       const { data: roles, error: rErr } = await supabase
@@ -85,6 +111,8 @@ function UsersContent() {
           display_name: p.display_name,
           role_id: r?.id ?? null,
           role: r?.role ?? null,
+          company_slug: p.company_slug,
+          company_name: p.company_name,
         };
       });
       setUsers(rows);
@@ -97,7 +125,29 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers();
+    fetchCompanies();
   }, []);
+
+  const handleCompanyChange = async (user: UserRow, newSlug: string) => {
+    if (user.role === "super_admin") {
+      toast.error("Cannot change a super admin's company");
+      return;
+    }
+    setCompanyUpdating(user.user_id);
+    try {
+      const headers = await getAuthHeaders();
+      await updateUserCompany({
+        data: { userId: user.user_id, companySlug: newSlug },
+        headers,
+      });
+      toast.success("Company updated");
+      await fetchUsers();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update company");
+    } finally {
+      setCompanyUpdating(null);
+    }
+  };
 
   const handleRoleChange = async (user: UserRow, newUi: UiRole) => {
     if (user.role === "super_admin") {
@@ -189,8 +239,32 @@ function UsersContent() {
                       {u.email && (
                         <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                       )}
+                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                        <Building2 className="h-3 w-3" />
+                        {u.company_name || "No company"}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {!isSuper && (
+                        <Select
+                          value={u.company_slug ?? ""}
+                          onValueChange={(v) => handleCompanyChange(u, v)}
+                          disabled={
+                            companyUpdating === u.user_id || companies.length === 0
+                          }
+                        >
+                          <SelectTrigger className="w-[160px] text-xs">
+                            <SelectValue placeholder="Set company" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((c) => (
+                              <SelectItem key={c.slug} value={c.slug}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       {isSuper ? (
                         <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning-foreground">
                           Super Admin
