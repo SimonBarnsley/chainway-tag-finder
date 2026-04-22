@@ -1,10 +1,11 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
-import { Map as MapIcon, ArrowLeft, Pencil, RefreshCw, MapPin } from "lucide-react";
+import { Map as MapIcon, ArrowLeft, Pencil, RefreshCw, MapPin, Search, X } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -41,9 +42,36 @@ interface LocationRow {
   name: string;
 }
 
+interface ItemInfo {
+  name: string | null;
+  sku: string | null;
+  description: string | null;
+}
+
 // Pins for any tag whose latest scan location matches a zone (no time cutoff).
 // Recent scans get a "live" pulse; older ones render as static pins.
 const LIVE_WINDOW_MS = 5 * 60 * 1000;
+
+/**
+ * Wildcard match: supports `*` (any chars) and `?` (single char).
+ * If the query has no wildcard chars, it acts as a case-insensitive substring match.
+ */
+function wildcardMatch(value: string | null | undefined, query: string): boolean {
+  if (!value) return false;
+  const v = value.toLowerCase();
+  const q = query.trim().toLowerCase();
+  if (!q) return true;
+  if (q.includes("*") || q.includes("?")) {
+    const escaped = q.replace(/[.+^${}()|[\]\\]/g, "\\$&");
+    const pattern = "^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$";
+    try {
+      return new RegExp(pattern).test(v);
+    } catch {
+      return v.includes(q);
+    }
+  }
+  return v.includes(q);
+}
 
 function ViewPage() {
   return (
@@ -62,8 +90,10 @@ function Viewer() {
   const [zones, setZones] = useState<AntennaZone[]>([]);
   const [locations, setLocations] = useState<LocationRow[]>([]);
   const [scans, setScans] = useState<ScanRow[]>([]);
+  const [itemByEpc, setItemByEpc] = useState<Map<string, ItemInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [hoveredEpc, setHoveredEpc] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchAll = useCallback(async () => {
     if (!companySlug) return;
@@ -124,6 +154,33 @@ function Viewer() {
         dedup.push(s);
       }
       setScans(dedup);
+
+      // Lookup item info (name/sku/description) for each EPC via tag_items -> items.
+      const epcs = dedup.map((s) => s.epc);
+      if (epcs.length === 0) {
+        setItemByEpc(new Map());
+      } else {
+        const { data: tagRows, error: tagErr } = await supabase
+          .from("tag_items")
+          .select("epc, items:item_id(name, sku, description)")
+          .eq("company_slug", companySlug)
+          .in("epc", epcs);
+        if (tagErr) throw tagErr;
+        const m = new Map<string, ItemInfo>();
+        type TagRow = {
+          epc: string;
+          items: { name: string | null; sku: string | null; description: string | null } | null;
+        };
+        for (const row of (tagRows ?? []) as unknown as TagRow[]) {
+          if (!row.items) continue;
+          m.set(row.epc, {
+            name: row.items.name,
+            sku: row.items.sku,
+            description: row.items.description,
+          });
+        }
+        setItemByEpc(m);
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load map");
     } finally {
@@ -199,12 +256,22 @@ function Viewer() {
       zoneId: string;
       lastSeen: string;
       isLive: boolean;
+      matchesSearch: boolean;
+      item: ItemInfo | null;
     }> = [];
     const liveCutoff = Date.now() - LIVE_WINDOW_MS;
+    const q = search.trim();
     for (const s of scans) {
       if (!s.location) continue;
       const z = zoneByLocationName.get(s.location.toLowerCase());
       if (!z) continue;
+      const item = itemByEpc.get(s.epc) ?? null;
+      const matches =
+        !q ||
+        wildcardMatch(s.epc, q) ||
+        wildcardMatch(item?.sku ?? null, q) ||
+        wildcardMatch(item?.description ?? null, q) ||
+        wildcardMatch(item?.name ?? null, q);
       const shape = parseZoneShape(z);
       const p = jitteredPointForEpc(shape, s.epc);
       out.push({
@@ -215,19 +282,26 @@ function Viewer() {
         zoneId: z.id,
         lastSeen: s.last_seen,
         isLive: new Date(s.last_seen).getTime() >= liveCutoff,
+        matchesSearch: matches,
+        item,
       });
     }
     return out;
-  }, [scans, zoneByLocationName]);
+  }, [scans, zoneByLocationName, itemByEpc, search]);
+
+  const visiblePins = useMemo(
+    () => (search.trim() ? pins.filter((p) => p.matchesSearch) : pins),
+    [pins, search],
+  );
 
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
   const zoneCounts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of pins) m.set(p.zoneId, (m.get(p.zoneId) ?? 0) + 1);
+    for (const p of visiblePins) m.set(p.zoneId, (m.get(p.zoneId) ?? 0) + 1);
     return m;
-  }, [pins]);
+  }, [visiblePins]);
 
   const locationNameById = new Map(locations.map((l) => [l.id, l.name]));
 
@@ -287,9 +361,33 @@ function Viewer() {
                   <span className="text-foreground font-medium">Live</span>
                 </span>
                 <span className="text-muted-foreground">
-                  {pins.length} tag{pins.length === 1 ? "" : "s"} ({pins.filter((p) => p.isLive).length} live) · {zones.length} zone
-                  {zones.length === 1 ? "" : "s"}
+                  {search.trim()
+                    ? `${visiblePins.length} of ${pins.length} tag${pins.length === 1 ? "" : "s"}`
+                    : `${pins.length} tag${pins.length === 1 ? "" : "s"} (${pins.filter((p) => p.isLive).length} live)`}
+                  {" · "}
+                  {zones.length} zone{zones.length === 1 ? "" : "s"}
                 </span>
+                <div className="ml-auto flex items-center gap-1.5 w-full sm:w-auto sm:min-w-[280px]">
+                  <div className="relative flex-1">
+                    <Search className="absolute left-2 top-1/2 -translate-y-1/2 h-3.5 w-3.5 text-muted-foreground" />
+                    <Input
+                      value={search}
+                      onChange={(e) => setSearch(e.target.value)}
+                      placeholder="Search SKU, description, EPC (use * ?)"
+                      className="h-8 pl-7 pr-7 text-xs"
+                    />
+                    {search && (
+                      <button
+                        type="button"
+                        onClick={() => setSearch("")}
+                        className="absolute right-1 top-1/2 -translate-y-1/2 rounded p-1 text-muted-foreground hover:text-foreground"
+                        aria-label="Clear search"
+                      >
+                        <X className="h-3.5 w-3.5" />
+                      </button>
+                    )}
+                  </div>
+                </div>
               </CardContent>
             </Card>
 
@@ -378,17 +476,26 @@ function Viewer() {
                       const cx = p.x * renderWidth;
                       const cy = p.y * renderHeight;
                       const isHover = hoveredEpc === p.epc;
+                      const dimmed = search.trim() !== "" && !p.matchesSearch;
+                      const highlighted = search.trim() !== "" && p.matchesSearch;
                       return (
                         <g
                           key={p.epc}
                           onMouseEnter={() => setHoveredEpc(p.epc)}
                           onMouseLeave={() => setHoveredEpc(null)}
                           style={{ cursor: "pointer" }}
+                          opacity={dimmed ? 0.15 : 1}
                         >
                           {isHover && (
                             <circle cx={cx} cy={cy} r={14} fill={p.color} fillOpacity={0.25} />
                           )}
-                          {p.isLive && (
+                          {highlighted && (
+                            <circle cx={cx} cy={cy} r={11} fill="none" stroke={p.color} strokeWidth={2.5}>
+                              <animate attributeName="r" values="9;16;9" dur="1.2s" repeatCount="indefinite" />
+                              <animate attributeName="stroke-opacity" values="1;0;1" dur="1.2s" repeatCount="indefinite" />
+                            </circle>
+                          )}
+                          {p.isLive && !dimmed && (
                             <circle cx={cx} cy={cy} r={7} fill={p.color} fillOpacity={0.5}>
                               <animate attributeName="r" values="7;14;7" dur="1.6s" repeatCount="indefinite" />
                               <animate attributeName="fill-opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite" />
@@ -397,7 +504,7 @@ function Viewer() {
                           <circle
                             cx={cx}
                             cy={cy}
-                            r={7}
+                            r={highlighted ? 8 : 7}
                             fill={p.color}
                             stroke="white"
                             strokeWidth={2}
@@ -414,30 +521,46 @@ function Viewer() {
                         if (!p) return null;
                         const cx = p.x * renderWidth;
                         const cy = p.y * renderHeight;
-                        const labelW = Math.max(180, p.epc.length * 7);
+                        const line1 =
+                          p.item?.name ||
+                          p.item?.sku ||
+                          p.item?.description ||
+                          "(unlinked tag)";
+                        const line2 = p.epc;
+                        const labelW = Math.max(200, Math.max(line1.length, line2.length) * 7);
                         const tx = Math.min(
                           renderWidth - labelW - 8,
                           Math.max(8, cx - labelW / 2),
                         );
-                        const ty = cy - 38 < 8 ? cy + 14 : cy - 38;
+                        const ty = cy - 52 < 8 ? cy + 14 : cy - 52;
                         return (
                           <g pointerEvents="none">
                             <rect
                               x={tx}
                               y={ty}
                               width={labelW}
-                              height={28}
+                              height={42}
                               rx={4}
                               fill="rgba(15,23,42,0.92)"
                             />
                             <text
                               x={tx + 8}
-                              y={ty + 18}
+                              y={ty + 16}
                               fill="white"
                               fontSize={12}
-                              fontFamily="monospace"
+                              fontWeight={600}
                             >
-                              {p.epc}
+                              {line1}
+                            </text>
+                            <text
+                              x={tx + 8}
+                              y={ty + 33}
+                              fill="white"
+                              fontSize={11}
+                              fontFamily="monospace"
+                              opacity={0.85}
+                            >
+                              {line2}
                             </text>
                           </g>
                         );
