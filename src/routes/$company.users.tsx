@@ -62,10 +62,18 @@ function UsersContent() {
   const [pendingLoading, setPendingLoading] = useState(true);
   const [pendingBusy, setPendingBusy] = useState<string | null>(null);
 
+  const getAuthHeaders = async () => {
+    const { data: { session } } = await supabase.auth.getSession();
+    const token = session?.access_token;
+    if (!token) throw new Error("Not authenticated");
+    return { Authorization: `Bearer ${token}` };
+  };
+
   const fetchPending = async () => {
     setPendingLoading(true);
     try {
-      const res = await listPendingUsers();
+      const headers = await getAuthHeaders();
+      const res = await listPendingUsers({ headers });
       if (!res?.ok) {
         toast.error(res?.error || "Failed to load pending users");
         setPending([]);
@@ -83,7 +91,8 @@ function UsersContent() {
   const handleApprove = async (u: PendingUser) => {
     setPendingBusy(u.id);
     try {
-      await approveUserSignup({ data: { userId: u.id } });
+      const headers = await getAuthHeaders();
+      await approveUserSignup({ data: { userId: u.id }, headers });
       toast.success(`Approved ${u.email ?? u.id}`);
       await Promise.all([fetchPending(), fetchUsers()]);
     } catch (e) {
@@ -97,7 +106,8 @@ function UsersContent() {
     if (!u.email) return;
     setPendingBusy(u.id);
     try {
-      await resendConfirmationEmail({ data: { email: u.email } });
+      const headers = await getAuthHeaders();
+      await resendConfirmationEmail({ data: { email: u.email }, headers });
       toast.success(`Sent confirmation email to ${u.email}`);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to resend email");
