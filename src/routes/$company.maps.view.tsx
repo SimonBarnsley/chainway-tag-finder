@@ -413,13 +413,8 @@ function Viewer() {
                   >
                     {zones.map((z) => {
                       const shape = parseZoneShape(z);
-                      const c = zoneCenter(shape);
-                      const count = zoneCounts.get(z.id) ?? 0;
-                      const name = z.location_id
-                        ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
-                        : z.label ?? "Zone";
                       return (
-                        <g key={z.id}>
+                        <g key={`shape-${z.id}`}>
                           {shape.kind === "rect" ? (
                             <rect
                               x={shape.x * renderWidth}
@@ -443,34 +438,6 @@ function Viewer() {
                               stroke={z.color}
                               strokeWidth={2}
                             />
-                          )}
-                          <text
-                            x={c.x * renderWidth}
-                            y={c.y * renderHeight - 14}
-                            fill={z.color}
-                            stroke="white"
-                            strokeWidth={3}
-                            paintOrder="stroke"
-                            fontSize={16}
-                            fontWeight={700}
-                            textAnchor="middle"
-                          >
-                            {name}
-                          </text>
-                          {count > 0 && (
-                            <text
-                              x={c.x * renderWidth}
-                              y={c.y * renderHeight + 6}
-                              fill={z.color}
-                              stroke="white"
-                              strokeWidth={3}
-                              paintOrder="stroke"
-                              fontSize={14}
-                              fontWeight={600}
-                              textAnchor="middle"
-                            >
-                              {count} tag{count === 1 ? "" : "s"}
-                            </text>
                           )}
                         </g>
                       );
