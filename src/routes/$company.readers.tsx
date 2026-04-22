@@ -55,7 +55,7 @@ interface FixedReader {
 
 function ReadersPage() {
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="readers.manage">
       <ReadersContent />
     </AuthGuard>
   );

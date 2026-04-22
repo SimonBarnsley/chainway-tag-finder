@@ -284,7 +284,7 @@ function ScannerPage() {
   );
 
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="scanner.use">
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
 

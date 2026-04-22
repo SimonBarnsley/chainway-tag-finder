@@ -93,7 +93,7 @@ function HistoryPage() {
   };
 
   return (
-    <AuthGuard>
+    <AuthGuard requirePermission="history.view">
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
 

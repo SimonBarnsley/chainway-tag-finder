@@ -243,7 +243,7 @@ function BulkUploadPage() {
   const successCount = items.filter((i) => i.status === "success").length;
 
   return (
-    <AuthGuard adminOnly>
+    <AuthGuard requirePermission="bulk_upload.use">
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader actions={
         <Button size="sm" variant="outline" className="gap-1.5 text-xs" onClick={downloadTemplate}>

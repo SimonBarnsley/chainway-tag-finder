@@ -2,7 +2,7 @@ import { useState, useEffect, useCallback } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
-export type AppRole = "admin" | "user" | "super_admin";
+export type AppRole = "admin" | "user" | "super_admin" | "supervisor";
 
 interface AuthState {
   user: User | null;
@@ -35,6 +35,7 @@ export function useAuth() {
     const roles = (data ?? []).map(r => r.role as AppRole);
     if (roles.includes("super_admin")) return "super_admin" as AppRole;
     if (roles.includes("admin")) return "admin" as AppRole;
+    if (roles.includes("supervisor")) return "supervisor" as AppRole;
     return "user" as AppRole;
   }, []);
 
