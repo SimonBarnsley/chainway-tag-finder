@@ -190,7 +190,9 @@ function Viewer() {
       color: string;
       zoneId: string;
       lastSeen: string;
+      isLive: boolean;
     }> = [];
+    const liveCutoff = Date.now() - LIVE_WINDOW_MS;
     for (const s of scans) {
       if (!s.location) continue;
       const z = zoneByLocationName.get(s.location.toLowerCase());
@@ -204,6 +206,7 @@ function Viewer() {
         color: z.color,
         zoneId: z.id,
         lastSeen: s.last_seen,
+        isLive: new Date(s.last_seen).getTime() >= liveCutoff,
       });
     }
     return out;
