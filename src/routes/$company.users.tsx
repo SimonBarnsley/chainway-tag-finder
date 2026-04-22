@@ -111,6 +111,8 @@ function UsersContent() {
           display_name: p.display_name,
           role_id: r?.id ?? null,
           role: r?.role ?? null,
+          company_slug: p.company_slug,
+          company_name: p.company_name,
         };
       });
       setUsers(rows);
@@ -123,7 +125,29 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers();
+    fetchCompanies();
   }, []);
+
+  const handleCompanyChange = async (user: UserRow, newSlug: string) => {
+    if (user.role === "super_admin") {
+      toast.error("Cannot change a super admin's company");
+      return;
+    }
+    setCompanyUpdating(user.user_id);
+    try {
+      const headers = await getAuthHeaders();
+      await updateUserCompany({
+        data: { userId: user.user_id, companySlug: newSlug },
+        headers,
+      });
+      toast.success("Company updated");
+      await fetchUsers();
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update company");
+    } finally {
+      setCompanyUpdating(null);
+    }
+  };
 
   const handleRoleChange = async (user: UserRow, newUi: UiRole) => {
     if (user.role === "super_admin") {
