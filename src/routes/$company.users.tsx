@@ -239,8 +239,32 @@ function UsersContent() {
                       {u.email && (
                         <p className="text-xs text-muted-foreground truncate">{u.email}</p>
                       )}
+                      <p className="text-[11px] text-muted-foreground truncate flex items-center gap-1 mt-0.5">
+                        <Building2 className="h-3 w-3" />
+                        {u.company_name || "No company"}
+                      </p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
+                      {!isSuper && (
+                        <Select
+                          value={u.company_slug ?? ""}
+                          onValueChange={(v) => handleCompanyChange(u, v)}
+                          disabled={
+                            companyUpdating === u.user_id || companies.length === 0
+                          }
+                        >
+                          <SelectTrigger className="w-[160px] text-xs">
+                            <SelectValue placeholder="Set company" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            {companies.map((c) => (
+                              <SelectItem key={c.slug} value={c.slug}>
+                                {c.name}
+                              </SelectItem>
+                            ))}
+                          </SelectContent>
+                        </Select>
+                      )}
                       {isSuper ? (
                         <span className="text-xs px-2 py-1 rounded-full bg-warning/20 text-warning-foreground">
                           Super Admin
