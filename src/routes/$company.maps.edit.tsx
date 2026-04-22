@@ -3,21 +3,19 @@ import { useState, useEffect, useCallback, useRef } from "react";
 import {
   Map as MapIcon,
   Upload,
-  Save,
-  Trash2,
   Square,
   Hexagon,
   X,
   ArrowLeft,
   Eye,
+  Trash2,
   Wand2,
+  MapPin,
 } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
-import { Label } from "@/components/ui/label";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
@@ -25,6 +23,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -37,30 +36,29 @@ import {
   colorForIndex,
 } from "@/lib/map-zones";
 
-export const Route = createFileRoute("/$company/maps/$locationId/edit")({
-  component: MapEditorPage,
+export const Route = createFileRoute("/$company/maps/edit")({
+  component: EditPage,
   head: () => ({
     meta: [
-      { title: "Edit Floor Plan — RFID Zone Editor" },
-      { name: "description", content: "Upload a floor plan and draw antenna coverage zones." },
+      { title: "Edit Company Floor Plan — RFID Zone Editor" },
+      {
+        name: "description",
+        content: "Upload your company floor plan and draw a zone for each location.",
+      },
     ],
   }),
 });
 
-interface AntennaOption {
-  reader_id: string;
-  reader_name: string;
-  reader_hostname: string;
-  antenna_port: number;
-  location: string;
-  description: string | null;
+interface LocationOption {
+  id: string;
+  name: string;
 }
 
 type DraftRect = { kind: "rect"; x: number; y: number; w: number; h: number };
 type DraftPoly = { kind: "polygon"; points: Array<{ x: number; y: number }> };
 type Draft = DraftRect | DraftPoly | null;
 
-function MapEditorPage() {
+function EditPage() {
   return (
     <AuthGuard>
       <Editor />
@@ -69,23 +67,22 @@ function MapEditorPage() {
 }
 
 function Editor() {
-  const { company, locationId } = Route.useParams();
+  const { company } = Route.useParams();
   const { companySlug } = useAuth();
 
-  const [locationName, setLocationName] = useState("");
   const [mapId, setMapId] = useState<string | null>(null);
   const [imagePath, setImagePath] = useState<string | null>(null);
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgDims, setImgDims] = useState<{ w: number; h: number } | null>(null);
 
   const [zones, setZones] = useState<AntennaZone[]>([]);
-  const [antennaOptions, setAntennaOptions] = useState<AntennaOption[]>([]);
+  const [locations, setLocations] = useState<LocationOption[]>([]);
 
   const [tool, setTool] = useState<"rect" | "polygon" | null>(null);
   const [draft, setDraft] = useState<Draft>(null);
   const [draftStart, setDraftStart] = useState<{ x: number; y: number } | null>(null);
   const [pendingShape, setPendingShape] = useState<ZoneShape | null>(null);
-  const [pendingAntennaKey, setPendingAntennaKey] = useState<string>("");
+  const [pendingLocationId, setPendingLocationId] = useState<string>("");
   const [pendingLabel, setPendingLabel] = useState("");
 
   const [uploading, setUploading] = useState(false);
@@ -97,25 +94,23 @@ function Editor() {
     if (!companySlug) return;
     setLoading(true);
     try {
-      const [locRes, mapRes, antRes] = await Promise.all([
-        supabase.from("locations").select("name").eq("id", locationId).maybeSingle(),
+      const [mapRes, locRes] = await Promise.all([
         supabase
           .from("location_maps")
           .select("id, image_path, image_width, image_height")
-          .eq("location_id", locationId)
           .eq("company_slug", companySlug)
+          .is("location_id", null)
           .maybeSingle(),
         supabase
-          .from("reader_antennas")
-          .select("reader_id, antenna_port, location, description, fixed_readers!inner(id, name, hostname)")
-          .eq("company_slug", companySlug),
+          .from("locations")
+          .select("id, name")
+          .eq("company_slug", companySlug)
+          .order("name"),
       ]);
-
-      if (locRes.error) throw locRes.error;
       if (mapRes.error) throw mapRes.error;
-      if (antRes.error) throw antRes.error;
+      if (locRes.error) throw locRes.error;
 
-      setLocationName(locRes.data?.name ?? "Location");
+      setLocations(locRes.data ?? []);
 
       let activeMapId: string | null = null;
       if (mapRes.data) {
@@ -123,7 +118,9 @@ function Editor() {
         setMapId(mapRes.data.id);
         setImagePath(mapRes.data.image_path);
         setImgDims({ w: mapRes.data.image_width, h: mapRes.data.image_height });
-        const { data: pub } = supabase.storage.from("location-maps").getPublicUrl(mapRes.data.image_path);
+        const { data: pub } = supabase.storage
+          .from("location-maps")
+          .getPublicUrl(mapRes.data.image_path);
         setImageUrl(pub.publicUrl);
       } else {
         setMapId(null);
@@ -132,24 +129,12 @@ function Editor() {
         setImageUrl(null);
       }
 
-      const opts: AntennaOption[] = (antRes.data ?? []).map((a) => {
-        const reader = a.fixed_readers as unknown as { id: string; name: string; hostname: string };
-        return {
-          reader_id: reader.id,
-          reader_name: reader.name,
-          reader_hostname: reader.hostname,
-          antenna_port: a.antenna_port,
-          location: a.location,
-          description: a.description ?? null,
-        };
-      });
-      setAntennaOptions(opts);
-
       if (activeMapId) {
         const { data: zd, error: ze } = await supabase
           .from("antenna_zones")
           .select("*")
-          .eq("map_id", activeMapId);
+          .eq("map_id", activeMapId)
+          .not("location_id", "is", null);
         if (ze) throw ze;
         setZones((zd ?? []) as AntennaZone[]);
       } else {
@@ -160,7 +145,7 @@ function Editor() {
     } finally {
       setLoading(false);
     }
-  }, [companySlug, locationId]);
+  }, [companySlug]);
 
   useEffect(() => {
     fetchAll();
@@ -178,7 +163,7 @@ function Editor() {
       });
 
       const ext = file.name.split(".").pop()?.toLowerCase() || "jpg";
-      const path = `${companySlug}/${locationId}-${Date.now()}.${ext}`;
+      const path = `${companySlug}/company-${Date.now()}.${ext}`;
       const { error: upErr } = await supabase.storage
         .from("location-maps")
         .upload(path, file, { upsert: true, contentType: file.type });
@@ -197,7 +182,7 @@ function Editor() {
       } else {
         const { error: insErr } = await supabase.from("location_maps").insert({
           company_slug: companySlug,
-          location_id: locationId,
+          location_id: null,
           image_path: path,
           image_width: dims.w,
           image_height: dims.h,
@@ -215,7 +200,9 @@ function Editor() {
     }
   };
 
-  const eventToNormalized = (e: React.MouseEvent<SVGSVGElement>): { x: number; y: number } | null => {
+  const eventToNormalized = (
+    e: React.MouseEvent<SVGSVGElement>,
+  ): { x: number; y: number } | null => {
     const svg = svgRef.current;
     if (!svg) return null;
     const rect = svg.getBoundingClientRect();
@@ -285,19 +272,21 @@ function Editor() {
     setDraft(null);
     setDraftStart(null);
     setPendingShape(null);
-    setPendingAntennaKey("");
+    setPendingLocationId("");
     setPendingLabel("");
     setTool(null);
   };
 
   const handleSaveZone = async () => {
     if (!pendingShape || !companySlug || !mapId) return;
-    if (!pendingAntennaKey) {
-      toast.error("Pick an antenna first");
+    if (!pendingLocationId) {
+      toast.error("Pick a location first");
       return;
     }
-    const [reader_id, portStr] = pendingAntennaKey.split("::");
-    const antenna_port = parseInt(portStr, 10);
+    if (zones.some((z) => z.location_id === pendingLocationId)) {
+      toast.error("That location already has a zone on this map");
+      return;
+    }
 
     const shape_data =
       pendingShape.kind === "rect"
@@ -310,15 +299,16 @@ function Editor() {
       const { error } = await supabase.from("antenna_zones").insert({
         company_slug: companySlug,
         map_id: mapId,
-        reader_id,
-        antenna_port,
+        location_id: pendingLocationId,
+        reader_id: null,
+        antenna_port: null,
         shape_kind: pendingShape.kind,
         shape_data,
         label: pendingLabel.trim() || null,
         color,
       });
       if (error) throw error;
-      toast.success("Zone saved");
+      toast.success("Location zone saved");
       cancelDraw();
       fetchAll();
     } catch (err: unknown) {
@@ -328,23 +318,18 @@ function Editor() {
 
   const handleAutoCreateZones = async () => {
     if (!companySlug || !mapId) return;
-    if (antennaOptions.length === 0) {
-      toast.error("No antenna mappings found. Configure them on the Readers page first.");
+    if (locations.length === 0) {
+      toast.error("No locations yet — add them on the Locations page first.");
       return;
     }
 
-    // Skip antennas already mapped on this map
-    const existing = new Set(zones.map((z) => `${z.reader_id}::${z.antenna_port}`));
-    const toCreate = antennaOptions.filter(
-      (o) => !existing.has(`${o.reader_id}::${o.antenna_port}`)
-    );
+    const existing = new Set(zones.map((z) => z.location_id));
+    const toCreate = locations.filter((l) => !existing.has(l.id));
     if (toCreate.length === 0) {
-      toast.info("All antennas already have zones on this map");
+      toast.info("Every location already has a zone on this map");
       return;
     }
 
-    // Lay out new zones in a grid that fits the unused space.
-    // Each zone is ~22% wide / ~22% tall; 4 columns, rows as needed.
     const cols = 4;
     const cellW = 0.22;
     const cellH = 0.22;
@@ -352,21 +337,21 @@ function Editor() {
     const gapY = 0.04;
     const startIndex = zones.length;
 
-    const rows = toCreate.map((o, i) => {
+    const rows = toCreate.map((l, i) => {
       const idx = startIndex + i;
       const col = i % cols;
       const row = Math.floor(i / cols);
       const x = gapX + col * (cellW + gapX);
       const y = Math.min(0.9 - cellH, gapY + row * (cellH + gapY));
-      const labelParts = [o.location, o.description].filter(Boolean).join(" — ").slice(0, 100);
       return {
         company_slug: companySlug,
         map_id: mapId,
-        reader_id: o.reader_id,
-        antenna_port: o.antenna_port,
+        location_id: l.id,
+        reader_id: null,
+        antenna_port: null,
         shape_kind: "rect",
         shape_data: { x, y, w: cellW, h: cellH },
-        label: labelParts || `${o.reader_name} A${o.antenna_port}`,
+        label: l.name,
         color: colorForIndex(idx),
       };
     });
@@ -374,7 +359,9 @@ function Editor() {
     try {
       const { error } = await supabase.from("antenna_zones").insert(rows);
       if (error) throw error;
-      toast.success(`Created ${rows.length} zone${rows.length === 1 ? "" : "s"} from antenna mapping`);
+      toast.success(
+        `Created ${rows.length} zone${rows.length === 1 ? "" : "s"} (drag to reposition them on the map)`,
+      );
       fetchAll();
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to auto-create zones");
@@ -395,6 +382,11 @@ function Editor() {
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
+  const locationNameById = new Map(locations.map((l) => [l.id, l.name]));
+  const availableLocations = locations.filter(
+    (l) => !zones.some((z) => z.location_id === l.id),
+  );
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
@@ -408,11 +400,11 @@ function Editor() {
             </Link>
             <MapIcon className="h-5 w-5 text-primary shrink-0" />
             <h1 className="text-lg font-bold text-foreground truncate">
-              {locationName} — Edit
+              Company Floor Plan — Edit
             </h1>
           </div>
           {mapId && (
-            <Link to="/$company/maps/$locationId/view" params={{ company, locationId }}>
+            <Link to="/$company/maps/view" params={{ company }}>
               <Button variant="outline" size="sm" className="h-8 gap-1">
                 <Eye className="h-3.5 w-3.5" /> Live View
               </Button>
@@ -420,7 +412,6 @@ function Editor() {
           )}
         </div>
 
-        {/* Always-visible upload control */}
         <Card>
           <CardContent className="p-3 flex items-center gap-3">
             <div className="h-10 w-10 rounded bg-primary/10 flex items-center justify-center shrink-0">
@@ -428,12 +419,12 @@ function Editor() {
             </div>
             <div className="flex-1 min-w-0">
               <p className="text-sm font-semibold text-foreground">
-                {imageUrl ? "Replace floor plan image" : "Upload floor plan image"}
+                {imageUrl ? "Replace company floor plan" : "Upload company floor plan"}
               </p>
               <p className="text-xs text-muted-foreground truncate">
                 {imageUrl
-                  ? "Uploading a new file will replace the current map (zones are kept)."
-                  : "JPG, PNG or WebP. Recommended: a top-down floor plan of the location."}
+                  ? "Uploading a new file replaces the current map. Existing zones are kept."
+                  : "JPG, PNG or WebP. Recommended: a top-down plan covering all locations."}
               </p>
             </div>
             <input
@@ -466,7 +457,8 @@ function Editor() {
               <MapIcon className="h-8 w-8 text-muted-foreground mx-auto" />
               <p className="text-sm text-muted-foreground">No floor plan uploaded yet</p>
               <p className="text-xs text-muted-foreground">
-                Use the <span className="font-semibold text-foreground">Upload Map</span> button above to get started.
+                Use the <span className="font-semibold text-foreground">Upload Map</span> button
+                above to get started.
               </p>
             </CardContent>
           </Card>
@@ -500,68 +492,52 @@ function Editor() {
                   <Hexagon className="h-3.5 w-3.5" /> Polygon
                 </Button>
                 {tool === "polygon" && draft?.kind === "polygon" && (
-                  <>
-                    <Button size="sm" variant="default" className="h-8 gap-1" onClick={finishPolygon}>
-                      <Save className="h-3.5 w-3.5" /> Finish ({draft.points.length} pts)
-                    </Button>
-                    <Button size="sm" variant="ghost" className="h-8" onClick={() => setDraft(null)}>
-                      Reset
-                    </Button>
-                  </>
+                  <Button size="sm" variant="secondary" className="h-8" onClick={finishPolygon}>
+                    Finish polygon ({draft.points.length} pts)
+                  </Button>
                 )}
-                <div className="flex-1" />
-                <Button
-                  size="sm"
-                  variant="secondary"
-                  className="h-8 gap-1"
-                  onClick={handleAutoCreateZones}
-                  title="Create one zone per antenna mapping (you can drag/resize after)"
-                >
-                  <Wand2 className="h-3.5 w-3.5" /> Auto from Antennas
-                </Button>
-                <input
-                  ref={fileRef}
-                  type="file"
-                  accept="image/jpeg,image/png,image/webp"
-                  className="hidden"
-                  onChange={(e) => {
-                    const f = e.target.files?.[0];
-                    if (f) handleUpload(f);
-                  }}
-                />
+                <span className="ml-auto" />
                 <Button
                   size="sm"
                   variant="outline"
                   className="h-8 gap-1"
-                  onClick={() => fileRef.current?.click()}
-                  disabled={uploading}
+                  onClick={handleAutoCreateZones}
+                  disabled={availableLocations.length === 0}
+                  title="Drop a default rectangle for every location not yet on the map"
                 >
-                  <Upload className="h-3.5 w-3.5" /> Replace Image
+                  <Wand2 className="h-3.5 w-3.5" /> Auto-create zones
                 </Button>
               </CardContent>
             </Card>
 
             <Card className="overflow-hidden">
               <CardContent className="p-0 relative">
-                <div className="relative w-full" style={{ aspectRatio: `${renderWidth} / ${renderHeight}` }}>
+                <div
+                  className="relative w-full"
+                  style={{ aspectRatio: `${renderWidth} / ${renderHeight}` }}
+                >
                   <img
                     src={imageUrl}
-                    alt={locationName}
+                    alt="Company floor plan"
                     className="absolute inset-0 w-full h-full object-contain bg-muted select-none pointer-events-none"
                     draggable={false}
                   />
                   <svg
                     ref={svgRef}
                     viewBox={`0 0 ${renderWidth} ${renderHeight}`}
-                    className={`absolute inset-0 w-full h-full ${tool ? "cursor-crosshair" : "cursor-default"}`}
+                    className="absolute inset-0 w-full h-full"
                     onMouseDown={handleSvgMouseDown}
                     onMouseMove={handleSvgMouseMove}
                     onMouseUp={handleSvgMouseUp}
-                    onMouseLeave={handleSvgMouseUp}
+                    style={{ cursor: tool ? "crosshair" : "default" }}
                   >
+                    {/* Saved zones */}
                     {zones.map((z) => {
                       const shape = parseZoneShape(z);
                       const c = zoneCenter(shape);
+                      const name = z.location_id
+                        ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
+                        : z.label ?? "Zone";
                       return (
                         <g key={z.id}>
                           {shape.kind === "rect" ? (
@@ -571,15 +547,19 @@ function Editor() {
                               width={shape.w * renderWidth}
                               height={shape.h * renderHeight}
                               fill={z.color}
-                              fillOpacity={0.25}
+                              fillOpacity={0.18}
                               stroke={z.color}
                               strokeWidth={2}
                             />
                           ) : (
                             <polygon
-                              points={polygonPointsAttr(shape.points, renderWidth, renderHeight)}
+                              points={polygonPointsAttr(
+                                shape.points,
+                                renderWidth,
+                                renderHeight,
+                              )}
                               fill={z.color}
-                              fillOpacity={0.25}
+                              fillOpacity={0.18}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -591,45 +571,17 @@ function Editor() {
                             stroke="white"
                             strokeWidth={3}
                             paintOrder="stroke"
-                            fontSize={18}
+                            fontSize={16}
                             fontWeight={700}
                             textAnchor="middle"
-                            dominantBaseline="middle"
                           >
-                            A{z.antenna_port}
-                            {z.label ? ` · ${z.label}` : ""}
+                            {name}
                           </text>
                         </g>
                       );
                     })}
 
-                    {pendingShape && (
-                      <g>
-                        {pendingShape.kind === "rect" ? (
-                          <rect
-                            x={pendingShape.x * renderWidth}
-                            y={pendingShape.y * renderHeight}
-                            width={pendingShape.w * renderWidth}
-                            height={pendingShape.h * renderHeight}
-                            fill="#facc15"
-                            fillOpacity={0.3}
-                            stroke="#facc15"
-                            strokeWidth={2}
-                            strokeDasharray="6 4"
-                          />
-                        ) : (
-                          <polygon
-                            points={polygonPointsAttr(pendingShape.points, renderWidth, renderHeight)}
-                            fill="#facc15"
-                            fillOpacity={0.3}
-                            stroke="#facc15"
-                            strokeWidth={2}
-                            strokeDasharray="6 4"
-                          />
-                        )}
-                      </g>
-                    )}
-
+                    {/* Draft */}
                     {draft && draft.kind === "rect" && (
                       <rect
                         x={draft.x * renderWidth}
@@ -640,18 +592,22 @@ function Editor() {
                         fillOpacity={0.2}
                         stroke="#3b82f6"
                         strokeWidth={2}
-                        strokeDasharray="4 4"
+                        strokeDasharray="6 4"
                       />
                     )}
                     {draft && draft.kind === "polygon" && draft.points.length > 0 && (
                       <>
                         {draft.points.length >= 2 && (
                           <polyline
-                            points={polygonPointsAttr(draft.points, renderWidth, renderHeight)}
+                            points={polygonPointsAttr(
+                              draft.points,
+                              renderWidth,
+                              renderHeight,
+                            )}
                             fill="none"
                             stroke="#3b82f6"
                             strokeWidth={2}
-                            strokeDasharray="4 4"
+                            strokeDasharray="6 4"
                           />
                         )}
                         {draft.points.map((p, i) => (
@@ -659,11 +615,38 @@ function Editor() {
                             key={i}
                             cx={p.x * renderWidth}
                             cy={p.y * renderHeight}
-                            r={5}
+                            r={4}
                             fill="#3b82f6"
                           />
                         ))}
                       </>
+                    )}
+
+                    {/* Pending preview */}
+                    {pendingShape && pendingShape.kind === "rect" && (
+                      <rect
+                        x={pendingShape.x * renderWidth}
+                        y={pendingShape.y * renderHeight}
+                        width={pendingShape.w * renderWidth}
+                        height={pendingShape.h * renderHeight}
+                        fill="#f59e0b"
+                        fillOpacity={0.25}
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                      />
+                    )}
+                    {pendingShape && pendingShape.kind === "polygon" && (
+                      <polygon
+                        points={polygonPointsAttr(
+                          pendingShape.points,
+                          renderWidth,
+                          renderHeight,
+                        )}
+                        fill="#f59e0b"
+                        fillOpacity={0.25}
+                        stroke="#f59e0b"
+                        strokeWidth={2}
+                      />
                     )}
                   </svg>
                 </div>
@@ -671,54 +654,55 @@ function Editor() {
             </Card>
 
             {pendingShape && (
-              <Card className="border-primary">
-                <CardContent className="p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-semibold text-foreground">Assign zone to antenna</h3>
-                    <Button size="sm" variant="ghost" className="h-7 w-7 p-0" onClick={cancelDraw}>
+              <Card className="border-amber-500/40">
+                <CardContent className="p-3 space-y-3">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="h-4 w-4 text-amber-500" />
+                    <p className="text-sm font-semibold">Assign this zone to a location</p>
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      className="ml-auto h-7 w-7 p-0"
+                      onClick={cancelDraw}
+                    >
                       <X className="h-4 w-4" />
                     </Button>
                   </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Antenna *</Label>
-                    <Select value={pendingAntennaKey} onValueChange={setPendingAntennaKey}>
-                      <SelectTrigger className="text-sm">
-                        <SelectValue placeholder="Pick a reader + antenna" />
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <Select
+                      value={pendingLocationId}
+                      onValueChange={setPendingLocationId}
+                    >
+                      <SelectTrigger className="h-9">
+                        <SelectValue placeholder="Pick a location…" />
                       </SelectTrigger>
                       <SelectContent>
-                        {antennaOptions.length === 0 ? (
-                          <div className="px-2 py-1.5 text-xs text-muted-foreground">
-                            No antennas configured. Set them up in Readers first.
+                        {availableLocations.length === 0 ? (
+                          <div className="px-2 py-2 text-xs text-muted-foreground">
+                            All locations already have zones
                           </div>
                         ) : (
-                          antennaOptions.map((o) => (
-                            <SelectItem
-                              key={`${o.reader_id}::${o.antenna_port}`}
-                              value={`${o.reader_id}::${o.antenna_port}`}
-                            >
-                              {o.reader_name} · A{o.antenna_port} · {o.location}
+                          availableLocations.map((l) => (
+                            <SelectItem key={l.id} value={l.id}>
+                              {l.name}
                             </SelectItem>
                           ))
                         )}
                       </SelectContent>
                     </Select>
-                  </div>
-                  <div className="space-y-1.5">
-                    <Label className="text-xs">Label (optional)</Label>
                     <Input
+                      placeholder="Optional label (defaults to location name)"
                       value={pendingLabel}
                       onChange={(e) => setPendingLabel(e.target.value)}
-                      placeholder="e.g. Pallet rack 3"
-                      className="text-sm"
-                      maxLength={100}
+                      className="h-9"
                     />
                   </div>
-                  <div className="flex gap-2">
-                    <Button onClick={handleSaveZone} className="flex-1 gap-1" size="sm">
-                      <Save className="h-3.5 w-3.5" /> Save Zone
-                    </Button>
-                    <Button onClick={cancelDraw} variant="outline" size="sm">
+                  <div className="flex justify-end gap-2">
+                    <Button size="sm" variant="ghost" onClick={cancelDraw}>
                       Cancel
+                    </Button>
+                    <Button size="sm" onClick={handleSaveZone}>
+                      Save zone
                     </Button>
                   </div>
                 </CardContent>
@@ -727,40 +711,46 @@ function Editor() {
 
             <Card>
               <CardContent className="p-3">
-                <h3 className="text-xs font-semibold text-foreground uppercase tracking-wider mb-2">
-                  Configured Zones ({zones.length})
-                </h3>
+                <p className="text-xs font-semibold text-muted-foreground mb-2">
+                  Mapped locations ({zones.length} of {locations.length})
+                </p>
                 {zones.length === 0 ? (
                   <p className="text-xs text-muted-foreground">
-                    No zones yet. Pick Rectangle or Polygon above and draw on the map.
+                    Pick a draw tool above and outline each location on the map.
                   </p>
                 ) : (
-                  <div className="space-y-1.5">
-                    {zones.map((z) => (
-                      <div
-                        key={z.id}
-                        className="flex items-center gap-2 text-sm border border-border rounded px-2 py-1.5"
-                      >
-                        <div
-                          className="h-4 w-4 rounded shrink-0"
-                          style={{ backgroundColor: z.color }}
-                        />
-                        <span className="font-mono text-xs">A{z.antenna_port}</span>
-                        <span className="text-foreground truncate flex-1">
-                          {z.label || <span className="text-muted-foreground italic">no label</span>}
-                        </span>
-                        <span className="text-xs text-muted-foreground capitalize">{z.shape_kind}</span>
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-7 w-7 p-0 text-destructive"
-                          onClick={() => handleDeleteZone(z.id)}
+                  <ul className="divide-y divide-border">
+                    {zones.map((z) => {
+                      const name = z.location_id
+                        ? locationNameById.get(z.location_id) ?? "Unknown"
+                        : "Unassigned";
+                      return (
+                        <li
+                          key={z.id}
+                          className="flex items-center gap-2 py-2 text-sm"
                         >
-                          <Trash2 className="h-3.5 w-3.5" />
-                        </Button>
-                      </div>
-                    ))}
-                  </div>
+                          <span
+                            className="inline-block h-3 w-3 rounded-sm shrink-0"
+                            style={{ backgroundColor: z.color }}
+                          />
+                          <span className="font-medium truncate flex-1">{name}</span>
+                          {z.label && (
+                            <span className="text-xs text-muted-foreground truncate italic">
+                              {z.label}
+                            </span>
+                          )}
+                          <Button
+                            size="sm"
+                            variant="ghost"
+                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                            onClick={() => handleDeleteZone(z.id)}
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </Button>
+                        </li>
+                      );
+                    })}
+                  </ul>
                 )}
               </CardContent>
             </Card>
