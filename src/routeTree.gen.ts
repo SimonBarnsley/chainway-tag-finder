@@ -28,6 +28,7 @@ import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-up
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
+import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
 
@@ -126,6 +127,11 @@ const CompanyMapsIndexRoute = CompanyMapsIndexRouteImport.update({
   path: '/maps/',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyMapsViewRoute = CompanyMapsViewRouteImport.update({
+  id: '/maps/view',
+  path: '/maps/view',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyMapsEditRoute = CompanyMapsEditRouteImport.update({
   id: '/maps/edit',
   path: '/maps/edit',
@@ -158,6 +164,7 @@ export interface FileRoutesByFullPath {
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
+  '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
 }
@@ -180,6 +187,7 @@ export interface FileRoutesByTo {
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
+  '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
 }
@@ -204,6 +212,7 @@ export interface FileRoutesById {
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
+  '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
 }
@@ -229,6 +238,7 @@ export interface FileRouteTypes {
     | '/api/zebra-reader'
     | '/$company/'
     | '/$company/maps/edit'
+    | '/$company/maps/view'
     | '/$company/maps/'
     | '/api/zebra-reader/$company/$key'
   fileRoutesByTo: FileRoutesByTo
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/api/zebra-reader'
     | '/$company'
     | '/$company/maps/edit'
+    | '/$company/maps/view'
     | '/$company/maps'
     | '/api/zebra-reader/$company/$key'
   id:
@@ -274,6 +285,7 @@ export interface FileRouteTypes {
     | '/api/zebra-reader'
     | '/$company/'
     | '/$company/maps/edit'
+    | '/$company/maps/view'
     | '/$company/maps/'
     | '/api/zebra-reader/$company/$key'
   fileRoutesById: FileRoutesById
@@ -421,6 +433,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyMapsIndexRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/maps/view': {
+      id: '/$company/maps/view'
+      path: '/maps/view'
+      fullPath: '/$company/maps/view'
+      preLoaderRoute: typeof CompanyMapsViewRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/maps/edit': {
       id: '/$company/maps/edit'
       path: '/maps/edit'
@@ -453,6 +472,7 @@ interface CompanyRouteChildren {
   CompanyUsersRoute: typeof CompanyUsersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
   CompanyMapsEditRoute: typeof CompanyMapsEditRoute
+  CompanyMapsViewRoute: typeof CompanyMapsViewRoute
   CompanyMapsIndexRoute: typeof CompanyMapsIndexRoute
 }
 
@@ -471,6 +491,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyUsersRoute: CompanyUsersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
   CompanyMapsEditRoute: CompanyMapsEditRoute,
+  CompanyMapsViewRoute: CompanyMapsViewRoute,
   CompanyMapsIndexRoute: CompanyMapsIndexRoute,
 }
 
