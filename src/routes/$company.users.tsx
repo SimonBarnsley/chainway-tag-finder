@@ -58,6 +58,47 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingUser[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
+  const [pendingBusy, setPendingBusy] = useState<string | null>(null);
+
+  const fetchPending = async () => {
+    setPendingLoading(true);
+    try {
+      const rows = await listPendingUsers();
+      setPending(rows);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load pending users");
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const handleApprove = async (u: PendingUser) => {
+    setPendingBusy(u.id);
+    try {
+      await approveUserSignup({ data: { userId: u.id } });
+      toast.success(`Approved ${u.email ?? u.id}`);
+      await Promise.all([fetchPending(), fetchUsers()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to approve user");
+    } finally {
+      setPendingBusy(null);
+    }
+  };
+
+  const handleResend = async (u: PendingUser) => {
+    if (!u.email) return;
+    setPendingBusy(u.id);
+    try {
+      await resendConfirmationEmail({ data: { email: u.email } });
+      toast.success(`Sent confirmation email to ${u.email}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to resend email");
+    } finally {
+      setPendingBusy(null);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
