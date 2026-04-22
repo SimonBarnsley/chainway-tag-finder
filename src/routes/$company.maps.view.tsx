@@ -90,8 +90,10 @@ function Viewer() {
   const [zones, setZones] = useState<AntennaZone[]>([]);
   const [locations, setLocations] = useState<LocationRow[]>([]);
   const [scans, setScans] = useState<ScanRow[]>([]);
+  const [itemByEpc, setItemByEpc] = useState<Map<string, ItemInfo>>(new Map());
   const [loading, setLoading] = useState(true);
   const [hoveredEpc, setHoveredEpc] = useState<string | null>(null);
+  const [search, setSearch] = useState("");
 
   const fetchAll = useCallback(async () => {
     if (!companySlug) return;
@@ -152,6 +154,33 @@ function Viewer() {
         dedup.push(s);
       }
       setScans(dedup);
+
+      // Lookup item info (name/sku/description) for each EPC via tag_items -> items.
+      const epcs = dedup.map((s) => s.epc);
+      if (epcs.length === 0) {
+        setItemByEpc(new Map());
+      } else {
+        const { data: tagRows, error: tagErr } = await supabase
+          .from("tag_items")
+          .select("epc, items:item_id(name, sku, description)")
+          .eq("company_slug", companySlug)
+          .in("epc", epcs);
+        if (tagErr) throw tagErr;
+        const m = new Map<string, ItemInfo>();
+        type TagRow = {
+          epc: string;
+          items: { name: string | null; sku: string | null; description: string | null } | null;
+        };
+        for (const row of (tagRows ?? []) as unknown as TagRow[]) {
+          if (!row.items) continue;
+          m.set(row.epc, {
+            name: row.items.name,
+            sku: row.items.sku,
+            description: row.items.description,
+          });
+        }
+        setItemByEpc(m);
+      }
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load map");
     } finally {
