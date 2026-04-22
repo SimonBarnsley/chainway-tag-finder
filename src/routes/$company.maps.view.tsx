@@ -135,6 +135,14 @@ function Viewer() {
     fetchAll();
   }, [fetchAll]);
 
+  // Auto-refresh tag data every 15s as a safety net on top of realtime.
+  useEffect(() => {
+    const t = setInterval(() => {
+      fetchAll();
+    }, 15000);
+    return () => clearInterval(t);
+  }, [fetchAll]);
+
   // Realtime
   useEffect(() => {
     if (!companySlug) return;
