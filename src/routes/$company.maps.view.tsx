@@ -83,7 +83,7 @@ function ViewPage() {
 
 function Viewer() {
   const { company } = Route.useParams();
-  const { companySlug } = useAuth();
+  const { companySlug, isAdmin } = useAuth();
 
   const [imageUrl, setImageUrl] = useState<string | null>(null);
   const [imgDims, setImgDims] = useState<{ w: number; h: number } | null>(null);
@@ -325,11 +325,13 @@ function Viewer() {
             <Button variant="outline" size="sm" className="h-8 gap-1" onClick={fetchAll}>
               <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </Button>
-            <Link to="/$company/maps/edit" params={{ company }}>
-              <Button variant="outline" size="sm" className="h-8 gap-1">
-                <Pencil className="h-3.5 w-3.5" /> Edit
-              </Button>
-            </Link>
+            {isAdmin && (
+              <Link to="/$company/maps/edit" params={{ company }}>
+                <Button variant="outline" size="sm" className="h-8 gap-1">
+                  <Pencil className="h-3.5 w-3.5" /> Edit
+                </Button>
+              </Link>
+            )}
           </div>
         </div>
 
@@ -342,11 +344,13 @@ function Viewer() {
               <p className="text-sm text-muted-foreground">
                 No company floor plan uploaded yet
               </p>
-              <Link to="/$company/maps/edit" params={{ company }}>
-                <Button size="sm" className="mt-3 gap-1">
-                  <Pencil className="h-3.5 w-3.5" /> Set up map
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link to="/$company/maps/edit" params={{ company }}>
+                  <Button size="sm" className="mt-3 gap-1">
+                    <Pencil className="h-3.5 w-3.5" /> Set up map
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         ) : (
