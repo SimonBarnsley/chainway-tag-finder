@@ -41,7 +41,9 @@ interface LocationRow {
   name: string;
 }
 
-const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+// Pins for any tag whose latest scan location matches a zone (no time cutoff).
+// Recent scans get a "live" pulse; older ones render as static pins.
+const LIVE_WINDOW_MS = 5 * 60 * 1000;
 
 function ViewPage() {
   return (
@@ -105,16 +107,23 @@ function Viewer() {
       if (ze) throw ze;
       setZones((zd ?? []) as AntennaZone[]);
 
-      const since = new Date(Date.now() - ACTIVE_WINDOW_MS).toISOString();
       const { data: sd, error: se } = await supabase
         .from("rfid_scans")
         .select("id, epc, location, last_seen")
         .eq("company_slug", companySlug)
-        .gte("last_seen", since)
+        .not("location", "is", null)
         .order("last_seen", { ascending: false })
-        .limit(500);
+        .limit(2000);
       if (se) throw se;
-      setScans(sd ?? []);
+      // Deduplicate to the latest scan per EPC so each tag pins once.
+      const seen = new Set<string>();
+      const dedup: ScanRow[] = [];
+      for (const s of sd ?? []) {
+        if (seen.has(s.epc)) continue;
+        seen.add(s.epc);
+        dedup.push(s);
+      }
+      setScans(dedup);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load map");
     } finally {
@@ -146,12 +155,10 @@ function Viewer() {
             if (payload.eventType === "DELETE" && oldRow?.id) {
               return prev.filter((s) => s.id !== oldRow.id);
             }
-            if (!newRow) return prev;
-            const idx = prev.findIndex((s) => s.id === newRow.id);
-            if (idx === -1) return [newRow, ...prev].slice(0, 500);
-            const next = prev.slice();
-            next[idx] = newRow;
-            return next;
+            if (!newRow || !newRow.location) return prev;
+            // Keep one row per EPC (latest wins).
+            const filtered = prev.filter((s) => s.epc !== newRow.epc);
+            return [newRow, ...filtered].slice(0, 2000);
           });
         },
       )
@@ -161,13 +168,6 @@ function Viewer() {
     };
   }, [companySlug]);
 
-  useEffect(() => {
-    const t = setInterval(() => {
-      const cutoff = Date.now() - ACTIVE_WINDOW_MS;
-      setScans((prev) => prev.filter((s) => new Date(s.last_seen).getTime() >= cutoff));
-    }, 30000);
-    return () => clearInterval(t);
-  }, []);
 
   // location name -> zone
   const zoneByLocationName = useMemo(() => {
