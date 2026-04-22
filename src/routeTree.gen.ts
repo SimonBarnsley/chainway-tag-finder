@@ -19,7 +19,6 @@ import { Route as CompanyUsersRouteImport } from './routes/$company.users'
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
-import { Route as CompanyMapsRouteImport } from './routes/$company.maps'
 import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
 import { Route as CompanyItemsRouteImport } from './routes/$company.items'
 import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
@@ -28,6 +27,7 @@ import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboar
 import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
+import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
 import { Route as CompanyMapsLocationIdViewRouteImport } from './routes/$company.maps.$locationId.view'
 import { Route as CompanyMapsLocationIdEditRouteImport } from './routes/$company.maps.$locationId.edit'
@@ -82,11 +82,6 @@ const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
   path: '/reader-debug',
   getParentRoute: () => CompanyRoute,
 } as any)
-const CompanyMapsRoute = CompanyMapsRouteImport.update({
-  id: '/maps',
-  path: '/maps',
-  getParentRoute: () => CompanyRoute,
-} as any)
 const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
   id: '/locations',
   path: '/locations',
@@ -127,6 +122,11 @@ const CompanyAdminRoute = CompanyAdminRouteImport.update({
   path: '/admin',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyMapsIndexRoute = CompanyMapsIndexRouteImport.update({
+  id: '/maps/',
+  path: '/maps/',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const ApiZebraReaderCompanyKeyRoute =
   ApiZebraReaderCompanyKeyRouteImport.update({
     id: '/$company/$key',
@@ -135,15 +135,15 @@ const ApiZebraReaderCompanyKeyRoute =
   } as any)
 const CompanyMapsLocationIdViewRoute =
   CompanyMapsLocationIdViewRouteImport.update({
-    id: '/$locationId/view',
-    path: '/$locationId/view',
-    getParentRoute: () => CompanyMapsRoute,
+    id: '/maps/$locationId/view',
+    path: '/maps/$locationId/view',
+    getParentRoute: () => CompanyRoute,
   } as any)
 const CompanyMapsLocationIdEditRoute =
   CompanyMapsLocationIdEditRouteImport.update({
-    id: '/$locationId/edit',
-    path: '/$locationId/edit',
-    getParentRoute: () => CompanyMapsRoute,
+    id: '/maps/$locationId/edit',
+    path: '/maps/$locationId/edit',
+    getParentRoute: () => CompanyRoute,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -159,13 +159,13 @@ export interface FileRoutesByFullPath {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
-  '/$company/maps': typeof CompanyMapsRouteWithChildren
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
+  '/$company/maps/': typeof CompanyMapsIndexRoute
   '/$company/maps/$locationId/edit': typeof CompanyMapsLocationIdEditRoute
   '/$company/maps/$locationId/view': typeof CompanyMapsLocationIdViewRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -182,13 +182,13 @@ export interface FileRoutesByTo {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
-  '/$company/maps': typeof CompanyMapsRouteWithChildren
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company': typeof CompanyIndexRoute
+  '/$company/maps': typeof CompanyMapsIndexRoute
   '/$company/maps/$locationId/edit': typeof CompanyMapsLocationIdEditRoute
   '/$company/maps/$locationId/view': typeof CompanyMapsLocationIdViewRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -207,13 +207,13 @@ export interface FileRoutesById {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
-  '/$company/maps': typeof CompanyMapsRouteWithChildren
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
+  '/$company/maps/': typeof CompanyMapsIndexRoute
   '/$company/maps/$locationId/edit': typeof CompanyMapsLocationIdEditRoute
   '/$company/maps/$locationId/view': typeof CompanyMapsLocationIdViewRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -233,13 +233,13 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
-    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
+    | '/$company/maps/'
     | '/$company/maps/$locationId/edit'
     | '/$company/maps/$locationId/view'
     | '/api/zebra-reader/$company/$key'
@@ -256,13 +256,13 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
-    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company'
+    | '/$company/maps'
     | '/$company/maps/$locationId/edit'
     | '/$company/maps/$locationId/view'
     | '/api/zebra-reader/$company/$key'
@@ -280,13 +280,13 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
-    | '/$company/maps'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
+    | '/$company/maps/'
     | '/$company/maps/$locationId/edit'
     | '/$company/maps/$locationId/view'
     | '/api/zebra-reader/$company/$key'
@@ -372,13 +372,6 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyReaderDebugRouteImport
       parentRoute: typeof CompanyRoute
     }
-    '/$company/maps': {
-      id: '/$company/maps'
-      path: '/maps'
-      fullPath: '/$company/maps'
-      preLoaderRoute: typeof CompanyMapsRouteImport
-      parentRoute: typeof CompanyRoute
-    }
     '/$company/locations': {
       id: '/$company/locations'
       path: '/locations'
@@ -435,6 +428,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyAdminRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/maps/': {
+      id: '/$company/maps/'
+      path: '/maps'
+      fullPath: '/$company/maps/'
+      preLoaderRoute: typeof CompanyMapsIndexRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/api/zebra-reader/$company/$key': {
       id: '/api/zebra-reader/$company/$key'
       path: '/$company/$key'
@@ -444,34 +444,20 @@ declare module '@tanstack/react-router' {
     }
     '/$company/maps/$locationId/view': {
       id: '/$company/maps/$locationId/view'
-      path: '/$locationId/view'
+      path: '/maps/$locationId/view'
       fullPath: '/$company/maps/$locationId/view'
       preLoaderRoute: typeof CompanyMapsLocationIdViewRouteImport
-      parentRoute: typeof CompanyMapsRoute
+      parentRoute: typeof CompanyRoute
     }
     '/$company/maps/$locationId/edit': {
       id: '/$company/maps/$locationId/edit'
-      path: '/$locationId/edit'
+      path: '/maps/$locationId/edit'
       fullPath: '/$company/maps/$locationId/edit'
       preLoaderRoute: typeof CompanyMapsLocationIdEditRouteImport
-      parentRoute: typeof CompanyMapsRoute
+      parentRoute: typeof CompanyRoute
     }
   }
 }
-
-interface CompanyMapsRouteChildren {
-  CompanyMapsLocationIdEditRoute: typeof CompanyMapsLocationIdEditRoute
-  CompanyMapsLocationIdViewRoute: typeof CompanyMapsLocationIdViewRoute
-}
-
-const CompanyMapsRouteChildren: CompanyMapsRouteChildren = {
-  CompanyMapsLocationIdEditRoute: CompanyMapsLocationIdEditRoute,
-  CompanyMapsLocationIdViewRoute: CompanyMapsLocationIdViewRoute,
-}
-
-const CompanyMapsRouteWithChildren = CompanyMapsRoute._addFileChildren(
-  CompanyMapsRouteChildren,
-)
 
 interface CompanyRouteChildren {
   CompanyAdminRoute: typeof CompanyAdminRoute
@@ -482,12 +468,14 @@ interface CompanyRouteChildren {
   CompanyHistoryRoute: typeof CompanyHistoryRoute
   CompanyItemsRoute: typeof CompanyItemsRoute
   CompanyLocationsRoute: typeof CompanyLocationsRoute
-  CompanyMapsRoute: typeof CompanyMapsRouteWithChildren
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
   CompanyUsersRoute: typeof CompanyUsersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
+  CompanyMapsIndexRoute: typeof CompanyMapsIndexRoute
+  CompanyMapsLocationIdEditRoute: typeof CompanyMapsLocationIdEditRoute
+  CompanyMapsLocationIdViewRoute: typeof CompanyMapsLocationIdViewRoute
 }
 
 const CompanyRouteChildren: CompanyRouteChildren = {
@@ -499,12 +487,14 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyHistoryRoute: CompanyHistoryRoute,
   CompanyItemsRoute: CompanyItemsRoute,
   CompanyLocationsRoute: CompanyLocationsRoute,
-  CompanyMapsRoute: CompanyMapsRouteWithChildren,
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
   CompanyUsersRoute: CompanyUsersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
+  CompanyMapsIndexRoute: CompanyMapsIndexRoute,
+  CompanyMapsLocationIdEditRoute: CompanyMapsLocationIdEditRoute,
+  CompanyMapsLocationIdViewRoute: CompanyMapsLocationIdViewRoute,
 }
 
 const CompanyRouteWithChildren =
