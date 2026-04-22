@@ -22,6 +22,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
     { label: "Mobile Dashboard", to: "/$company/dashboard" as const, icon: BarChart3 },
     { label: "Items", to: "/$company/items" as const, icon: Package },
     { label: "Locations", to: "/$company/locations" as const, icon: MapPin },
+    { label: "Map", to: "/$company/maps/view" as const, icon: MapIcon },
     { label: "History", to: "/$company/history" as const, icon: History },
     { label: "Decoder", to: "/$company/decoder" as const, icon: Barcode },
     { label: "Bulk Upload", to: "/$company/bulk-upload" as const, icon: Upload },
