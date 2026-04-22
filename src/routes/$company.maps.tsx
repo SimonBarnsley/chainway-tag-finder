@@ -46,14 +46,16 @@ function MapsContent() {
     if (!companySlug) return;
     setLoading(true);
     try {
-      const [locRes, mapRes, zoneRes] = await Promise.all([
+      const [locRes, mapRes, zoneRes, antennaRes] = await Promise.all([
         supabase.from("locations").select("id, name, description").eq("company_slug", companySlug).order("name"),
         supabase.from("location_maps").select("id, location_id").eq("company_slug", companySlug),
         supabase.from("antenna_zones").select("map_id").eq("company_slug", companySlug),
+        supabase.from("reader_antennas").select("location").eq("company_slug", companySlug),
       ]);
       if (locRes.error) throw locRes.error;
       if (mapRes.error) throw mapRes.error;
       if (zoneRes.error) throw zoneRes.error;
+      if (antennaRes.error) throw antennaRes.error;
 
       const mapByLoc = new Map<string, string>();
       for (const m of mapRes.data ?? []) mapByLoc.set(m.location_id, m.id);
@@ -63,8 +65,33 @@ function MapsContent() {
         zoneCounts.set(z.map_id, (zoneCounts.get(z.map_id) ?? 0) + 1);
       }
 
+      // Find antenna location strings missing from locations table; auto-create them
+      const existingNames = new Set((locRes.data ?? []).map((l) => l.name.toLowerCase()));
+      const missing = new Set<string>();
+      for (const a of antennaRes.data ?? []) {
+        const name = (a.location ?? "").trim();
+        if (name && !existingNames.has(name.toLowerCase())) missing.add(name);
+      }
+
+      let allLocations = locRes.data ?? [];
+      if (missing.size > 0) {
+        const toInsert = Array.from(missing).map((name) => ({
+          name,
+          company_slug: companySlug,
+          description: "Auto-created from antenna mapping",
+        }));
+        const { data: inserted, error: insErr } = await supabase
+          .from("locations")
+          .insert(toInsert)
+          .select("id, name, description");
+        if (insErr) throw insErr;
+        allLocations = [...allLocations, ...(inserted ?? [])].sort((a, b) =>
+          a.name.localeCompare(b.name),
+        );
+      }
+
       setRows(
-        (locRes.data ?? []).map((l) => {
+        allLocations.map((l) => {
           const mapId = mapByLoc.get(l.id) ?? null;
           return {
             id: l.id,
