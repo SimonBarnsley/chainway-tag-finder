@@ -16,6 +16,7 @@ import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
 import { Route as CompanyUsersRouteImport } from './routes/$company.users'
+import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
@@ -65,6 +66,11 @@ const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
 const CompanyUsersRoute = CompanyUsersRouteImport.update({
   id: '/users',
   path: '/users',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanySignupDebugRoute = CompanySignupDebugRouteImport.update({
+  id: '/signup-debug',
+  path: '/signup-debug',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyRolesRoute = CompanyRolesRouteImport.update({
@@ -160,6 +166,7 @@ export interface FileRoutesByFullPath {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
@@ -183,6 +190,7 @@ export interface FileRoutesByTo {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company': typeof CompanyIndexRoute
@@ -208,6 +216,7 @@ export interface FileRoutesById {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
@@ -234,6 +243,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
@@ -257,6 +267,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company'
@@ -281,6 +292,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
     | '/$company/'
@@ -347,6 +359,13 @@ declare module '@tanstack/react-router' {
       path: '/users'
       fullPath: '/$company/users'
       preLoaderRoute: typeof CompanyUsersRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/signup-debug': {
+      id: '/$company/signup-debug'
+      path: '/signup-debug'
+      fullPath: '/$company/signup-debug'
+      preLoaderRoute: typeof CompanySignupDebugRouteImport
       parentRoute: typeof CompanyRoute
     }
     '/$company/roles': {
@@ -469,6 +488,7 @@ interface CompanyRouteChildren {
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
+  CompanySignupDebugRoute: typeof CompanySignupDebugRoute
   CompanyUsersRoute: typeof CompanyUsersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
   CompanyMapsEditRoute: typeof CompanyMapsEditRoute
@@ -488,6 +508,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
+  CompanySignupDebugRoute: CompanySignupDebugRoute,
   CompanyUsersRoute: CompanyUsersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
   CompanyMapsEditRoute: CompanyMapsEditRoute,
