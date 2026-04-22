@@ -256,12 +256,22 @@ function Viewer() {
       zoneId: string;
       lastSeen: string;
       isLive: boolean;
+      matchesSearch: boolean;
+      item: ItemInfo | null;
     }> = [];
     const liveCutoff = Date.now() - LIVE_WINDOW_MS;
+    const q = search.trim();
     for (const s of scans) {
       if (!s.location) continue;
       const z = zoneByLocationName.get(s.location.toLowerCase());
       if (!z) continue;
+      const item = itemByEpc.get(s.epc) ?? null;
+      const matches =
+        !q ||
+        wildcardMatch(s.epc, q) ||
+        wildcardMatch(item?.sku ?? null, q) ||
+        wildcardMatch(item?.description ?? null, q) ||
+        wildcardMatch(item?.name ?? null, q);
       const shape = parseZoneShape(z);
       const p = jitteredPointForEpc(shape, s.epc);
       out.push({
@@ -272,19 +282,26 @@ function Viewer() {
         zoneId: z.id,
         lastSeen: s.last_seen,
         isLive: new Date(s.last_seen).getTime() >= liveCutoff,
+        matchesSearch: matches,
+        item,
       });
     }
     return out;
-  }, [scans, zoneByLocationName]);
+  }, [scans, zoneByLocationName, itemByEpc, search]);
+
+  const visiblePins = useMemo(
+    () => (search.trim() ? pins.filter((p) => p.matchesSearch) : pins),
+    [pins, search],
+  );
 
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
   const zoneCounts = useMemo(() => {
     const m = new Map<string, number>();
-    for (const p of pins) m.set(p.zoneId, (m.get(p.zoneId) ?? 0) + 1);
+    for (const p of visiblePins) m.set(p.zoneId, (m.get(p.zoneId) ?? 0) + 1);
     return m;
-  }, [pins]);
+  }, [visiblePins]);
 
   const locationNameById = new Map(locations.map((l) => [l.id, l.name]));
 
