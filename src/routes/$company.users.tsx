@@ -30,6 +30,8 @@ interface UserRow {
   display_name: string | null;
   role_id: string | null;
   role: string | null; // raw db role
+  company_slug: string | null;
+  company_name: string | null;
 }
 
 const dbToUi = (r: string | null): UiRole => {
