@@ -31,6 +31,7 @@ import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
 import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit'
+import { Route as LovableEmailQueueProcessRouteImport } from './routes/lovable/email/queue/process'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
 
 const SignupRoute = SignupRouteImport.update({
@@ -143,6 +144,12 @@ const CompanyMapsEditRoute = CompanyMapsEditRouteImport.update({
   path: '/maps/edit',
   getParentRoute: () => CompanyRoute,
 } as any)
+const LovableEmailQueueProcessRoute =
+  LovableEmailQueueProcessRouteImport.update({
+    id: '/lovable/email/queue/process',
+    path: '/lovable/email/queue/process',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiZebraReaderCompanyKeyRoute =
   ApiZebraReaderCompanyKeyRouteImport.update({
     id: '/$company/$key',
@@ -174,6 +181,7 @@ export interface FileRoutesByFullPath {
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -198,6 +206,7 @@ export interface FileRoutesByTo {
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -224,6 +233,7 @@ export interface FileRoutesById {
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
+  '/lovable/email/queue/process': typeof LovableEmailQueueProcessRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -251,6 +261,7 @@ export interface FileRouteTypes {
     | '/$company/maps/view'
     | '/$company/maps/'
     | '/api/zebra-reader/$company/$key'
+    | '/lovable/email/queue/process'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -275,6 +286,7 @@ export interface FileRouteTypes {
     | '/$company/maps/view'
     | '/$company/maps'
     | '/api/zebra-reader/$company/$key'
+    | '/lovable/email/queue/process'
   id:
     | '__root__'
     | '/'
@@ -300,6 +312,7 @@ export interface FileRouteTypes {
     | '/$company/maps/view'
     | '/$company/maps/'
     | '/api/zebra-reader/$company/$key'
+    | '/lovable/email/queue/process'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -308,6 +321,7 @@ export interface RootRouteChildren {
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
   ApiZebraReaderRoute: typeof ApiZebraReaderRouteWithChildren
+  LovableEmailQueueProcessRoute: typeof LovableEmailQueueProcessRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -466,6 +480,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyMapsEditRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/lovable/email/queue/process': {
+      id: '/lovable/email/queue/process'
+      path: '/lovable/email/queue/process'
+      fullPath: '/lovable/email/queue/process'
+      preLoaderRoute: typeof LovableEmailQueueProcessRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/zebra-reader/$company/$key': {
       id: '/api/zebra-reader/$company/$key'
       path: '/$company/$key'
@@ -537,6 +558,7 @@ const rootRouteChildren: RootRouteChildren = {
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
   ApiZebraReaderRoute: ApiZebraReaderRouteWithChildren,
+  LovableEmailQueueProcessRoute: LovableEmailQueueProcessRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
