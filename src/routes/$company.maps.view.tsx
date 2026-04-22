@@ -41,7 +41,9 @@ interface LocationRow {
   name: string;
 }
 
-const ACTIVE_WINDOW_MS = 5 * 60 * 1000;
+// Pins for any tag whose latest scan location matches a zone (no time cutoff).
+// Recent scans get a "live" pulse; older ones render as static pins.
+const LIVE_WINDOW_MS = 5 * 60 * 1000;
 
 function ViewPage() {
   return (
@@ -105,16 +107,23 @@ function Viewer() {
       if (ze) throw ze;
       setZones((zd ?? []) as AntennaZone[]);
 
-      const since = new Date(Date.now() - ACTIVE_WINDOW_MS).toISOString();
       const { data: sd, error: se } = await supabase
         .from("rfid_scans")
         .select("id, epc, location, last_seen")
         .eq("company_slug", companySlug)
-        .gte("last_seen", since)
+        .not("location", "is", null)
         .order("last_seen", { ascending: false })
-        .limit(500);
+        .limit(2000);
       if (se) throw se;
-      setScans(sd ?? []);
+      // Deduplicate to the latest scan per EPC so each tag pins once.
+      const seen = new Set<string>();
+      const dedup: ScanRow[] = [];
+      for (const s of sd ?? []) {
+        if (seen.has(s.epc)) continue;
+        seen.add(s.epc);
+        dedup.push(s);
+      }
+      setScans(dedup);
     } catch (err: unknown) {
       toast.error(err instanceof Error ? err.message : "Failed to load map");
     } finally {
@@ -146,12 +155,10 @@ function Viewer() {
             if (payload.eventType === "DELETE" && oldRow?.id) {
               return prev.filter((s) => s.id !== oldRow.id);
             }
-            if (!newRow) return prev;
-            const idx = prev.findIndex((s) => s.id === newRow.id);
-            if (idx === -1) return [newRow, ...prev].slice(0, 500);
-            const next = prev.slice();
-            next[idx] = newRow;
-            return next;
+            if (!newRow || !newRow.location) return prev;
+            // Keep one row per EPC (latest wins).
+            const filtered = prev.filter((s) => s.epc !== newRow.epc);
+            return [newRow, ...filtered].slice(0, 2000);
           });
         },
       )
@@ -161,13 +168,6 @@ function Viewer() {
     };
   }, [companySlug]);
 
-  useEffect(() => {
-    const t = setInterval(() => {
-      const cutoff = Date.now() - ACTIVE_WINDOW_MS;
-      setScans((prev) => prev.filter((s) => new Date(s.last_seen).getTime() >= cutoff));
-    }, 30000);
-    return () => clearInterval(t);
-  }, []);
 
   // location name -> zone
   const zoneByLocationName = useMemo(() => {
@@ -190,7 +190,9 @@ function Viewer() {
       color: string;
       zoneId: string;
       lastSeen: string;
+      isLive: boolean;
     }> = [];
+    const liveCutoff = Date.now() - LIVE_WINDOW_MS;
     for (const s of scans) {
       if (!s.location) continue;
       const z = zoneByLocationName.get(s.location.toLowerCase());
@@ -204,6 +206,7 @@ function Viewer() {
         color: z.color,
         zoneId: z.id,
         lastSeen: s.last_seen,
+        isLive: new Date(s.last_seen).getTime() >= liveCutoff,
       });
     }
     return out;
@@ -276,8 +279,8 @@ function Viewer() {
                   <span className="text-foreground font-medium">Live</span>
                 </span>
                 <span className="text-muted-foreground">
-                  {pins.length} active pin{pins.length === 1 ? "" : "s"} · {zones.length} zone
-                  {zones.length === 1 ? "" : "s"} · last 5 min
+                  {pins.length} tag{pins.length === 1 ? "" : "s"} ({pins.filter((p) => p.isLive).length} live) · {zones.length} zone
+                  {zones.length === 1 ? "" : "s"}
                 </span>
               </CardContent>
             </Card>
@@ -377,6 +380,12 @@ function Viewer() {
                           {isHover && (
                             <circle cx={cx} cy={cy} r={14} fill={p.color} fillOpacity={0.25} />
                           )}
+                          {p.isLive && (
+                            <circle cx={cx} cy={cy} r={7} fill={p.color} fillOpacity={0.5}>
+                              <animate attributeName="r" values="7;14;7" dur="1.6s" repeatCount="indefinite" />
+                              <animate attributeName="fill-opacity" values="0.5;0;0.5" dur="1.6s" repeatCount="indefinite" />
+                            </circle>
+                          )}
                           <circle
                             cx={cx}
                             cy={cy}
@@ -384,6 +393,7 @@ function Viewer() {
                             fill={p.color}
                             stroke="white"
                             strokeWidth={2}
+                            opacity={p.isLive ? 1 : 0.85}
                           />
                           <circle cx={cx} cy={cy} r={2.5} fill="white" />
                         </g>
