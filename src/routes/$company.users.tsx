@@ -6,9 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users as UsersIcon, Search, Trash2 } from "lucide-react";
+import { Users as UsersIcon, Search, Trash2, MailCheck, Mail, Clock } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import {
+  listPendingUsers,
+  approveUserSignup,
+  resendConfirmationEmail,
+  type PendingUser,
+} from "@/lib/admin-users.functions";
 
 export const Route = createFileRoute("/$company/users")({
   component: UsersPage,
@@ -52,6 +58,47 @@ function UsersContent() {
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
   const [updating, setUpdating] = useState<string | null>(null);
+  const [pending, setPending] = useState<PendingUser[]>([]);
+  const [pendingLoading, setPendingLoading] = useState(true);
+  const [pendingBusy, setPendingBusy] = useState<string | null>(null);
+
+  const fetchPending = async () => {
+    setPendingLoading(true);
+    try {
+      const rows = await listPendingUsers();
+      setPending(rows);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to load pending users");
+    } finally {
+      setPendingLoading(false);
+    }
+  };
+
+  const handleApprove = async (u: PendingUser) => {
+    setPendingBusy(u.id);
+    try {
+      await approveUserSignup({ data: { userId: u.id } });
+      toast.success(`Approved ${u.email ?? u.id}`);
+      await Promise.all([fetchPending(), fetchUsers()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to approve user");
+    } finally {
+      setPendingBusy(null);
+    }
+  };
+
+  const handleResend = async (u: PendingUser) => {
+    if (!u.email) return;
+    setPendingBusy(u.id);
+    try {
+      await resendConfirmationEmail({ data: { email: u.email } });
+      toast.success(`Sent confirmation email to ${u.email}`);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to resend email");
+    } finally {
+      setPendingBusy(null);
+    }
+  };
 
   const fetchUsers = async () => {
     setLoading(true);
@@ -97,6 +144,7 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers();
+    fetchPending();
   }, []);
 
   const handleRoleChange = async (user: UserRow, newUi: UiRole) => {
@@ -166,6 +214,63 @@ function UsersContent() {
             onChange={(e) => setSearch(e.target.value)}
             className="pl-9"
           />
+        </div>
+
+        {/* Pending email confirmations */}
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 flex-wrap">
+            <Clock className="h-4 w-4 text-warning" />
+            <h2 className="text-sm font-semibold text-foreground">
+              Pending email confirmation
+            </h2>
+            <span className="text-xs text-muted-foreground">
+              Approve users who didn't receive the verification email
+            </span>
+          </div>
+          {pendingLoading ? (
+            <p className="text-xs text-muted-foreground">Checking...</p>
+          ) : pending.length === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              No pending sign-ups — all users have confirmed their email.
+            </p>
+          ) : (
+            <div className="space-y-2">
+              {pending.map((u) => (
+                <Card key={u.id} className="border-warning/40">
+                  <CardContent className="p-3 flex items-center justify-between gap-3">
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">
+                        {u.display_name || u.email || u.id}
+                      </p>
+                      <p className="text-xs text-muted-foreground truncate">
+                        {u.email} · signed up{" "}
+                        {new Date(u.created_at).toLocaleString()}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleResend(u)}
+                        disabled={pendingBusy === u.id || !u.email}
+                      >
+                        <Mail className="h-4 w-4 mr-1" />
+                        Resend
+                      </Button>
+                      <Button
+                        size="sm"
+                        onClick={() => handleApprove(u)}
+                        disabled={pendingBusy === u.id}
+                      >
+                        <MailCheck className="h-4 w-4 mr-1" />
+                        Approve
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          )}
         </div>
 
         {loading ? (
