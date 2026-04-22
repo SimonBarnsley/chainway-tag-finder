@@ -144,6 +144,7 @@ function UsersContent() {
 
   useEffect(() => {
     fetchUsers();
+    fetchPending();
   }, []);
 
   const handleRoleChange = async (user: UserRow, newUi: UiRole) => {
