@@ -89,10 +89,10 @@ export const resendConfirmationEmail = createServerFn({ method: "POST" })
   })
   .handler(async ({ context, data }) => {
     await assertAdmin(context.userId);
-    // Generate a fresh signup confirmation link — Supabase will email it via
-    // the configured auth email hook.
+    // Generate a magic link the user can click to sign in & confirm their
+    // email. Supabase will deliver it via the configured auth email hook.
     const { error } = await supabaseAdmin.auth.admin.generateLink({
-      type: "signup",
+      type: "magiclink",
       email: data.email,
     });
     if (error) throw new Response(error.message, { status: 500 });
