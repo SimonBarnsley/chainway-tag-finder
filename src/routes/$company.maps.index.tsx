@@ -33,7 +33,7 @@ function MapsPage() {
 
 function Content() {
   const { company } = Route.useParams();
-  const { companySlug } = useAuth();
+  const { companySlug, isAdmin } = useAuth();
   const [hasMap, setHasMap] = useState(false);
   const [zoneCount, setZoneCount] = useState(0);
   const [locationCount, setLocationCount] = useState(0);
@@ -126,12 +126,14 @@ function Content() {
                   </Button>
                 </Link>
               )}
-              <Link to="/$company/maps/edit" params={{ company }}>
-                <Button size="sm" variant={hasMap ? "outline" : "default"} className="h-8 gap-1">
-                  <Pencil className="h-3.5 w-3.5" />
-                  {hasMap ? "Edit" : "Setup"}
-                </Button>
-              </Link>
+              {isAdmin && (
+                <Link to="/$company/maps/edit" params={{ company }}>
+                  <Button size="sm" variant={hasMap ? "outline" : "default"} className="h-8 gap-1">
+                    <Pencil className="h-3.5 w-3.5" />
+                    {hasMap ? "Edit" : "Setup"}
+                  </Button>
+                </Link>
+              )}
             </CardContent>
           </Card>
         )}
