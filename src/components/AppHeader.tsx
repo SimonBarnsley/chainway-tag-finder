@@ -104,6 +104,26 @@ export function AppHeader({ actions }: AppHeaderProps) {
                       {adminOpen && (
                         <div className="bg-muted/30">
                           <Link
+                            to="/$company/locations"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <MapPin className="h-4 w-4" />
+                            Locations
+                          </Link>
+                          <Link
+                            to="/$company/decoder"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Barcode className="h-4 w-4" />
+                            Decoder
+                          </Link>
+                          <Link
                             to="/$company/admin-dashboard"
                             params={{ company }}
                             onClick={() => setOpen(false)}
