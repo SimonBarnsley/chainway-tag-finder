@@ -60,7 +60,7 @@ type Draft = DraftRect | DraftPoly | null;
 
 function EditPage() {
   return (
-    <AuthGuard>
+    <AuthGuard adminOnly>
       <Editor />
     </AuthGuard>
   );
