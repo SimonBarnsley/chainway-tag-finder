@@ -23,10 +23,8 @@ export function AppHeader({ actions }: AppHeaderProps) {
     { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
     { label: "Mobile Dashboard", to: "/$company/dashboard", icon: BarChart3, perm: "dashboard.admin" },
     { label: "Items", to: "/$company/items", icon: Package, perm: "items.view" },
-    { label: "Locations", to: "/$company/locations", icon: MapPin, perm: "locations.view" },
     { label: "Map", to: "/$company/maps/view", icon: MapIcon, perm: null },
     { label: "History", to: "/$company/history", icon: History, perm: "history.view" },
-    { label: "Decoder", to: "/$company/decoder", icon: Barcode, perm: null },
     { label: "Bulk Upload", to: "/$company/bulk-upload", icon: Upload, perm: "bulk_upload.use" },
   ];
   const navItems = permLoading
