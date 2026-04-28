@@ -82,7 +82,14 @@ function DecoderPage() {
               Enter EPC Hex (SGTIN-96 or SGTIN-198)
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
+            <Input
+              value={prefixFilter}
+              onChange={(e) => setPrefixFilter(e.target.value.toUpperCase().slice(0, 4))}
+              placeholder="Filter: first 4 hex chars (e.g. 3034)"
+              className="font-mono text-xs"
+              maxLength={4}
+            />
             <form onSubmit={handleDecode} className="flex gap-2">
               <Input value={epcInput} onChange={(e) => setEpcInput(e.target.value.toUpperCase())} placeholder="e.g. 3034257BF7194E4000001A85" className="font-mono text-xs flex-1" autoFocus />
               <Button type="submit" size="sm" className="gap-1" disabled={!epcInput.trim()}>
