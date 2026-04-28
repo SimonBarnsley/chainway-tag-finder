@@ -21,15 +21,24 @@ export const Route = createFileRoute("/$company/decoder")({
 
 function DecoderPage() {
   const [epcInput, setEpcInput] = useState("");
+  const [prefixFilter, setPrefixFilter] = useState("");
   const [result, setResult] = useState<SgtinDecoded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleDecode = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!epcInput.trim()) return;
+    const epc = epcInput.trim();
+    if (!epc) return;
 
-    const decoded = decodeSgtin(epcInput.trim());
+    const prefix = prefixFilter.trim().toUpperCase();
+    if (prefix && !epc.toUpperCase().startsWith(prefix)) {
+      setError(`EPC does not match filter prefix "${prefix}"`);
+      setResult(null);
+      return;
+    }
+
+    const decoded = decodeSgtin(epc);
     if ("error" in decoded) {
       setError(decoded.error);
       setResult(null);
