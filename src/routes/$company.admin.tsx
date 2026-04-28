@@ -51,6 +51,43 @@ function AdminContent() {
   const [creating, setCreating] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [tagPrefix, setTagPrefix] = useState("");
+  const [tagPrefixLoaded, setTagPrefixLoaded] = useState(false);
+  const [savingPrefix, setSavingPrefix] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("company_settings")
+        .select("epc_tag_prefix")
+        .eq("company_slug", company)
+        .maybeSingle();
+      if (cancelled) return;
+      setTagPrefix((data?.epc_tag_prefix ?? "").toUpperCase());
+      setTagPrefixLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company]);
+
+  const handleSavePrefix = async () => {
+    setSavingPrefix(true);
+    try {
+      const value = tagPrefix.trim().toUpperCase() || null;
+      const { error } = await supabase
+        .from("company_settings")
+        .upsert(
+          { company_slug: company, epc_tag_prefix: value },
+          { onConflict: "company_slug" }
+        );
+      if (error) throw error;
+      toast.success(value ? `Tag filter set to "${value}"` : "Tag filter cleared");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingPrefix(false);
+    }
+  };
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://uhf-tag-finder.lovable.app";
   const zebraEndpointUrl = `${baseUrl}/api/zebra-reader?company=${company}`;
