@@ -22,11 +22,29 @@ export const Route = createFileRoute("/$company/decoder")({
 });
 
 function DecoderPage() {
+  const { company } = Route.useParams();
   const [epcInput, setEpcInput] = useState("");
   const [prefixFilter, setPrefixFilter] = useState("");
+  const [prefixLoaded, setPrefixLoaded] = useState(false);
   const [result, setResult] = useState<SgtinDecoded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Load company-wide tag prefix (set by an admin in the Admin menu)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("company_settings")
+        .select("epc_tag_prefix")
+        .eq("company_slug", company)
+        .maybeSingle();
+      if (cancelled) return;
+      setPrefixFilter((data?.epc_tag_prefix ?? "").toUpperCase());
+      setPrefixLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company]);
 
   const decodeEpc = useCallback((rawEpc: string): boolean => {
     const epc = rawEpc.trim();
