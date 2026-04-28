@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState } from "react";
+import { useState, useCallback } from "react";
 import { Radio, Search, Copy, Check } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { decodeSgtin, type SgtinDecoded } from "@/lib/sgtin-decoder";
 import { toast } from "sonner";
+import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 
 export const Route = createFileRoute("/$company/decoder")({
   component: DecoderPage,
@@ -26,27 +27,46 @@ function DecoderPage() {
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
-  const handleDecode = (e?: React.FormEvent) => {
-    e?.preventDefault();
-    const epc = epcInput.trim();
-    if (!epc) return;
+  const decodeEpc = useCallback((rawEpc: string): boolean => {
+    const epc = rawEpc.trim();
+    if (!epc) return false;
 
     const prefix = prefixFilter.trim().toUpperCase();
     if (prefix && !epc.toUpperCase().startsWith(prefix)) {
       setError(`EPC does not match filter prefix "${prefix}"`);
       setResult(null);
-      return;
+      return false;
     }
 
     const decoded = decodeSgtin(epc);
     if ("error" in decoded) {
       setError(decoded.error);
       setResult(null);
-    } else {
-      setResult(decoded);
-      setError(null);
+      return false;
     }
+    setResult(decoded);
+    setError(null);
+    return true;
+  }, [prefixFilter]);
+
+  const handleDecode = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    decodeEpc(epcInput);
   };
+
+  const handleWedgeScan = useCallback((tag: RfidTag) => {
+    const prefix = prefixFilter.trim().toUpperCase();
+    if (prefix && !tag.epc.toUpperCase().startsWith(prefix)) {
+      // Silently ignore non-matching scans so the wedge only acts on filtered tags
+      return;
+    }
+    setEpcInput(tag.epc.toUpperCase());
+    if (decodeEpc(tag.epc)) {
+      toast.success(`Scanned ${tag.epc.slice(-12)}`);
+    }
+  }, [prefixFilter, decodeEpc]);
+
+  useRfidScanner({ enabled: true, onTagScanned: handleWedgeScan });
 
   const handleCopy = (label: string, value: string) => {
     navigator.clipboard.writeText(value);
