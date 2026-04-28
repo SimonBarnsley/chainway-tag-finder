@@ -253,6 +253,31 @@ function AdminContent() {
           </CardContent>
         </Card>
 
+        {/* Company-wide EPC Tag Prefix Filter */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">EPC Tag Prefix Filter</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Set a company-wide hex prefix (first 4 hex chars of the EPC). The decoder and RFID wedge scanner will only process tags that start with this prefix. Leave blank to accept all tags.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={tagPrefix}
+                onChange={(e) => setTagPrefix(e.target.value.toUpperCase().slice(0, 4))}
+                placeholder="e.g. 3034"
+                className="font-mono text-xs flex-1"
+                maxLength={4}
+                disabled={!tagPrefixLoaded}
+              />
+              <Button size="sm" onClick={handleSavePrefix} disabled={!tagPrefixLoaded || savingPrefix}>
+                {savingPrefix ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {showCreateForm && (
           <Card>
