@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState, useCallback } from "react";
-import { Radio, Search, Copy, Check } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Radio, Search, Copy, Check, Filter } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { decodeSgtin, type SgtinDecoded } from "@/lib/sgtin-decoder";
 import { toast } from "sonner";
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/$company/decoder")({
   component: DecoderPage,
