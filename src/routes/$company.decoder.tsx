@@ -21,15 +21,24 @@ export const Route = createFileRoute("/$company/decoder")({
 
 function DecoderPage() {
   const [epcInput, setEpcInput] = useState("");
+  const [prefixFilter, setPrefixFilter] = useState("");
   const [result, setResult] = useState<SgtinDecoded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
 
   const handleDecode = (e?: React.FormEvent) => {
     e?.preventDefault();
-    if (!epcInput.trim()) return;
+    const epc = epcInput.trim();
+    if (!epc) return;
 
-    const decoded = decodeSgtin(epcInput.trim());
+    const prefix = prefixFilter.trim().toUpperCase();
+    if (prefix && !epc.toUpperCase().startsWith(prefix)) {
+      setError(`EPC does not match filter prefix "${prefix}"`);
+      setResult(null);
+      return;
+    }
+
+    const decoded = decodeSgtin(epc);
     if ("error" in decoded) {
       setError(decoded.error);
       setResult(null);
@@ -73,7 +82,14 @@ function DecoderPage() {
               Enter EPC Hex (SGTIN-96 or SGTIN-198)
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="space-y-2">
+            <Input
+              value={prefixFilter}
+              onChange={(e) => setPrefixFilter(e.target.value.toUpperCase().slice(0, 4))}
+              placeholder="Filter: first 4 hex chars (e.g. 3034)"
+              className="font-mono text-xs"
+              maxLength={4}
+            />
             <form onSubmit={handleDecode} className="flex gap-2">
               <Input value={epcInput} onChange={(e) => setEpcInput(e.target.value.toUpperCase())} placeholder="e.g. 3034257BF7194E4000001A85" className="font-mono text-xs flex-1" autoFocus />
               <Button type="submit" size="sm" className="gap-1" disabled={!epcInput.trim()}>
