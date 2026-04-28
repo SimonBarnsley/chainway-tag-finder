@@ -28,7 +28,7 @@ interface UserRole {
 
 function AdminPage() {
   return (
-    <AuthGuard superAdminOnly>
+    <AuthGuard adminOnly>
       <AdminContent />
     </AuthGuard>
   );
