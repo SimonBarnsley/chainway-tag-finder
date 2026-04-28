@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio } from "lucide-react";
+import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio, Filter } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
@@ -51,6 +51,43 @@ function AdminContent() {
   const [creating, setCreating] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [tagPrefix, setTagPrefix] = useState("");
+  const [tagPrefixLoaded, setTagPrefixLoaded] = useState(false);
+  const [savingPrefix, setSavingPrefix] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("company_settings")
+        .select("epc_tag_prefix")
+        .eq("company_slug", company)
+        .maybeSingle();
+      if (cancelled) return;
+      setTagPrefix((data?.epc_tag_prefix ?? "").toUpperCase());
+      setTagPrefixLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company]);
+
+  const handleSavePrefix = async () => {
+    setSavingPrefix(true);
+    try {
+      const value = tagPrefix.trim().toUpperCase() || null;
+      const { error } = await supabase
+        .from("company_settings")
+        .upsert(
+          { company_slug: company, epc_tag_prefix: value },
+          { onConflict: "company_slug" }
+        );
+      if (error) throw error;
+      toast.success(value ? `Tag filter set to "${value}"` : "Tag filter cleared");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingPrefix(false);
+    }
+  };
 
   const baseUrl = typeof window !== "undefined" ? window.location.origin : "https://uhf-tag-finder.lovable.app";
   const zebraEndpointUrl = `${baseUrl}/api/zebra-reader?company=${company}`;
@@ -216,6 +253,31 @@ function AdminContent() {
           </CardContent>
         </Card>
 
+        {/* Company-wide EPC Tag Prefix Filter */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">EPC Tag Prefix Filter</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Set a company-wide hex prefix (first 4 hex chars of the EPC). The decoder and RFID wedge scanner will only process tags that start with this prefix. Leave blank to accept all tags.
+            </p>
+            <div className="flex gap-2">
+              <Input
+                value={tagPrefix}
+                onChange={(e) => setTagPrefix(e.target.value.toUpperCase().slice(0, 4))}
+                placeholder="e.g. 3034"
+                className="font-mono text-xs flex-1"
+                maxLength={4}
+                disabled={!tagPrefixLoaded}
+              />
+              <Button size="sm" onClick={handleSavePrefix} disabled={!tagPrefixLoaded || savingPrefix}>
+                {savingPrefix ? "Saving..." : "Save"}
+              </Button>
+            </div>
+          </CardContent>
+        </Card>
 
         {showCreateForm && (
           <Card>

@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState, useCallback } from "react";
-import { Radio, Search, Copy, Check } from "lucide-react";
+import { useState, useCallback, useEffect } from "react";
+import { Radio, Search, Copy, Check, Filter } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -9,6 +9,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { decodeSgtin, type SgtinDecoded } from "@/lib/sgtin-decoder";
 import { toast } from "sonner";
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
+import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/$company/decoder")({
   component: DecoderPage,
@@ -21,11 +22,29 @@ export const Route = createFileRoute("/$company/decoder")({
 });
 
 function DecoderPage() {
+  const { company } = Route.useParams();
   const [epcInput, setEpcInput] = useState("");
   const [prefixFilter, setPrefixFilter] = useState("");
+  const [prefixLoaded, setPrefixLoaded] = useState(false);
   const [result, setResult] = useState<SgtinDecoded | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
+
+  // Load company-wide tag prefix (set by an admin in the Admin menu)
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("company_settings")
+        .select("epc_tag_prefix")
+        .eq("company_slug", company)
+        .maybeSingle();
+      if (cancelled) return;
+      setPrefixFilter((data?.epc_tag_prefix ?? "").toUpperCase());
+      setPrefixLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company]);
 
   const decodeEpc = useCallback((rawEpc: string): boolean => {
     const epc = rawEpc.trim();
@@ -103,13 +122,19 @@ function DecoderPage() {
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-2">
-            <Input
-              value={prefixFilter}
-              onChange={(e) => setPrefixFilter(e.target.value.toUpperCase().slice(0, 4))}
-              placeholder="Filter: first 4 hex chars (e.g. 3034)"
-              className="font-mono text-xs"
-              maxLength={4}
-            />
+            <div className="flex items-center gap-2 rounded-md border border-border bg-muted/40 px-3 py-2">
+              <Filter className="h-3.5 w-3.5 text-muted-foreground shrink-0" />
+              <span className="text-xs text-muted-foreground">Company tag filter:</span>
+              {prefixLoaded ? (
+                prefixFilter ? (
+                  <span className="font-mono text-xs font-semibold text-foreground">{prefixFilter}</span>
+                ) : (
+                  <span className="text-xs italic text-muted-foreground">none — accepting all tags</span>
+                )
+              ) : (
+                <span className="text-xs text-muted-foreground">loading…</span>
+              )}
+            </div>
             <form onSubmit={handleDecode} className="flex gap-2">
               <Input value={epcInput} onChange={(e) => setEpcInput(e.target.value.toUpperCase())} placeholder="e.g. 3034257BF7194E4000001A85" className="font-mono text-xs flex-1" autoFocus />
               <Button type="submit" size="sm" className="gap-1" disabled={!epcInput.trim()}>

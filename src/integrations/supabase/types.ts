@@ -74,6 +74,30 @@ export type Database = {
           },
         ]
       }
+      company_settings: {
+        Row: {
+          company_slug: string
+          created_at: string
+          epc_tag_prefix: string | null
+          id: string
+          updated_at: string
+        }
+        Insert: {
+          company_slug: string
+          created_at?: string
+          epc_tag_prefix?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Update: {
+          company_slug?: string
+          created_at?: string
+          epc_tag_prefix?: string | null
+          id?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       email_send_log: {
         Row: {
           created_at: string
