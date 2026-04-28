@@ -51,6 +51,7 @@ function ScannerPage() {
   // effect re-fires even when the SAME EPC is scanned repeatedly (which is the
   // normal case in geiger mode — the target tag is read over and over).
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
+  const [tagPrefix, setTagPrefix] = useState<string>("");
 
   useEffect(() => {
     const fetchCompanyName = async () => {
@@ -65,7 +66,25 @@ function ScannerPage() {
     fetchCompanyName();
   }, [company]);
 
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const { data } = await supabase
+        .from("company_settings")
+        .select("epc_tag_prefix")
+        .eq("company_slug", company)
+        .maybeSingle();
+      if (cancelled) return;
+      setTagPrefix((data?.epc_tag_prefix ?? "").toUpperCase());
+    })();
+    return () => { cancelled = true; };
+  }, [company]);
+
   const handleTagScanned = useCallback((tag: RfidTag) => {
+    // Company-wide EPC prefix filter (set by admin). Silently ignore non-matching tags.
+    if (tagPrefix && !tag.epc.toUpperCase().startsWith(tagPrefix)) {
+      return;
+    }
     setTotalScans((prev) => {
       const next = prev + 1;
       setLastScan({ epc: tag.epc, rssi: tag.rssi, seq: next });
@@ -95,7 +114,7 @@ function ScannerPage() {
       navigator.vibrate(50);
     }
 
-  }, [geigerEpc]);
+  }, [geigerEpc, tagPrefix]);
 
   useRfidScanner({
     enabled: scanEnabled,
