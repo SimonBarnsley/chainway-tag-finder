@@ -250,9 +250,11 @@ export async function handleZebraReaderPost(
     }
   }
 
-  await writeDebug(tags.length, null);
-
+  // Only log anomalies (zero-tag payloads). Successful reads are NOT logged
+  // to avoid filling zebra_reader_debug_logs (which previously grew to >1GB
+  // from a single chatty reader). Tag data is already persisted in rfid_scans.
   if (tags.length === 0) {
+    await writeDebug(0, "no tags parsed from payload");
     return respond({ accepted: 0, message: "No valid tags found in payload" }, 200);
   }
 
