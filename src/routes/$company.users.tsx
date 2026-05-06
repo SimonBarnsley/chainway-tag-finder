@@ -64,6 +64,15 @@ function UsersContent() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [companyUpdating, setCompanyUpdating] = useState<string | null>(null);
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newRole, setNewRole] = useState<UiRole>("basic");
+  const [companyMode, setCompanyMode] = useState<"existing" | "new">("existing");
+  const [newCompanySlug, setNewCompanySlug] = useState("");
+  const [newCompanyName, setNewCompanyName] = useState("");
 
   const getAuthHeaders = async () => {
     const { data: { session } } = await supabase.auth.getSession();
