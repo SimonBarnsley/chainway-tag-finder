@@ -398,6 +398,24 @@ function Editor() {
     }
   };
 
+  const handleMaxCapacityChange = (id: string, max_capacity: number) => {
+    setZones((prev) => prev.map((z) => (z.id === id ? { ...z, max_capacity } : z)));
+  };
+
+  const handleMaxCapacityCommit = async (id: string, max_capacity: number) => {
+    try {
+      const { error } = await supabase
+        .from("antenna_zones")
+        .update({ max_capacity })
+        .eq("id", id);
+      if (error) throw error;
+      toast.success("Max capacity updated");
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update max capacity");
+      fetchAll();
+    }
+  };
+
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
