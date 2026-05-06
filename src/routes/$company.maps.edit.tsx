@@ -599,7 +599,7 @@ function Editor() {
                             fontWeight={700}
                             textAnchor="middle"
                           >
-                            {name} · {cap}%
+                            {cap}%
                           </text>
                         </g>
                       );
