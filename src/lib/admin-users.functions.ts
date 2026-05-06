@@ -201,3 +201,78 @@ export const listCompanies = createServerFn({ method: "POST" })
       return { ok: false, companies: [], error: msg };
     }
   });
+
+export const createUser = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator(
+    (input: {
+      email: string;
+      password: string;
+      displayName?: string;
+      companyName?: string;
+      companySlug?: string;
+      role?: "admin" | "supervisor" | "user";
+    }) => {
+      if (!input?.email || typeof input.email !== "string") {
+        throw new Response("email required", { status: 400 });
+      }
+      if (!input?.password || typeof input.password !== "string" || input.password.length < 6) {
+        throw new Response("password must be at least 6 characters", { status: 400 });
+      }
+      if (!input.companyName && !input.companySlug) {
+        throw new Response("companyName or companySlug required", { status: 400 });
+      }
+      return input;
+    }
+  )
+  .handler(async ({ context, data }) => {
+    await assertAdmin(context.userId);
+
+    let companyName = data.companyName?.trim() || null;
+    let companySlug = data.companySlug || null;
+
+    // If a slug was provided, resolve canonical name
+    if (companySlug && !companyName) {
+      const { data: existing } = await supabaseAdmin
+        .from("profiles")
+        .select("company_name")
+        .eq("company_slug", companySlug)
+        .not("company_name", "is", null)
+        .limit(1)
+        .maybeSingle();
+      companyName = existing?.company_name ?? null;
+      if (!companyName) {
+        throw new Response("Unknown company", { status: 400 });
+      }
+    }
+
+    // Create the user (auto-confirmed). The handle_new_user trigger will
+    // create the profile + default 'user' role and resolve the company slug.
+    const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
+      email: data.email,
+      password: data.password,
+      email_confirm: true,
+      user_metadata: {
+        display_name: data.displayName || data.email.split("@")[0],
+        company_name: companyName,
+      },
+    });
+    if (error || !created.user) {
+      throw new Response(error?.message ?? "Failed to create user", { status: 500 });
+    }
+
+    // If a non-default role was requested, replace the default 'user' role.
+    if (data.role && data.role !== "user") {
+      await supabaseAdmin
+        .from("user_roles")
+        .delete()
+        .eq("user_id", created.user.id)
+        .neq("role", "super_admin");
+      const { error: rErr } = await supabaseAdmin
+        .from("user_roles")
+        .insert({ user_id: created.user.id, role: data.role });
+      if (rErr) throw new Response(rErr.message, { status: 500 });
+    }
+
+    return { ok: true, userId: created.user.id };
+  });

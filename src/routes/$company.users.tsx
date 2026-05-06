@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Users as UsersIcon, Search, Trash2, Building2 } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogTrigger } from "@/components/ui/dialog";
+import { Label } from "@/components/ui/label";
+import { Users as UsersIcon, Search, Trash2, Building2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import {
   listCompanies,
   updateUserCompany,
+  createUser,
   type CompanyOption,
 } from "@/lib/admin-users.functions";
 
@@ -61,6 +64,15 @@ function UsersContent() {
   const [updating, setUpdating] = useState<string | null>(null);
   const [companyUpdating, setCompanyUpdating] = useState<string | null>(null);
   const [companies, setCompanies] = useState<CompanyOption[]>([]);
+  const [createOpen, setCreateOpen] = useState(false);
+  const [creating, setCreating] = useState(false);
+  const [newEmail, setNewEmail] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [newDisplayName, setNewDisplayName] = useState("");
+  const [newRole, setNewRole] = useState<UiRole>("basic");
+  const [companyMode, setCompanyMode] = useState<"existing" | "new">("existing");
+  const [newCompanySlug, setNewCompanySlug] = useState("");
+  const [newCompanyName, setNewCompanyName] = useState("");
 
   const getAuthHeaders = async () => {
     const { data: { session } } = await supabase.auth.getSession();
@@ -189,6 +201,58 @@ function UsersContent() {
     }
   };
 
+  const resetCreateForm = () => {
+    setNewEmail("");
+    setNewPassword("");
+    setNewDisplayName("");
+    setNewRole("basic");
+    setCompanyMode("existing");
+    setNewCompanySlug("");
+    setNewCompanyName("");
+  };
+
+  const handleCreate = async () => {
+    if (!newEmail.trim() || !newPassword.trim()) {
+      toast.error("Email and password are required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (companyMode === "existing" && !newCompanySlug) {
+      toast.error("Select a company");
+      return;
+    }
+    if (companyMode === "new" && !newCompanyName.trim()) {
+      toast.error("Enter a company name");
+      return;
+    }
+    setCreating(true);
+    try {
+      const headers = await getAuthHeaders();
+      await createUser({
+        data: {
+          email: newEmail.trim(),
+          password: newPassword,
+          displayName: newDisplayName.trim() || undefined,
+          companySlug: companyMode === "existing" ? newCompanySlug : undefined,
+          companyName: companyMode === "new" ? newCompanyName.trim() : undefined,
+          role: uiToDb(newRole),
+        },
+        headers,
+      });
+      toast.success("User created");
+      setCreateOpen(false);
+      resetCreateForm();
+      await Promise.all([fetchUsers(), fetchCompanies()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create user");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const filtered = users.filter(
     (u) =>
       !search ||
@@ -206,6 +270,81 @@ function UsersContent() {
           <span className="text-xs text-muted-foreground ml-2">
             Allocate roles to signed-up users
           </span>
+          <div className="ml-auto">
+            <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) resetCreateForm(); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="h-8 gap-1">
+                  <UserPlus className="h-3.5 w-3.5" /> Create User
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create User</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-email">Email</Label>
+                    <Input id="cu-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-name">Display name (optional)</Label>
+                    <Input id="cu-name" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-pw">Temporary password</Label>
+                    <Input id="cu-pw" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Role</Label>
+                    <Select value={newRole} onValueChange={(v) => setNewRole(v as UiRole)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">ADMIN</SelectItem>
+                        <SelectItem value="supervisor">SUPERVISOR</SelectItem>
+                        <SelectItem value="basic">BASIC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Company</Label>
+                    <Select value={companyMode} onValueChange={(v) => setCompanyMode(v as "existing" | "new")}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="existing">Use existing company</SelectItem>
+                        <SelectItem value="new">Create new company</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {companyMode === "existing" ? (
+                    <div className="space-y-1">
+                      <Label>Select company</Label>
+                      <Select value={newCompanySlug} onValueChange={setNewCompanySlug}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={companies.length === 0 ? "No companies available" : "Choose..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companies.map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Label htmlFor="cu-cname">New company name</Label>
+                      <Input id="cu-cname" value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} placeholder="Acme Inc." />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
+                  <Button onClick={handleCreate} disabled={creating}>
+                    {creating ? "Creating..." : "Create User"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="relative">
