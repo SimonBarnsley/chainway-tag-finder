@@ -414,8 +414,10 @@ function Viewer() {
                   >
                     {zones.map((z) => {
                       const shape = parseZoneShape(z);
-                      const cap = z.capacity ?? 0;
-                      const fill = capacityColor(cap);
+                      const count = zoneCounts.get(z.id) ?? 0;
+                      const max = z.max_capacity ?? 0;
+                      const pct = max > 0 ? Math.min(100, Math.round((count / max) * 100)) : 0;
+                      const fill = capacityColor(pct);
                       return (
                         <g key={`shape-${z.id}`}>
                           {shape.kind === "rect" ? (
