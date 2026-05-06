@@ -89,6 +89,7 @@ function Editor() {
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [globalCapacity, setGlobalCapacity] = useState(0);
   const fileRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
