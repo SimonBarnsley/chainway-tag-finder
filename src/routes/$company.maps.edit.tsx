@@ -805,10 +805,12 @@ function Editor() {
                               type="number"
                               min={0}
                               step={1}
-                              value={z.max_capacity ?? 0}
-                              onChange={(e) =>
-                                handleMaxCapacityChange(z.id, Math.max(0, Number(e.target.value) || 0))
-                              }
+                              value={z.max_capacity ? String(z.max_capacity) : ""}
+                              placeholder="0"
+                              onChange={(e) => {
+                                const v = e.target.value === "" ? 0 : Math.max(0, Number(e.target.value) || 0);
+                                handleMaxCapacityChange(z.id, v);
+                              }}
                               onBlur={(e) =>
                                 handleMaxCapacityCommit(z.id, Math.max(0, Number(e.target.value) || 0))
                               }
