@@ -750,6 +750,33 @@ function Editor() {
             )}
 
             <Card>
+              <CardContent className="p-3 space-y-2">
+                <div className="flex items-center gap-3">
+                  <span className="text-xs font-semibold text-muted-foreground w-28 shrink-0">
+                    Map capacity preview
+                  </span>
+                  <Slider
+                    value={[globalCapacity]}
+                    min={0}
+                    max={100}
+                    step={1}
+                    onValueChange={(v) => setGlobalCapacity(v[0])}
+                    className="flex-1"
+                  />
+                  <span
+                    className="text-xs font-mono w-12 text-right rounded px-1.5 py-0.5 text-white"
+                    style={{ backgroundColor: capacityColor(globalCapacity) }}
+                  >
+                    {globalCapacity}%
+                  </span>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  Slide to preview how zones recolour from green → red as capacity rises.
+                </p>
+              </CardContent>
+            </Card>
+
+            <Card>
               <CardContent className="p-3">
                 <p className="text-xs font-semibold text-muted-foreground mb-2">
                   Mapped locations ({zones.length} of {locations.length})
@@ -764,7 +791,6 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? "Unknown"
                         : "Unassigned";
-                      const cap = z.capacity ?? 0;
                       return (
                         <li key={z.id} className="py-2 text-sm space-y-1.5">
                           <div className="flex items-center gap-2">
@@ -786,26 +812,6 @@ function Editor() {
                             >
                               <Trash2 className="h-3.5 w-3.5" />
                             </Button>
-                          </div>
-                          <div className="flex items-center gap-3 pl-5">
-                            <span className="text-xs text-muted-foreground w-16 shrink-0">
-                              Capacity
-                            </span>
-                            <Slider
-                              value={[cap]}
-                              min={0}
-                              max={100}
-                              step={1}
-                              onValueChange={(v) => handleCapacityChange(z.id, v[0])}
-                              onValueCommit={(v) => handleCapacityCommit(z.id, v[0])}
-                              className="flex-1"
-                            />
-                            <span
-                              className="text-xs font-mono w-12 text-right rounded px-1.5 py-0.5 text-white"
-                              style={{ backgroundColor: capacityColor(cap) }}
-                            >
-                              {cap}%
-                            </span>
                           </div>
                           <div className="flex items-center gap-3 pl-5">
                             <span className="text-xs text-muted-foreground w-16 shrink-0">
