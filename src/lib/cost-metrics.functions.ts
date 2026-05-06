@@ -40,30 +40,19 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       scansHead7d,
       debugHead24h,
       debugHeadTotal,
-      hourlyRes,
-      dailyRes,
-      tableStatsRes,
-      dbSizeRes,
+      scanRowsRes,
     ] = await Promise.all([
       supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", h1),
       supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", h24),
       supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", d7),
       supabaseAdmin.from("zebra_reader_debug_logs").select("*", { count: "exact", head: true }).gte("created_at", h24),
       supabaseAdmin.from("zebra_reader_debug_logs").select("*", { count: "exact", head: true }),
-      // hourly scan volume last 24h
-      supabaseAdmin.rpc("exec_sql_readonly" as never, {} as never).then(
-        () => null,
-        () => null
-      ),
-      Promise.resolve(null),
-      // table stats
       supabaseAdmin
         .from("rfid_scans")
         .select("last_seen")
         .gte("last_seen", h24)
         .order("last_seen", { ascending: false })
         .limit(10000),
-      Promise.resolve(null),
     ]);
 
     // Compute hourly bucket from the fetched scan rows
@@ -75,7 +64,7 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       const key = d.toISOString();
       hourMap.set(key, 0);
     }
-    const scanRows = (tableStatsRes.data ?? []) as { last_seen: string }[];
+    const scanRows = (scanRowsRes.data ?? []) as { last_seen: string }[];
     for (const row of scanRows) {
       const d = new Date(row.last_seen);
       d.setMinutes(0, 0, 0);
