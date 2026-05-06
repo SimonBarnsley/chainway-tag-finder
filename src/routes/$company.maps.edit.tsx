@@ -560,7 +560,7 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
                         : z.label ?? "Zone";
-                      const cap = globalCapacity;
+                      const cap = 0;
                       const fill = capacityColor(cap);
                       return (
                         <g key={z.id}>
