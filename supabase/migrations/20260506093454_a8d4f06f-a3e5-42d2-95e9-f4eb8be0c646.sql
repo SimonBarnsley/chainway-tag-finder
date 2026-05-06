@@ -1,0 +1,1 @@
+ALTER TABLE public.antenna_zones ADD COLUMN IF NOT EXISTS max_capacity integer NOT NULL DEFAULT 0;

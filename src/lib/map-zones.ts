@@ -17,6 +17,7 @@ export interface AntennaZone {
   label: string | null;
   color: string;
   capacity?: number | null;
+  max_capacity?: number | null;
 }
 
 /**
