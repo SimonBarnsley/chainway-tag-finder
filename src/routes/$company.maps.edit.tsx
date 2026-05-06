@@ -540,6 +540,8 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
                         : z.label ?? "Zone";
+                      const cap = z.capacity ?? 0;
+                      const fill = capacityColor(cap);
                       return (
                         <g key={z.id}>
                           {shape.kind === "rect" ? (
@@ -548,8 +550,8 @@ function Editor() {
                               y={shape.y * renderHeight}
                               width={shape.w * renderWidth}
                               height={shape.h * renderHeight}
-                              fill={z.color}
-                              fillOpacity={0.18}
+                              fill={fill}
+                              fillOpacity={0.45}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -560,8 +562,8 @@ function Editor() {
                                 renderWidth,
                                 renderHeight,
                               )}
-                              fill={z.color}
-                              fillOpacity={0.18}
+                              fill={fill}
+                              fillOpacity={0.45}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -577,7 +579,7 @@ function Editor() {
                             fontWeight={700}
                             textAnchor="middle"
                           >
-                            {name}
+                            {name} · {cap}%
                           </text>
                         </g>
                       );
