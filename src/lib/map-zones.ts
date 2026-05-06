@@ -16,6 +16,27 @@ export interface AntennaZone {
   shape_data: unknown;
   label: string | null;
   color: string;
+  capacity?: number | null;
+}
+
+/**
+ * Color from green (0%) → yellow (50%) → red (100%) for capacity fill.
+ */
+export function capacityColor(capacity: number): string {
+  const c = Math.max(0, Math.min(100, capacity));
+  let r: number, g: number, b: number;
+  if (c <= 50) {
+    const t = c / 50;
+    r = Math.round(16 + (245 - 16) * t);
+    g = Math.round(185 + (158 - 185) * t);
+    b = Math.round(129 + (11 - 129) * t);
+  } else {
+    const t = (c - 50) / 50;
+    r = Math.round(245 + (239 - 245) * t);
+    g = Math.round(158 + (68 - 158) * t);
+    b = Math.round(11 + (68 - 11) * t);
+  }
+  return `#${r.toString(16).padStart(2, "0")}${g.toString(16).padStart(2, "0")}${b.toString(16).padStart(2, "0")}`;
 }
 
 export interface LocationMap {
