@@ -270,6 +270,81 @@ function UsersContent() {
           <span className="text-xs text-muted-foreground ml-2">
             Allocate roles to signed-up users
           </span>
+          <div className="ml-auto">
+            <Dialog open={createOpen} onOpenChange={(o) => { setCreateOpen(o); if (!o) resetCreateForm(); }}>
+              <DialogTrigger asChild>
+                <Button size="sm" className="h-8 gap-1">
+                  <UserPlus className="h-3.5 w-3.5" /> Create User
+                </Button>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                <DialogHeader>
+                  <DialogTitle>Create User</DialogTitle>
+                </DialogHeader>
+                <div className="space-y-3">
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-email">Email</Label>
+                    <Input id="cu-email" type="email" value={newEmail} onChange={(e) => setNewEmail(e.target.value)} placeholder="user@example.com" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-name">Display name (optional)</Label>
+                    <Input id="cu-name" value={newDisplayName} onChange={(e) => setNewDisplayName(e.target.value)} />
+                  </div>
+                  <div className="space-y-1">
+                    <Label htmlFor="cu-pw">Temporary password</Label>
+                    <Input id="cu-pw" type="password" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} placeholder="At least 6 characters" />
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Role</Label>
+                    <Select value={newRole} onValueChange={(v) => setNewRole(v as UiRole)}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="admin">ADMIN</SelectItem>
+                        <SelectItem value="supervisor">SUPERVISOR</SelectItem>
+                        <SelectItem value="basic">BASIC</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div className="space-y-1">
+                    <Label>Company</Label>
+                    <Select value={companyMode} onValueChange={(v) => setCompanyMode(v as "existing" | "new")}>
+                      <SelectTrigger><SelectValue /></SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="existing">Use existing company</SelectItem>
+                        <SelectItem value="new">Create new company</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  {companyMode === "existing" ? (
+                    <div className="space-y-1">
+                      <Label>Select company</Label>
+                      <Select value={newCompanySlug} onValueChange={setNewCompanySlug}>
+                        <SelectTrigger>
+                          <SelectValue placeholder={companies.length === 0 ? "No companies available" : "Choose..."} />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {companies.map((c) => (
+                            <SelectItem key={c.slug} value={c.slug}>{c.name}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  ) : (
+                    <div className="space-y-1">
+                      <Label htmlFor="cu-cname">New company name</Label>
+                      <Input id="cu-cname" value={newCompanyName} onChange={(e) => setNewCompanyName(e.target.value)} placeholder="Acme Inc." />
+                    </div>
+                  )}
+                </div>
+                <DialogFooter>
+                  <Button variant="outline" onClick={() => setCreateOpen(false)} disabled={creating}>Cancel</Button>
+                  <Button onClick={handleCreate} disabled={creating}>
+                    {creating ? "Creating..." : "Create User"}
+                  </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
 
         <div className="relative">
