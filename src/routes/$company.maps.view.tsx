@@ -15,6 +15,7 @@ import {
   polygonPointsAttr,
   jitteredPointForEpc,
   zoneCenter,
+  capacityColor,
 } from "@/lib/map-zones";
 
 export const Route = createFileRoute("/$company/maps/view")({
