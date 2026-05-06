@@ -201,6 +201,58 @@ function UsersContent() {
     }
   };
 
+  const resetCreateForm = () => {
+    setNewEmail("");
+    setNewPassword("");
+    setNewDisplayName("");
+    setNewRole("basic");
+    setCompanyMode("existing");
+    setNewCompanySlug("");
+    setNewCompanyName("");
+  };
+
+  const handleCreate = async () => {
+    if (!newEmail.trim() || !newPassword.trim()) {
+      toast.error("Email and password are required");
+      return;
+    }
+    if (newPassword.length < 6) {
+      toast.error("Password must be at least 6 characters");
+      return;
+    }
+    if (companyMode === "existing" && !newCompanySlug) {
+      toast.error("Select a company");
+      return;
+    }
+    if (companyMode === "new" && !newCompanyName.trim()) {
+      toast.error("Enter a company name");
+      return;
+    }
+    setCreating(true);
+    try {
+      const headers = await getAuthHeaders();
+      await createUser({
+        data: {
+          email: newEmail.trim(),
+          password: newPassword,
+          displayName: newDisplayName.trim() || undefined,
+          companySlug: companyMode === "existing" ? newCompanySlug : undefined,
+          companyName: companyMode === "new" ? newCompanyName.trim() : undefined,
+          role: uiToDb(newRole),
+        },
+        headers,
+      });
+      toast.success("User created");
+      setCreateOpen(false);
+      resetCreateForm();
+      await Promise.all([fetchUsers(), fetchCompanies()]);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to create user");
+    } finally {
+      setCreating(false);
+    }
+  };
+
   const filtered = users.filter(
     (u) =>
       !search ||
