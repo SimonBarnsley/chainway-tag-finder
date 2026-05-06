@@ -381,6 +381,23 @@ function Editor() {
     }
   };
 
+  const handleCapacityChange = (id: string, capacity: number) => {
+    setZones((prev) => prev.map((z) => (z.id === id ? { ...z, capacity } : z)));
+  };
+
+  const handleCapacityCommit = async (id: string, capacity: number) => {
+    try {
+      const { error } = await supabase
+        .from("antenna_zones")
+        .update({ capacity })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update capacity");
+      fetchAll();
+    }
+  };
+
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
