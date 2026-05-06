@@ -24,6 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
+import { Slider } from "@/components/ui/slider";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -34,6 +35,7 @@ import {
   polygonPointsAttr,
   zoneCenter,
   colorForIndex,
+  capacityColor,
 } from "@/lib/map-zones";
 
 export const Route = createFileRoute("/$company/maps/edit")({
@@ -379,6 +381,23 @@ function Editor() {
     }
   };
 
+  const handleCapacityChange = (id: string, capacity: number) => {
+    setZones((prev) => prev.map((z) => (z.id === id ? { ...z, capacity } : z)));
+  };
+
+  const handleCapacityCommit = async (id: string, capacity: number) => {
+    try {
+      const { error } = await supabase
+        .from("antenna_zones")
+        .update({ capacity })
+        .eq("id", id);
+      if (error) throw error;
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Failed to update capacity");
+      fetchAll();
+    }
+  };
+
   const renderWidth = 1000;
   const renderHeight = imgDims ? Math.round((imgDims.h / imgDims.w) * renderWidth) : 700;
 
@@ -538,6 +557,8 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
                         : z.label ?? "Zone";
+                      const cap = z.capacity ?? 0;
+                      const fill = capacityColor(cap);
                       return (
                         <g key={z.id}>
                           {shape.kind === "rect" ? (
@@ -546,8 +567,8 @@ function Editor() {
                               y={shape.y * renderHeight}
                               width={shape.w * renderWidth}
                               height={shape.h * renderHeight}
-                              fill={z.color}
-                              fillOpacity={0.18}
+                              fill={fill}
+                              fillOpacity={0.45}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -558,8 +579,8 @@ function Editor() {
                                 renderWidth,
                                 renderHeight,
                               )}
-                              fill={z.color}
-                              fillOpacity={0.18}
+                              fill={fill}
+                              fillOpacity={0.45}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -575,7 +596,7 @@ function Editor() {
                             fontWeight={700}
                             textAnchor="middle"
                           >
-                            {name}
+                            {name} · {cap}%
                           </text>
                         </g>
                       );
@@ -724,29 +745,49 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? "Unknown"
                         : "Unassigned";
+                      const cap = z.capacity ?? 0;
                       return (
-                        <li
-                          key={z.id}
-                          className="flex items-center gap-2 py-2 text-sm"
-                        >
-                          <span
-                            className="inline-block h-3 w-3 rounded-sm shrink-0"
-                            style={{ backgroundColor: z.color }}
-                          />
-                          <span className="font-medium truncate flex-1">{name}</span>
-                          {z.label && (
-                            <span className="text-xs text-muted-foreground truncate italic">
-                              {z.label}
+                        <li key={z.id} className="py-2 text-sm space-y-1.5">
+                          <div className="flex items-center gap-2">
+                            <span
+                              className="inline-block h-3 w-3 rounded-sm shrink-0"
+                              style={{ backgroundColor: z.color }}
+                            />
+                            <span className="font-medium truncate flex-1">{name}</span>
+                            {z.label && (
+                              <span className="text-xs text-muted-foreground truncate italic">
+                                {z.label}
+                              </span>
+                            )}
+                            <Button
+                              size="sm"
+                              variant="ghost"
+                              className="h-7 w-7 p-0 text-destructive hover:text-destructive"
+                              onClick={() => handleDeleteZone(z.id)}
+                            >
+                              <Trash2 className="h-3.5 w-3.5" />
+                            </Button>
+                          </div>
+                          <div className="flex items-center gap-3 pl-5">
+                            <span className="text-xs text-muted-foreground w-16 shrink-0">
+                              Capacity
                             </span>
-                          )}
-                          <Button
-                            size="sm"
-                            variant="ghost"
-                            className="h-7 w-7 p-0 text-destructive hover:text-destructive"
-                            onClick={() => handleDeleteZone(z.id)}
-                          >
-                            <Trash2 className="h-3.5 w-3.5" />
-                          </Button>
+                            <Slider
+                              value={[cap]}
+                              min={0}
+                              max={100}
+                              step={1}
+                              onValueChange={(v) => handleCapacityChange(z.id, v[0])}
+                              onValueCommit={(v) => handleCapacityCommit(z.id, v[0])}
+                              className="flex-1"
+                            />
+                            <span
+                              className="text-xs font-mono w-12 text-right rounded px-1.5 py-0.5 text-white"
+                              style={{ backgroundColor: capacityColor(cap) }}
+                            >
+                              {cap}%
+                            </span>
+                          </div>
                         </li>
                       );
                     })}

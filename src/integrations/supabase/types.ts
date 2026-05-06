@@ -17,6 +17,7 @@ export type Database = {
       antenna_zones: {
         Row: {
           antenna_port: number | null
+          capacity: number
           color: string
           company_slug: string
           created_at: string
@@ -31,6 +32,7 @@ export type Database = {
         }
         Insert: {
           antenna_port?: number | null
+          capacity?: number
           color?: string
           company_slug: string
           created_at?: string
@@ -45,6 +47,7 @@ export type Database = {
         }
         Update: {
           antenna_port?: number | null
+          capacity?: number
           color?: string
           company_slug?: string
           created_at?: string
