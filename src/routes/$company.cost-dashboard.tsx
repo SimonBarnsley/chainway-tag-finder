@@ -4,6 +4,7 @@ import { AppHeader } from "@/components/AppHeader";
 import { useEffect, useState, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { getCostMetrics, type CostMetrics } from "@/lib/cost-metrics.functions";
+import { supabase } from "@/integrations/supabase/client";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { RefreshCw, DollarSign, Database, Activity, AlertTriangle } from "lucide-react";
