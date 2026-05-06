@@ -42,7 +42,11 @@ function CostDashboard() {
   const load = useCallback(async () => {
     setLoading(true);
     try {
-      const res = await fetchMetrics();
+      const { data: sessionData } = await supabase.auth.getSession();
+      const token = sessionData.session?.access_token;
+      const res = await fetchMetrics({
+        headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      });
       setData(res);
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to load metrics");
