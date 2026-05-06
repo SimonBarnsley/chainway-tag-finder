@@ -24,7 +24,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Input } from "@/components/ui/input";
-import { Slider } from "@/components/ui/slider";
+
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
@@ -89,7 +89,7 @@ function Editor() {
 
   const [uploading, setUploading] = useState(false);
   const [loading, setLoading] = useState(true);
-  const [globalCapacity, setGlobalCapacity] = useState(0);
+  
   const fileRef = useRef<HTMLInputElement>(null);
   const svgRef = useRef<SVGSVGElement>(null);
 
@@ -560,7 +560,7 @@ function Editor() {
                       const name = z.location_id
                         ? locationNameById.get(z.location_id) ?? z.label ?? "Location"
                         : z.label ?? "Zone";
-                      const cap = globalCapacity;
+                      const cap = 0;
                       const fill = capacityColor(cap);
                       return (
                         <g key={z.id}>
@@ -732,33 +732,6 @@ function Editor() {
                 </CardContent>
               </Card>
             )}
-
-            <Card>
-              <CardContent className="p-3 space-y-2">
-                <div className="flex items-center gap-3">
-                  <span className="text-xs font-semibold text-muted-foreground w-28 shrink-0">
-                    Map capacity preview
-                  </span>
-                  <Slider
-                    value={[globalCapacity]}
-                    min={0}
-                    max={100}
-                    step={1}
-                    onValueChange={(v) => setGlobalCapacity(v[0])}
-                    className="flex-1"
-                  />
-                  <span
-                    className="text-xs font-mono w-12 text-right rounded px-1.5 py-0.5 text-white"
-                    style={{ backgroundColor: capacityColor(globalCapacity) }}
-                  >
-                    {globalCapacity}%
-                  </span>
-                </div>
-                <p className="text-[11px] text-muted-foreground">
-                  Slide to preview how zones recolour from green → red as capacity rises.
-                </p>
-              </CardContent>
-            </Card>
 
             <Card>
               <CardContent className="p-3">
