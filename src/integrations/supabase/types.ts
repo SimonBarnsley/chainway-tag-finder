@@ -25,6 +25,7 @@ export type Database = {
           label: string | null
           location_id: string | null
           map_id: string
+          max_capacity: number
           reader_id: string | null
           shape_data: Json
           shape_kind: string
@@ -40,6 +41,7 @@ export type Database = {
           label?: string | null
           location_id?: string | null
           map_id: string
+          max_capacity?: number
           reader_id?: string | null
           shape_data: Json
           shape_kind: string
@@ -55,6 +57,7 @@ export type Database = {
           label?: string | null
           location_id?: string | null
           map_id?: string
+          max_capacity?: number
           reader_id?: string | null
           shape_data?: Json
           shape_kind?: string
