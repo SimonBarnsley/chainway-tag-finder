@@ -326,13 +326,6 @@ function Viewer() {
             <Button variant="outline" size="sm" className="h-8 gap-1" onClick={fetchAll}>
               <RefreshCw className="h-3.5 w-3.5" /> Refresh
             </Button>
-            {isAdmin && (
-              <Link to="/$company/maps/edit" params={{ company }}>
-                <Button variant="outline" size="sm" className="h-8 gap-1">
-                  <Pencil className="h-3.5 w-3.5" /> Edit
-                </Button>
-              </Link>
-            )}
           </div>
         </div>
 
