@@ -25,6 +25,7 @@ import { Route as CompanyItemsRouteImport } from './routes/$company.items'
 import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
 import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
 import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboard'
+import { Route as CompanyCostDashboardRouteImport } from './routes/$company.cost-dashboard'
 import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
@@ -116,6 +117,11 @@ const CompanyDashboardRoute = CompanyDashboardRouteImport.update({
   path: '/dashboard',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyCostDashboardRoute = CompanyCostDashboardRouteImport.update({
+  id: '/cost-dashboard',
+  path: '/cost-dashboard',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyBulkUploadRoute = CompanyBulkUploadRouteImport.update({
   id: '/bulk-upload',
   path: '/bulk-upload',
@@ -177,6 +183,7 @@ export interface FileRoutesByFullPath {
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
+  '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
@@ -204,6 +211,7 @@ export interface FileRoutesByTo {
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
+  '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
@@ -233,6 +241,7 @@ export interface FileRoutesById {
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
+  '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
   '/$company/decoder': typeof CompanyDecoderRoute
   '/$company/history': typeof CompanyHistoryRoute
@@ -263,6 +272,7 @@ export interface FileRouteTypes {
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
+    | '/$company/cost-dashboard'
     | '/$company/dashboard'
     | '/$company/decoder'
     | '/$company/history'
@@ -290,6 +300,7 @@ export interface FileRouteTypes {
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
+    | '/$company/cost-dashboard'
     | '/$company/dashboard'
     | '/$company/decoder'
     | '/$company/history'
@@ -318,6 +329,7 @@ export interface FileRouteTypes {
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/bulk-upload'
+    | '/$company/cost-dashboard'
     | '/$company/dashboard'
     | '/$company/decoder'
     | '/$company/history'
@@ -464,6 +476,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyDashboardRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/cost-dashboard': {
+      id: '/$company/cost-dashboard'
+      path: '/cost-dashboard'
+      fullPath: '/$company/cost-dashboard'
+      preLoaderRoute: typeof CompanyCostDashboardRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/bulk-upload': {
       id: '/$company/bulk-upload'
       path: '/bulk-upload'
@@ -541,6 +560,7 @@ interface CompanyRouteChildren {
   CompanyAdminRoute: typeof CompanyAdminRoute
   CompanyAdminDashboardRoute: typeof CompanyAdminDashboardRoute
   CompanyBulkUploadRoute: typeof CompanyBulkUploadRoute
+  CompanyCostDashboardRoute: typeof CompanyCostDashboardRoute
   CompanyDashboardRoute: typeof CompanyDashboardRoute
   CompanyDecoderRoute: typeof CompanyDecoderRoute
   CompanyHistoryRoute: typeof CompanyHistoryRoute
@@ -561,6 +581,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyAdminRoute: CompanyAdminRoute,
   CompanyAdminDashboardRoute: CompanyAdminDashboardRoute,
   CompanyBulkUploadRoute: CompanyBulkUploadRoute,
+  CompanyCostDashboardRoute: CompanyCostDashboardRoute,
   CompanyDashboardRoute: CompanyDashboardRoute,
   CompanyDecoderRoute: CompanyDecoderRoute,
   CompanyHistoryRoute: CompanyHistoryRoute,
