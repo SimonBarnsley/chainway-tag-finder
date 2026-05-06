@@ -414,6 +414,8 @@ function Viewer() {
                   >
                     {zones.map((z) => {
                       const shape = parseZoneShape(z);
+                      const cap = z.capacity ?? 0;
+                      const fill = capacityColor(cap);
                       return (
                         <g key={`shape-${z.id}`}>
                           {shape.kind === "rect" ? (
@@ -422,8 +424,8 @@ function Viewer() {
                               y={shape.y * renderHeight}
                               width={shape.w * renderWidth}
                               height={shape.h * renderHeight}
-                              fill={z.color}
-                              fillOpacity={0.12}
+                              fill={fill}
+                              fillOpacity={0.4}
                               stroke={z.color}
                               strokeWidth={2}
                             />
@@ -434,8 +436,8 @@ function Viewer() {
                                 renderWidth,
                                 renderHeight,
                               )}
-                              fill={z.color}
-                              fillOpacity={0.12}
+                              fill={fill}
+                              fillOpacity={0.4}
                               stroke={z.color}
                               strokeWidth={2}
                             />
