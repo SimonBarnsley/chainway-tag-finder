@@ -267,6 +267,7 @@ function Viewer() {
       const z = zoneByLocationName.get(s.location.toLowerCase());
       if (!z) continue;
       const item = itemByEpc.get(s.epc) ?? null;
+      if (!item) continue;
       const matches =
         !q ||
         wildcardMatch(s.epc, q) ||
