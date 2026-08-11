@@ -238,6 +238,56 @@ function BulkUploadPage() {
     toast.success("CSV exported");
   };
 
+  const [exportingAll, setExportingAll] = useState(false);
+
+  const exportAllItems = async () => {
+    setExportingAll(true);
+    try {
+      const pageSize = 1000;
+      const all: Record<string, unknown>[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("items")
+          .select("*")
+          .eq("company_slug", company)
+          .order("created_at", { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+      }
+      if (all.length === 0) { toast.error("No items found to export"); return; }
+
+      const cols = [
+        "id", "name", "description", "category", "sku", "gtin", "price", "currency",
+        "weight", "weight_unit", "length", "width", "height", "dimension_unit",
+        "image_url", "warehouse_location", "company_prefix", "company_slug",
+        "created_at", "updated_at",
+      ];
+      const esc = (v: unknown) => {
+        const s = v === null || v === undefined ? "" : String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const csv = [
+        cols.join(","),
+        ...all.map((r) => cols.map((c) => esc(r[c])).join(",")),
+      ].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `all-items-${company}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${all.length} items`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExportingAll(false);
+    }
+  };
+
   const namedCount = items.filter((i) => i.name.trim()).length;
   const errorCount = items.filter((i) => i.status === "error").length;
   const successCount = items.filter((i) => i.status === "success").length;
@@ -252,7 +302,7 @@ function BulkUploadPage() {
       } />
 
       <main className="flex-1 px-4 py-4 space-y-4 max-w-7xl mx-auto w-full">
-        <div className="grid grid-cols-3 gap-2">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
           <Button onClick={() => fileRef.current?.click()} variant="outline" className="gap-1.5 text-xs h-12 flex-col">
             <Upload className="h-4 w-4" /> Upload CSV
           </Button>
@@ -261,7 +311,10 @@ function BulkUploadPage() {
             <Plus className="h-4 w-4" /> Add Row
           </Button>
           <Button onClick={exportItemsCSV} variant="outline" className="gap-1.5 text-xs h-12 flex-col" disabled={items.length === 0}>
-            <Download className="h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4" /> Export Rows
+          </Button>
+          <Button onClick={exportAllItems} variant="outline" className="gap-1.5 text-xs h-12 flex-col" disabled={exportingAll}>
+            {exportingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Export All Items
           </Button>
         </div>
 
