@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { decodeSgtin } from "@/lib/sgtin-decoder";
 
 export const Route = createFileRoute("/$company/bulk-upload")({
   component: BulkUploadPage,
@@ -259,20 +260,61 @@ function BulkUploadPage() {
       }
       if (all.length === 0) { toast.error("No items found to export"); return; }
 
+      // Linked EPC tags (GS1 data) for these items
+      const tags: { epc: string; item_id: string; gtin: string | null }[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("tag_items")
+          .select("epc, item_id, gtin")
+          .eq("company_slug", company)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        tags.push(...data);
+        if (data.length < pageSize) break;
+      }
+      const tagsByItem = new Map<string, typeof tags>();
+      tags.forEach((t) => {
+        const list = tagsByItem.get(t.item_id) ?? [];
+        list.push(t);
+        tagsByItem.set(t.item_id, list);
+      });
+
       const cols = [
         "id", "name", "description", "category", "sku", "gtin", "price", "currency",
         "weight", "weight_unit", "length", "width", "height", "dimension_unit",
         "image_url", "warehouse_location", "company_prefix", "company_slug",
         "created_at", "updated_at",
+        "epc", "epc_format", "gs1_company_prefix", "item_reference", "serial",
+        "filter", "gtin14", "pure_identity_uri",
       ];
       const esc = (v: unknown) => {
         const s = v === null || v === undefined ? "" : String(v);
         return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
       };
-      const csv = [
-        cols.join(","),
-        ...all.map((r) => cols.map((c) => esc(r[c])).join(",")),
-      ].join("\n");
+      const rows: string[] = [];
+      all.forEach((r) => {
+        const itemTags = tagsByItem.get(String(r["id"])) ?? [];
+        const emit = (extra: Record<string, unknown>) =>
+          rows.push(cols.map((c) => esc(c in extra ? extra[c] : r[c])).join(","));
+        if (itemTags.length === 0) { emit({}); return; }
+        itemTags.forEach((t) => {
+          const d = decodeSgtin(t.epc);
+          const ok = !("error" in d);
+          emit({
+            epc: t.epc,
+            gtin: t.gtin ?? r["gtin"],
+            epc_format: ok ? d.format : "",
+            gs1_company_prefix: ok ? d.companyPrefix : "",
+            item_reference: ok ? d.itemReference : "",
+            serial: ok ? d.serial : "",
+            filter: ok ? d.filter : "",
+            gtin14: ok ? d.gtin14 : "",
+            pure_identity_uri: ok ? d.pureIdentityUri : "",
+          });
+        });
+      });
+      const csv = [cols.join(","), ...rows].join("\n");
       const blob = new Blob([csv], { type: "text/csv" });
       const url = URL.createObjectURL(blob);
       const a = document.createElement("a");
