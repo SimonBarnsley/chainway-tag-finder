@@ -17,6 +17,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent } from "@/components/ui/card";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { decodeSgtin } from "@/lib/sgtin-decoder";
 
 export const Route = createFileRoute("/$company/bulk-upload")({
   component: BulkUploadPage,
