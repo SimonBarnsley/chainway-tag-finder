@@ -311,7 +311,10 @@ function BulkUploadPage() {
             <Plus className="h-4 w-4" /> Add Row
           </Button>
           <Button onClick={exportItemsCSV} variant="outline" className="gap-1.5 text-xs h-12 flex-col" disabled={items.length === 0}>
-            <Download className="h-4 w-4" /> Export CSV
+            <Download className="h-4 w-4" /> Export Rows
+          </Button>
+          <Button onClick={exportAllItems} variant="outline" className="gap-1.5 text-xs h-12 flex-col" disabled={exportingAll}>
+            {exportingAll ? <Loader2 className="h-4 w-4 animate-spin" /> : <Download className="h-4 w-4" />} Export All Items
           </Button>
         </div>
 
