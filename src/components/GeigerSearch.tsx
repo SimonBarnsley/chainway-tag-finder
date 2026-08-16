@@ -18,12 +18,22 @@ interface GeigerSearchProps {
    */
   lastScan: LastScan | null;
   onClose: () => void;
+  /**
+   * Live proximity from the Zebra SDK's Tag Locationing mode: 0-100, where 100
+   * means the tag is right in front of the antenna. `seq` is monotonic so the
+   * effect fires on every update, including repeats of the same value.
+   */
+  nativeProximity?: { value: number; seq: number } | null;
   /** Optional manual scan controls — shown when the native Zebra SDK is available */
   sdk?: {
     available: boolean;
     isScanning: boolean;
     startScan: () => Promise<void>;
     stopScan: () => Promise<void>;
+    /** Zebra Tag Locationing (true Geiger) controls */
+    isLocating?: boolean;
+    startLocate?: () => Promise<void>;
+    stopLocate?: () => Promise<void>;
   };
 }
 
@@ -37,11 +47,13 @@ function rssiToPercent(rssi: number): number {
   return Math.round(((clamped - RSSI_FAR) / (RSSI_NEAR - RSSI_FAR)) * 100);
 }
 
-export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearchProps) {
+export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximity }: GeigerSearchProps) {
   const [hitCount, setHitCount] = useState(0);
   const [signal, setSignal] = useState(0); // 0-100 (smoothed)
   const [lastRssi, setLastRssi] = useState<number | null>(null);
   const [hasRssi, setHasRssi] = useState(false);
+  const [usingLocationing, setUsingLocationing] = useState(false);
+  const lastProxSeqRef = useRef(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const decayRef = useRef<ReturnType<typeof setInterval> | null>(null);
@@ -79,8 +91,24 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearch
     } catch { /* audio not available */ }
   }, []);
 
+  // Native Zebra Tag Locationing — the SDK's own proximity metric (0-100).
+  // This is the most accurate signal available and takes priority over RSSI.
+  useEffect(() => {
+    if (!nativeProximity) return;
+    if (nativeProximity.seq === lastProxSeqRef.current) return;
+    lastProxSeqRef.current = nativeProximity.seq;
+    setUsingLocationing(true);
+    setHitCount((c) => c + 1);
+    const target = Math.max(0, Math.min(100, nativeProximity.value));
+    setSignal((prev) => Math.round(prev * 0.35 + target * 0.65));
+    if (navigator.vibrate) {
+      navigator.vibrate(target > 70 ? [80] : target > 40 ? [50] : [25]);
+    }
+  }, [nativeProximity]);
+
   // React to scans — this fires reliably because `seq` is monotonic
   useEffect(() => {
+    if (usingLocationing) return; // native proximity wins
     if (!lastScan) return;
     if (lastScan.seq === lastSeqRef.current) return; // already processed
     lastSeqRef.current = lastScan.seq;
@@ -112,7 +140,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearch
     if (navigator.vibrate) {
       navigator.vibrate(nextSignal > 70 ? [80] : nextSignal > 40 ? [50] : [25]);
     }
-  }, [lastScan, targetEpc]);
+  }, [lastScan, targetEpc, usingLocationing]);
 
   // Continuous beeping at a rate proportional to signal strength.
   // This is the classic Geiger-counter behavior — clicks get faster as you
@@ -213,7 +241,12 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearch
             {signalLabel}
           </span>
           <div className="flex items-center gap-3">
-            {hasRssi && lastRssi !== null && (
+            {usingLocationing && (
+              <span className="text-[10px] font-mono uppercase text-primary">
+                SDK locate
+              </span>
+            )}
+            {!usingLocationing && hasRssi && lastRssi !== null && (
               <span className="text-xs font-mono text-muted-foreground">
                 {lastRssi} dBm
               </span>
@@ -232,28 +265,32 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk }: GeigerSearch
       <Button
         onClick={() => {
           if (!sdk?.available) return;
+          if (sdk.startLocate && sdk.stopLocate) {
+            sdk.isLocating ? sdk.stopLocate() : sdk.startLocate();
+            return;
+          }
           sdk.isScanning ? sdk.stopScan() : sdk.startScan();
         }}
         disabled={!sdk?.available}
-        variant={sdk?.isScanning ? "destructive" : "default"}
+        variant={sdk?.isLocating || sdk?.isScanning ? "destructive" : "default"}
         className="w-full gap-2"
       >
-        {sdk?.isScanning ? (
+        {sdk?.isLocating || sdk?.isScanning ? (
           <>
-            <Square className="h-4 w-4" /> Stop scanning
+            <Square className="h-4 w-4" /> Stop locating
           </>
         ) : (
           <>
-            <Play className="h-4 w-4" /> Start scanning
+            <Play className="h-4 w-4" /> Start locating
           </>
         )}
       </Button>
 
       <p className="text-[10px] text-muted-foreground text-center">
         {sdk?.available
-          ? sdk.isScanning
+          ? sdk.isLocating || sdk.isScanning
             ? "Sweep the RFD40 around — beeps speed up as you get closer"
-            : "Pull the TC22 trigger OR tap Start scanning above"
+            : "Pull the TC22 trigger OR tap Start locating above"
           : "Native RFD40 control only works inside the installed Android APK on the TC22 — not in a browser preview."}
       </p>
     </div>

@@ -54,6 +54,10 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     private var readerDevice: ReaderDevice? = null
     private val reader get() = readerDevice?.rfidReader
     @Volatile private var isInventorying = false
+    // Tag Locationing (Geiger) state — the SDK reports a 0-100 proximity value
+    // for the single target EPC while locationing is running.
+    @Volatile private var isLocating = false
+    @Volatile private var locateEpc: String? = null
 
     // Heartbeat: the Zebra SDK doesn't always fire DISCONNECTION_EVENT promptly
     // when the RFD40 sled is powered off via its physical switch (vs. unplugged).
@@ -153,6 +157,20 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
 
     private val eventsListener = object : RfidEventsListener {
         override fun eventReadNotify(e: RfidReadEvents) {
+            // While Tag Locationing is running, the SDK streams proximity updates
+            // for the target EPC instead of ordinary inventory reads.
+            if (isLocating) {
+                val target = locateEpc
+                val tag = e.readEventData?.tagData
+                if (tag != null && (target == null || tag.tagID.equals(target, ignoreCase = true))) {
+                    val payload = JSObject()
+                    payload.put("epc", tag.tagID ?: target ?: "")
+                    payload.put("proximity", tag.LocationInfo?.relativeDistance ?: 0)
+                    payload.put("rssi", tag.peakRSSI.toInt())
+                    notifyListeners("locateProximity", payload)
+                }
+                return
+            }
             val tags: Array<TagData>? = reader?.Actions?.getReadTags(100)
             tags?.forEach { tag ->
                 val payload = JSObject()
@@ -195,6 +213,10 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
             call.resolve()
             return
         }
+        if (isLocating) {
+            call.reject("Tag locationing is active — stop it first")
+            return
+        }
         try {
             r.Actions.Inventory.perform()
             isInventorying = true
@@ -222,6 +244,9 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
         try {
             heartbeatHandler.removeCallbacks(heartbeatRunnable)
             isInventorying = false
+            if (isLocating) try { reader?.Actions?.TagLocationing?.Stop() } catch (_: Throwable) {}
+            isLocating = false
+            locateEpc = null
             reader?.Actions?.Inventory?.stop()
             reader?.Events?.removeEventsListener(eventsListener)
             reader?.disconnect()
@@ -233,6 +258,55 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
             Log.w(TAG, "release error", e)
             call.resolve()
         }
+    }
+
+    /**
+     * Start Zebra Tag Locationing ("Geiger") mode for a single EPC.
+     * The reader continuously reports a relative proximity value (0-100) for
+     * that tag, which is far more accurate for pinpointing than raw RSSI.
+     */
+    @PluginMethod
+    fun startLocate(call: PluginCall) {
+        val r = reader
+        if (r == null) {
+            call.reject("SDK not initialized")
+            return
+        }
+        val epc = call.getString("epc")?.trim()?.uppercase()
+        if (epc.isNullOrEmpty()) {
+            call.reject("epc is required")
+            return
+        }
+        try {
+            // Locationing and inventory are mutually exclusive
+            if (isInventorying) {
+                try { r.Actions.Inventory.stop() } catch (_: Throwable) {}
+                isInventorying = false
+            }
+            locateEpc = epc
+            isLocating = true
+            r.Actions.TagLocationing.Perform(epc, null, null)
+            call.resolve()
+        } catch (e: Throwable) {
+            isLocating = false
+            locateEpc = null
+            Log.e(TAG, "startLocate failed", e)
+            call.reject(e.message ?: "startLocate failed")
+        }
+    }
+
+    /** Stop Tag Locationing mode. */
+    @PluginMethod
+    fun stopLocate(call: PluginCall) {
+        try {
+            if (isLocating) reader?.Actions?.TagLocationing?.Stop()
+        } catch (e: Throwable) {
+            Log.w(TAG, "stopLocate error", e)
+        } finally {
+            isLocating = false
+            locateEpc = null
+        }
+        call.resolve()
     }
 
     // Readers.RFIDReaderEventHandler — fired when the sled is attached/detached
