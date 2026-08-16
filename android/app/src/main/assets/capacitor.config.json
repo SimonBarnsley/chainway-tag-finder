@@ -1,0 +1,12 @@
+{
+	"appId": "com.barcodewarehouse.uhftagfinder",
+	"appName": "UHF Tag Finder",
+	"webDir": "dist/client",
+	"server": {
+		"url": "https://rfid-zeba-android.lovable.app",
+		"cleartext": false
+	},
+	"android": {
+		"allowMixedContent": false
+	}
+}

@@ -1,28 +1,27 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
- * Capacitor configuration for the Zebra RFD40 + TC22 wrapper.
+ * Capacitor configuration for the Zebra UHF wrapper (TC22R built-in + RFD40 sled).
  *
- * Two modes:
- *  - Development (server.url set): WebView loads the live Lovable preview URL
- *    so you can iterate on the web UI without rebuilding the APK each time.
- *  - Production (server.url commented out): WebView loads the bundled
- *    `dist/` folder produced by `vite build`. Use this for sideload/distribution.
+ * This app is server-rendered (TanStack Start), so `dist/client` contains no
+ * index.html and CANNOT be bundled as static web assets. The WebView therefore
+ * always loads the published site over `server.url`; the native RFID plugin
+ * still runs locally, so the trigger/Geiger locate functions work as normal.
+ *
+ * Point `server.url` at whichever deployment you want the APK to open.
  */
 const config: CapacitorConfig = {
   appId: "com.barcodewarehouse.uhftagfinder",
   appName: "UHF Tag Finder",
-  // TanStack Start emits the static client bundle to dist/client (dist/server is the SSR worker).
-  // Capacitor only needs the client assets.
   webDir: "dist/client",
-  // For live development against the published site, uncomment:
-  // server: {
-  //   url: "https://uhf-tag-finder.lovable.app",
-  //   cleartext: false,
-  // },
+  server: {
+    url: "https://rfid-zeba-android.lovable.app",
+    cleartext: false,
+  },
   android: {
     allowMixedContent: false,
   },
 };
+
 
 export default config;
