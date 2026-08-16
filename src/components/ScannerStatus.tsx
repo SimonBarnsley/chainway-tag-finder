@@ -12,6 +12,7 @@ interface ScannerStatusProps {
   sdkError?: string | null;
   sdkScanning?: boolean;
   readerName?: string | null;
+  deviceType?: "integrated" | "sled" | null;
 }
 
 const wedgeConfig: Record<WedgeStatus, { label: string; color: string; iconColor: string }> = {
@@ -37,9 +38,12 @@ export function ScannerStatus({
   sdkError,
   sdkScanning,
   readerName,
+  deviceType,
 }: ScannerStatusProps) {
   const wedge = wedgeConfig[wedgeStatus];
   const sdk = sdkStatus ? sdkConfig[sdkStatus] : sdkConfig.unavailable;
+  const deviceLabel =
+    deviceType === "integrated" ? "Zebra built-in UHF (TC22R)" : deviceType === "sled" ? "Zebra RFD40 sled" : "Zebra UHF reader";
 
   return (
     <div className="space-y-2">
@@ -59,7 +63,7 @@ export function ScannerStatus({
           />
           <div className="flex-1 min-w-0">
             <p className="text-xs text-muted-foreground">
-              Zebra RFD40 {readerName ? `· ${readerName}` : ""}
+              {deviceLabel} {readerName ? `· ${readerName}` : ""}
             </p>
             <p className={`text-sm font-bold ${sdk.color}`}>
               {sdk.label}
@@ -67,8 +71,8 @@ export function ScannerStatus({
             </p>
           </div>
           <span className="text-xs text-muted-foreground shrink-0 truncate max-w-[12rem]">
-            {sdkStatus === "ready" && "Pull TC22 trigger to scan"}
-            {sdkStatus === "initializing" && "Connecting to RFD40 sled…"}
+            {sdkStatus === "ready" && "Pull the trigger to scan"}
+            {sdkStatus === "initializing" && "Connecting to reader…"}
             {sdkStatus === "error" && (sdkError ?? "Init failed")}
           </span>
         </div>
