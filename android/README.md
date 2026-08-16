@@ -82,6 +82,28 @@ app open.
 - **Tag reads**: the plugin subscribes to `RfidEventsListener.eventReadNotify`
   and forwards each `TagData` to JS as `{ epc, rssi, antenna, tid }`.
 
+## Geiger search (Zebra Tag Locationing)
+
+The Geiger panel uses the RFID3 SDK's dedicated **Tag Locationing** mode rather
+than raw RSSI, which is what 123RFID Mobile's "Locate Tag" screen uses:
+
+- JS calls `ZebraRFID.startLocate({ epc })` →
+  `reader.Actions.TagLocationing.Perform(epc, null, null)`.
+- While locationing runs, `eventReadNotify` delivers only the target tag; the
+  plugin reads `tagData.LocationInfo.relativeDistance` (0-100, where 100 means
+  the tag is directly in front of the antenna) and emits a `locateProximity`
+  event `{ epc, proximity, rssi }`.
+- `ZebraRFID.stopLocate()` → `reader.Actions.TagLocationing.Stop()`.
+- Inventory and locationing are mutually exclusive — the plugin stops inventory
+  before starting locationing and rejects `startScan` while locating.
+- Pulling the **hardware trigger** while the Geiger panel is open starts/stops
+  locationing instead of a normal inventory scan (the JS hook keeps the armed
+  target EPC in `locateEpcRef`).
+
+In the UI the meter shows `SDK locate` when native proximity is driving it;
+without the native plugin (browser preview / DataWedge) it falls back to RSSI
+or read-rate.
+
 ## Fallback: DataWedge keyboard wedge
 
 If the native plugin is unavailable (browser preview, SDK init failure, etc.)
