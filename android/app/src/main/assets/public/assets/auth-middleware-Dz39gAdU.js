@@ -1,0 +1,1 @@
+var t=(n,s)=>{const r={type:"request",...s||n};return{options:r,middleware:e=>t({},Object.assign(r,{middleware:e})),inputValidator:e=>t({},Object.assign(r,{inputValidator:e})),client:e=>t({},Object.assign(r,{client:e})),server:e=>t({},Object.assign(r,{server:e}))}};const a=t({type:"function"});export{a as r};
