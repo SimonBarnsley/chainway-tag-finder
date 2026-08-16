@@ -111,31 +111,74 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     @PluginMethod
     fun init(call: PluginCall) {
         try {
-            // SERIAL transport covers the e-Connex pin connection between
-            // the TC22 and the RFD40. (Use BLUETOOTH for snap-on/standalone variants.)
-            readers = Readers(context, ENUM_TRANSPORT.SERIAL)
-            readers?.attach(this)
+            // Transport auto-detection.
+            //  SERVICE_SERIAL -> integrated reader (TC22R / TC27R built-in)
+            //  SERIAL         -> RFD40 sled over e-Connex pin connection
+            //  BLUETOOTH      -> snap-on / standalone sled variants
+            // An explicit { transport: "service_serial" | "serial" | "bluetooth" }
+            // can be passed from JS to skip detection.
+            val requested = call.getString("transport")?.lowercase()
+            val candidates: List<Pair<String, ENUM_TRANSPORT>> = when (requested) {
+                "service_serial", "builtin", "internal" -> listOf("service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL)
+                "serial" -> listOf("serial" to ENUM_TRANSPORT.SERIAL)
+                "bluetooth" -> listOf("bluetooth" to ENUM_TRANSPORT.BLUETOOTH)
+                else -> listOf(
+                    "service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL,
+                    "serial" to ENUM_TRANSPORT.SERIAL,
+                    "bluetooth" to ENUM_TRANSPORT.BLUETOOTH,
+                )
+            }
 
-            val available = readers?.GetAvailableRFIDReaderList()
-            val first = available?.firstOrNull()
-            if (first == null) {
+            var found: ReaderDevice? = null
+            var usedTransport: String? = null
+            var lastError: String? = null
+
+            for ((label, transport) in candidates) {
+                try {
+                    val r = Readers(context, transport)
+                    val available = try { r.GetAvailableRFIDReaderList() } catch (e: Throwable) {
+                        lastError = e.message; null
+                    }
+                    val first = available?.firstOrNull()
+                    if (first != null) {
+                        r.attach(this)
+                        readers = r
+                        found = first
+                        usedTransport = label
+                        break
+                    }
+                    try { r.Dispose() } catch (_: Throwable) {}
+                } catch (e: Throwable) {
+                    Log.w(TAG, "transport $label unavailable", e)
+                    lastError = e.message
+                }
+            }
+
+            if (found == null || usedTransport == null) {
                 val ret = JSObject()
                 ret.put("success", false)
-                ret.put("error", "No RFD40 sled detected over e-Connex")
+                ret.put(
+                    "error",
+                    "No Zebra RFID reader detected (checked built-in TC22R, e-Connex sled and Bluetooth)" +
+                        (lastError?.let { " — $it" } ?: "")
+                )
                 call.resolve(ret)
                 return
             }
 
-            readerDevice = first
-            first.rfidReader.connect()
+            readerDevice = found
+            found.rfidReader.connect()
             configureReader()
             lastConnectedState = true
             heartbeatHandler.removeCallbacks(heartbeatRunnable)
             heartbeatHandler.postDelayed(heartbeatRunnable, 2000L)
 
+            val name = found.name ?: if (usedTransport == "service_serial") "Built-in UHF" else "RFD40"
             val ret = JSObject()
             ret.put("success", true)
-            ret.put("readerName", first.name ?: "RFD40")
+            ret.put("readerName", name)
+            ret.put("transport", usedTransport)
+            ret.put("deviceType", if (usedTransport == "service_serial") "integrated" else "sled")
             call.resolve(ret)
         } catch (e: InvalidUsageException) {
             Log.e(TAG, "init InvalidUsage", e)
@@ -148,6 +191,7 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
             resolveError(call, e.message ?: e.javaClass.simpleName)
         }
     }
+
 
     private fun configureReader() {
         val r = reader ?: return
