@@ -1,9 +1,20 @@
 /*
- * Zebra RFD40 Capacitor plugin (Kotlin).
+ * Zebra UHF RFID Capacitor plugin (Kotlin).
  *
- * Targets the Zebra RFD40 UHF sled connected to a Zebra TC22 mobile computer
- * through the e-Connex adapter (pin-based serial connection — NOT Bluetooth).
- * Uses Zebra's RFID3 SDK (com.zebra.rfid.api3).
+ * Supports BOTH:
+ *   1) Zebra TC22R / TC27R — RFID reader BUILT IN to the mobile computer.
+ *      The RFID3 SDK exposes it over ENUM_TRANSPORT.SERVICE_SERIAL as a
+ *      reader normally named "BUILTIN" / "RFD40-INTERNAL".
+ *   2) Zebra RFD40 sled + TC22 via the e-Connex adapter (pin serial), and
+ *      Bluetooth snap-on variants.
+ *
+ * Transport is auto-detected at init(): we try SERVICE_SERIAL (built-in),
+ * then SERIAL (e-Connex sled), then BLUETOOTH, and use the first transport
+ * that reports an available reader. The chosen transport + reader name are
+ * returned to JS so the UI can label the device correctly.
+ *
+ * Uses Zebra's RFID3 SDK (com.zebra.rfid.api3), version 2.0.3.x or newer
+ * (built-in TC22R reader support requires 2.0.3+).
  *
  * Copy this file into the Android project after running `bunx cap add android`:
  *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt
@@ -15,10 +26,12 @@
  *   - API3_LIB-x.x.x.aar      (Zebra RFID3 SDK)
  *   - ASCII_SDK_API.jar       (sometimes shipped alongside)
  *
- * The hardware trigger key (KEYCODE 293 / 280 on most TC22 + e-Connex setups)
- * is captured by overriding dispatchKeyEvent in MainActivity and forwarding
- * to this plugin via `notifyTriggerPressed()` / `notifyTriggerReleased()`.
+ * Trigger: on the TC22R the integrated trigger arrives as a HANDHELD_TRIGGER
+ * status event from the SDK itself; on the sled it may instead arrive as a
+ * key event (KEYCODE 293 / 280 / 10036) captured in MainActivity and
+ * forwarded via `notifyTriggerPressed()` / `notifyTriggerReleased()`.
  */
+
 package com.barcodewarehouse.uhftagfinder
 
 import android.content.ClipData
