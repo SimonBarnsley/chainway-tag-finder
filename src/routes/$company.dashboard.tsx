@@ -1,6 +1,6 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useServerFn } from "@tanstack/react-start";
 import { AppHeader } from "@/components/AppHeader";
 import {
@@ -21,6 +21,7 @@ import {
   ChevronRight,
   Link2,
   Trash2,
+  Crosshair,
 } from "lucide-react";
 import {
   AlertDialog,
@@ -47,6 +48,9 @@ import {
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { ItemDetails } from "@/components/ItemDetails";
+import { GeigerSearch } from "@/components/GeigerSearch";
+import { useZebraSdk } from "@/hooks/use-zebra-sdk";
+import type { RfidTag } from "@/hooks/use-rfid-scanner";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/$company/dashboard")({
@@ -125,6 +129,29 @@ function DashboardPage() {
       setBackfilling(false);
     }
   };
+
+  // Geiger (tag locate) state — driven by the native Zebra SDK when running
+  // inside the Android APK, with an RSSI/read-rate fallback in the browser.
+  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
+  const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; seq: number } | null>(null);
+
+  const handleGeigerTag = useCallback((tag: RfidTag) => {
+    setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
+  }, []);
+
+  const zebra = useZebraSdk({
+    enabled: true,
+    onTagScanned: handleGeigerTag,
+    onProximity: useCallback((data: { proximity: number }) => {
+      setProximity((prev) => ({ value: data.proximity, seq: (prev?.seq ?? 0) + 1 }));
+    }, []),
+  });
+
+  useEffect(() => {
+    zebra.setLocateTarget(geigerEpc);
+    if (!geigerEpc) setProximity(null);
+  }, [geigerEpc, zebra.setLocateTarget]);
 
   const handleCopyEpc = (epc: string, e: React.MouseEvent) => {
     e.stopPropagation();
@@ -364,6 +391,28 @@ function DashboardPage() {
 
       <main className="mx-auto max-w-7xl px-4 py-6 sm:px-6 space-y-6">
 
+        {geigerEpc && (
+          <GeigerSearch
+            targetEpc={geigerEpc}
+            lastScan={lastScan}
+            nativeProximity={proximity}
+            onClose={() => setGeigerEpc(null)}
+            sdk={
+              zebra.isNativeSdkAvailable
+                ? {
+                    available: true,
+                    isScanning: zebra.isScanning,
+                    startScan: zebra.startScan,
+                    stopScan: zebra.stopScan,
+                    isLocating: zebra.isLocating,
+                    startLocate: () => zebra.startLocate(geigerEpc),
+                    stopLocate: zebra.stopLocate,
+                  }
+                : undefined
+            }
+          />
+        )}
+
         <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
           <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
@@ -553,6 +602,7 @@ function DashboardPage() {
                           handleCopyEpc={handleCopyEpc}
                           fetchRecords={fetchRecords}
                           companySlug={company}
+                          onGeigerSearch={setGeigerEpc}
                           indent
                         />
                       ))}
@@ -570,6 +620,7 @@ function DashboardPage() {
                       handleCopyEpc={handleCopyEpc}
                       fetchRecords={fetchRecords}
                       companySlug={company}
+                      onGeigerSearch={setGeigerEpc}
                     />
                   ))
                 )}
@@ -593,6 +644,7 @@ function ScanRow({
   fetchRecords,
   indent,
   companySlug,
+  onGeigerSearch,
 }: {
   r: ScanRecord;
   showSku: boolean;
@@ -603,6 +655,7 @@ function ScanRow({
   fetchRecords: () => void;
   indent?: boolean;
   companySlug: string;
+  onGeigerSearch: (epc: string) => void;
 }) {
   return (
     <tr
@@ -653,6 +706,13 @@ function ScanRow({
       </td>
       <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
         <div className="inline-flex items-center gap-1">
+          <button
+            onClick={() => onGeigerSearch(r.epc)}
+            className="p-1 rounded hover:bg-primary/10 text-muted-foreground hover:text-primary transition-colors"
+            title="Geiger search this tag"
+          >
+            <Crosshair className="h-3.5 w-3.5" />
+          </button>
           <AlertDialog>
             <AlertDialogTrigger asChild>
               <button
