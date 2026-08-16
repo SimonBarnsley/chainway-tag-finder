@@ -146,3 +146,20 @@ built-in reader or the e-Connex serial connection. If you switch to a Bluetooth-
 <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
 ```
 to `android/app/src/main/AndroidManifest.xml`.
+
+## Note: the WebView loads the published site (not bundled assets)
+
+This app is server-rendered, so `dist/client` has no `index.html` and cannot be
+packaged as static assets — `bunx cap sync` would fail with
+"the web assets directory must contain an index.html file".
+
+`capacitor.config.ts` therefore sets:
+
+```ts
+server: { url: "https://rfid-zeba-android.lovable.app", cleartext: false }
+```
+
+The native RFID plugin (trigger, inventory, **Geiger tag locationing**) still runs
+on-device — only the UI is loaded over HTTPS. So to test new web-side changes you
+just **publish/update** in Lovable and relaunch the app; you only need to rebuild
+the APK when the Kotlin plugin changes.
