@@ -1,8 +1,33 @@
-# Android (Capacitor) — Zebra RFD40 + TC22 Wrapper
+# Android (Capacitor) — Zebra UHF RFID Wrapper (TC22R & RFD40)
 
-Native wrapper for using a **Zebra RFD40** UHF RFID sled paired with a **Zebra TC22**
-mobile computer through the **e-Connex adapter** (pin-based serial connection — no
-Bluetooth pairing required).
+Native wrapper for Zebra UHF RFID hardware. Two supported configurations, both
+handled by the same plugin — the transport is auto-detected at `init()`:
+
+| Device | RFID hardware | RFID3 transport |
+| --- | --- | --- |
+| **TC22R / TC27R** | **built into the device** | `ENUM_TRANSPORT.SERVICE_SERIAL` |
+| TC22 + **RFD40** sled | e-Connex pin serial | `ENUM_TRANSPORT.SERIAL` |
+| Snap-on / standalone sled | Bluetooth | `ENUM_TRANSPORT.BLUETOOTH` |
+
+`init()` returns `{ readerName, transport, deviceType }` where `deviceType` is
+`"integrated"` (TC22R built-in) or `"sled"`, and the UI labels itself
+accordingly. You can force one with `init({ transport: "service_serial" })`.
+
+### TC22R specifics
+
+- Use **RFID3 SDK (API3) 2.0.3.x or newer** — earlier builds don't enumerate the
+  integrated reader. Drop the `.aar` in `android/app/libs/`.
+- The built-in reader appears via `GetAvailableRFIDReaderList()` on
+  `SERVICE_SERIAL`, typically named `BUILTIN` / `RFD40-INTERNAL`.
+- **DataWedge**: for this app's profile, disable the RFID input plugin (or the
+  RFID trigger), otherwise DataWedge owns the radio and the SDK connect fails
+  with a "reader in use" style error. Barcode scanning can stay enabled.
+- Keep the **RFID Manager / Zebra RFID services** on the device up to date
+  (Zebra ships them via LifeGuard); the SDK talks to them over SERVICE_SERIAL.
+- The integrated trigger arrives as an SDK `HANDHELD_TRIGGER` status event and
+  (depending on key config) as keycode `10036`; both paths are handled.
+- Antenna power on the TC22R maxes lower than the RFD40 sled — expect shorter
+  read range; there is no separate battery/charging state to monitor.
 
 This folder is **not** generated yet. Capacitor scaffolds the Android Studio
 project on your local machine — it cannot be created from inside the Lovable
@@ -70,14 +95,15 @@ rebuilding the APK each time. Uncomment the `server.url` block in
 that, every change deployed to Lovable is reflected in the WebView on next
 app open.
 
-## How it talks to the sled
+## How it talks to the reader
 
-- **Transport**: `ENUM_TRANSPORT.SERIAL` — the e-Connex adapter exposes the
-  RFD40 to the TC22 over a serial pin connection, so no Bluetooth pairing is
-  needed and the connection is power-cycle stable.
-- **Trigger key**: the e-Connex passes the RFD40 hardware trigger up as
-  Android keycode **293** (some firmware uses **280**). `MainActivity` captures
-  both and forwards `triggerPressed` / `triggerReleased` events to the plugin,
+- **Transport**: auto-detected in order `SERVICE_SERIAL` (TC22R built-in) →
+  `SERIAL` (RFD40 over e-Connex) → `BLUETOOTH`. The first transport that
+  reports an available reader wins.
+- **Trigger key**: the e-Connex passes the RFD40 trigger up as Android keycode
+  **293** (some firmware uses **280**); the TC22R integrated trigger is
+  **10036** (and also raises an SDK handheld-trigger event). `MainActivity`
+  captures them and forwards `triggerPressed` / `triggerReleased` events to the plugin,
   which calls `Inventory.perform()` / `Inventory.stop()`.
 - **Tag reads**: the plugin subscribes to `RfidEventsListener.eventReadNotify`
   and forwards each `TagData` to JS as `{ epc, rssi, antenna, tid }`.
@@ -113,8 +139,8 @@ them up automatically.
 
 ## Permissions
 
-The Zebra RFID3 SDK over the e-Connex serial connection needs no special
-runtime permissions. If you switch to a Bluetooth-paired RFD40 variant, add:
+The Zebra RFID3 SDK needs no special runtime permissions for the TC22R
+built-in reader or the e-Connex serial connection. If you switch to a Bluetooth-paired RFD40 variant, add:
 ```xml
 <uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
 <uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
