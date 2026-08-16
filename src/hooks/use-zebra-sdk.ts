@@ -15,6 +15,8 @@ import type { RfidTag } from "@/hooks/use-rfid-scanner";
  * Native plugin contract (see android-plugin/ZebraRFD40Plugin.kt):
  *   ZebraRFID.init()       -> Promise<{ success: boolean; error?: string; readerName?: string }>
  *   ZebraRFID.startScan()  -> Promise<void>
+ *   ZebraRFID.startLocate({ epc }) -> Promise<void>   (Tag Locationing / Geiger)
+ *   ZebraRFID.stopLocate() -> Promise<void>
  *   ZebraRFID.stopScan()   -> Promise<void>
  *   ZebraRFID.release()    -> Promise<void>
  *   ZebraRFID.addListener("tagRead", (tag) => ...)
@@ -25,6 +27,7 @@ import type { RfidTag } from "@/hooks/use-rfid-scanner";
 
 type NativeTag = { epc: string; rssi?: number; antenna?: number; tid?: string };
 type ReaderStatus = { connected: boolean; name?: string };
+type LocateProximity = { epc: string; proximity: number; rssi?: number };
 type Listener<T> = (data: T) => void;
 type RemovableHandle = { remove: () => void };
 
@@ -32,11 +35,14 @@ interface ZebraRFIDNative {
   init: () => Promise<{ success: boolean; error?: string; readerName?: string }>;
   startScan: () => Promise<void>;
   stopScan: () => Promise<void>;
+  startLocate: (opts: { epc: string }) => Promise<void>;
+  stopLocate: () => Promise<void>;
   release: () => Promise<void>;
   addListener: ((event: "tagRead", cb: Listener<NativeTag>) => Promise<RemovableHandle>) &
     ((event: "triggerPressed", cb: Listener<void>) => Promise<RemovableHandle>) &
     ((event: "triggerReleased", cb: Listener<void>) => Promise<RemovableHandle>) &
-    ((event: "readerStatus", cb: Listener<ReaderStatus>) => Promise<RemovableHandle>);
+    ((event: "readerStatus", cb: Listener<ReaderStatus>) => Promise<RemovableHandle>) &
+    ((event: "locateProximity", cb: Listener<LocateProximity>) => Promise<RemovableHandle>);
 }
 
 declare global {
@@ -50,13 +56,21 @@ export type ZebraSdkStatus = "unavailable" | "initializing" | "ready" | "error";
 export function useZebraSdk(options: {
   enabled: boolean;
   onTagScanned?: (tag: RfidTag) => void;
+  /** Called with a 0-100 proximity value while Tag Locationing (Geiger) runs */
+  onProximity?: (data: { epc: string; proximity: number; rssi?: number }) => void;
 }) {
   const [status, setStatus] = useState<ZebraSdkStatus>("unavailable");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [readerName, setReaderName] = useState<string | null>(null);
+  const [isLocating, setIsLocating] = useState(false);
   const onTagRef = useRef(options.onTagScanned);
   onTagRef.current = options.onTagScanned;
+  const onProximityRef = useRef(options.onProximity);
+  onProximityRef.current = options.onProximity;
+  // EPC currently being located — kept in a ref so the trigger listener can
+  // re-arm locationing on each trigger pull without re-registering listeners.
+  const locateEpcRef = useRef<string | null>(null);
 
   const isNative = typeof window !== "undefined" && window.Capacitor?.isNativePlatform() === true;
   const plugin = isNative ? window.Capacitor?.Plugins?.ZebraRFID : undefined;
@@ -106,13 +120,29 @@ export function useZebraSdk(options: {
       .then((h) => handles.push(h));
 
     plugin
+      .addListener("locateProximity", (data) => {
+        onProximityRef.current?.(data);
+      })
+      .then((h) => handles.push(h));
+
+    plugin
       .addListener("triggerPressed", () => {
+        // In Geiger mode the trigger drives Tag Locationing, not inventory.
+        const epc = locateEpcRef.current;
+        if (epc) {
+          plugin.startLocate({ epc }).then(() => setIsLocating(true)).catch(() => undefined);
+          return;
+        }
         plugin.startScan().then(() => setIsScanning(true)).catch(() => undefined);
       })
       .then((h) => handles.push(h));
 
     plugin
       .addListener("triggerReleased", () => {
+        if (locateEpcRef.current) {
+          plugin.stopLocate().then(() => setIsLocating(false)).catch(() => undefined);
+          return;
+        }
         plugin.stopScan().then(() => setIsScanning(false)).catch(() => undefined);
       })
       .then((h) => handles.push(h));
@@ -132,6 +162,7 @@ export function useZebraSdk(options: {
 
     return () => {
       handles.forEach((h) => h.remove());
+      plugin.stopLocate().catch(() => undefined);
       plugin.stopScan().catch(() => undefined);
     };
   }, [plugin, status]);
@@ -148,8 +179,34 @@ export function useZebraSdk(options: {
     setIsScanning(false);
   }, [plugin]);
 
+  const startLocate = useCallback(async (epc: string) => {
+    if (!plugin) return;
+    locateEpcRef.current = epc.toUpperCase();
+    await plugin.startLocate({ epc: epc.toUpperCase() });
+    setIsLocating(true);
+  }, [plugin]);
+
+  const stopLocate = useCallback(async () => {
+    if (!plugin) return;
+    await plugin.stopLocate();
+    setIsLocating(false);
+  }, [plugin]);
+
+  /** Arm/disarm the hardware trigger for Geiger mode without starting it. */
+  const setLocateTarget = useCallback((epc: string | null) => {
+    locateEpcRef.current = epc ? epc.toUpperCase() : null;
+    if (!epc && plugin) {
+      plugin.stopLocate().catch(() => undefined);
+      setIsLocating(false);
+    }
+  }, [plugin]);
+
   return {
     isNativeSdkAvailable: !!plugin,
+    isLocating,
+    startLocate,
+    stopLocate,
+    setLocateTarget,
     status,
     errorMessage,
     isScanning,
