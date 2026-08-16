@@ -22,8 +22,8 @@ export const Route = createFileRoute("/$company/")({
   component: ScannerPage,
   head: () => ({
     meta: [
-      { title: "RFID Scanner — Zebra RFD40 + TC22" },
-      { name: "description", content: "UHF RFID tag scanner for the Zebra RFD40 sled paired with a TC22 via e-Connex" },
+      { title: "RFID Scanner — Zebra TC22R & RFD40" },
+      { name: "description", content: "UHF RFID tag scanner for Zebra TC22R built-in readers and the RFD40 sled" },
     ],
   }),
 });
@@ -123,8 +123,8 @@ function ScannerPage() {
     onTagScanned: handleTagScanned,
   });
 
-  // Native Zebra RFD40 SDK bridge — active only inside the Capacitor APK on a TC22
-  // docked in the RFD40 sled (e-Connex pin connection). In a regular browser this
+  // Native Zebra RFID SDK bridge — active only inside the Capacitor APK, on a
+  // TC22R with a built-in reader or a TC22 docked in an RFD40 sled. In a browser this
   // is a no-op and the keyboard wedge / DataWedge handles input.
   const zebra = useZebraSdk({
     enabled: scanEnabled,

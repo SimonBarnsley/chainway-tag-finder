@@ -259,7 +259,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
       </div>
 
       {/* Manual scan control — bypasses the hardware trigger so you can verify
-          the RFD40 sled responds even if the e-Connex trigger key isn't being
+          the reader responds even if the hardware trigger key isn't being
           captured by MainActivity.dispatchKeyEvent. Always rendered so the user
           can see why it isn't usable when running in a regular browser. */}
       <Button
@@ -289,9 +289,9 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
       <p className="text-[10px] text-muted-foreground text-center">
         {sdk?.available
           ? sdk.isLocating || sdk.isScanning
-            ? "Sweep the RFD40 around — beeps speed up as you get closer"
+            ? "Sweep the reader around — beeps speed up as you get closer"
             : "Pull the TC22 trigger OR tap Start locating above"
-          : "Native RFD40 control only works inside the installed Android APK on the TC22 — not in a browser preview."}
+          : "Native reader control only works inside the installed Android APK on the TC22R/TC22 — not in a browser preview."}
       </p>
     </div>
   );

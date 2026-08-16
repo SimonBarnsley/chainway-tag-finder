@@ -6,9 +6,11 @@
  * Key things this does:
  *   1) Registers the ZebraRFD40 plugin
  *   2) Captures the hardware trigger key sent by the e-Connex adapter when
- *      the TC22 is docked into the RFD40 sled, and forwards press/release to
- *      the plugin. Default Zebra trigger keycodes are 293 and 280 — adjust
- *      if your DataWedge / e-Connex profile remaps the trigger.
+ *      the TC22 is docked into the RFD40 sled OR the integrated trigger on a
+ *      TC22R is pulled, and forwards press/release to the plugin.
+ *      IMPORTANT on TC22R: disable/undefine the RFID trigger in DataWedge for
+ *      this app's profile, otherwise DataWedge consumes the trigger and the
+ *      SDK never sees it.
  */
 package com.barcodewarehouse.uhftagfinder
 
@@ -18,9 +20,13 @@ import com.getcapacitor.BridgeActivity
 
 class MainActivity : BridgeActivity() {
 
-    // Default Zebra trigger keycodes for the RFD40 sled via e-Connex.
-    // Some firmware/DataWedge profiles map the trigger to one or the other.
-    private val triggerKeyCodes = setOf(293, 280)
+    // Hardware trigger keycodes.
+    //   293 / 280  -> RFD40 sled via e-Connex
+    //   10036      -> TC22R / TC27R integrated scan trigger (Zebra "SCAN" key)
+    //   KEYCODE 131/132 are also used by some DataWedge profiles.
+    // On the TC22R the SDK usually also raises HANDHELD_TRIGGER status events,
+    // so the plugin de-dupes: either path starts/stops the same operation.
+    private val triggerKeyCodes = setOf(293, 280, 10036, 131, 132)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         registerPlugin(ZebraRFD40Plugin::class.java)

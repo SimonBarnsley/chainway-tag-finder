@@ -4,8 +4,11 @@ import type { RfidTag } from "@/hooks/use-rfid-scanner";
 /**
  * Bridge to the native Zebra RFID SDK plugin (Android only).
  *
- * Targets the Zebra RFD40 UHF sled paired with a TC22 mobile computer via the
- * e-Connex adapter (pin-based serial connection — no Bluetooth pairing needed).
+ * Works with both Zebra UHF reader types:
+ *   - TC22R / TC27R with the RFID reader BUILT IN (SERVICE_SERIAL transport)
+ *   - RFD40 sled + TC22 over the e-Connex adapter, or Bluetooth snap-ons
+ * The native plugin auto-detects which one is present and reports it back
+ * as `deviceType` ("integrated" | "sled") plus the transport used.
  *
  * When running inside the Capacitor APK, `Capacitor.Plugins.ZebraRFID` is
  * injected by the native plugin (see android-plugin/ZebraRFD40Plugin.kt).
@@ -32,7 +35,13 @@ type Listener<T> = (data: T) => void;
 type RemovableHandle = { remove: () => void };
 
 interface ZebraRFIDNative {
-  init: () => Promise<{ success: boolean; error?: string; readerName?: string }>;
+  init: (opts?: { transport?: "service_serial" | "serial" | "bluetooth" }) => Promise<{
+    success: boolean;
+    error?: string;
+    readerName?: string;
+    transport?: string;
+    deviceType?: "integrated" | "sled";
+  }>;
   startScan: () => Promise<void>;
   stopScan: () => Promise<void>;
   startLocate: (opts: { epc: string }) => Promise<void>;
@@ -63,6 +72,7 @@ export function useZebraSdk(options: {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
   const [readerName, setReaderName] = useState<string | null>(null);
+  const [deviceType, setDeviceType] = useState<"integrated" | "sled" | null>(null);
   const [isLocating, setIsLocating] = useState(false);
   const onTagRef = useRef(options.onTagScanned);
   onTagRef.current = options.onTagScanned;
@@ -71,6 +81,7 @@ export function useZebraSdk(options: {
   // EPC currently being located — kept in a ref so the trigger listener can
   // re-arm locationing on each trigger pull without re-registering listeners.
   const locateEpcRef = useRef<string | null>(null);
+  const deviceTypeRef = useRef<"integrated" | "sled" | null>(null);
 
   const isNative = typeof window !== "undefined" && window.Capacitor?.isNativePlatform() === true;
   const plugin = isNative ? window.Capacitor?.Plugins?.ZebraRFID : undefined;
@@ -88,6 +99,7 @@ export function useZebraSdk(options: {
           setStatus("ready");
           setErrorMessage(null);
           if (res.readerName) setReaderName(res.readerName);
+          if (res.deviceType) setDeviceType(res.deviceType);
         } else {
           setStatus("error");
           setErrorMessage(res.error ?? "SDK init failed");
@@ -152,7 +164,11 @@ export function useZebraSdk(options: {
         if (name) setReaderName(name);
         if (!connected) {
           setStatus("error");
-          setErrorMessage("RFD40 sled disconnected");
+          setErrorMessage(
+            deviceTypeRef.current === "integrated"
+              ? "Built-in RFID reader unavailable"
+              : "RFD40 sled disconnected",
+          );
         } else {
           setStatus("ready");
           setErrorMessage(null);
@@ -201,6 +217,8 @@ export function useZebraSdk(options: {
     }
   }, [plugin]);
 
+  deviceTypeRef.current = deviceType;
+
   return {
     isNativeSdkAvailable: !!plugin,
     isLocating,
@@ -211,6 +229,7 @@ export function useZebraSdk(options: {
     errorMessage,
     isScanning,
     readerName,
+    deviceType,
     startScan,
     stopScan,
   };

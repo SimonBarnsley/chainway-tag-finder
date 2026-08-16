@@ -66,7 +66,7 @@ export function WedgeDebugOverlay() {
       <div className="flex-1 overflow-auto p-2 font-mono text-xs">
         {events.length === 0 ? (
           <p className="p-2 text-muted-foreground">
-            Pull the RFD40 trigger. Every keystroke and buffer event will appear here.
+            Pull the reader trigger. Every keystroke and buffer event will appear here.
           </p>
         ) : (
           <ul className="space-y-1">
