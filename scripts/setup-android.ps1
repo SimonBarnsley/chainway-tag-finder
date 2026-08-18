@@ -26,10 +26,20 @@ if (-not (Test-Path "package.json")) {
   exit 1
 }
 
-# Pick a package runner
-if (Get-Command bun -ErrorAction SilentlyContinue) { $PM = "bun"; $RUN = "bunx" }
-else                                               { $PM = "npm"; $RUN = "npx" }
+# Paths containing spaces break the esbuild postinstall script on Windows
+if ((Get-Location).Path -match " ") {
+  Warn "Your project path contains a space:"
+  Warn "  $((Get-Location).Path)"
+  Warn "esbuild's install script fails on paths with spaces."
+  Warn "Move/rename the folder so there are no spaces, e.g. C:\Users\user\Downloads\Zebra-Zebra"
+  Warn "then re-run this script from there."
+  exit 1
+}
+
+# Pick a package runner (npm is the most reliable on Windows)
+$PM = "npm"; $RUN = "npx"
 Ok "Using $PM / $RUN"
+
 
 # --- 1. Dependencies ---------------------------------------------------------
 if (-not $SkipInstall) {
