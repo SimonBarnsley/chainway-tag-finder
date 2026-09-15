@@ -262,36 +262,43 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
           the reader responds even if the hardware trigger key isn't being
           captured by MainActivity.dispatchKeyEvent. Always rendered so the user
           can see why it isn't usable when running in a regular browser. */}
-      <Button
-        onClick={() => {
-          if (!sdk?.available) return;
-          if (sdk.startLocate && sdk.stopLocate) {
-            sdk.isLocating ? sdk.stopLocate() : sdk.startLocate();
-            return;
-          }
-          sdk.isScanning ? sdk.stopScan() : sdk.startScan();
-        }}
-        disabled={!sdk?.available}
-        variant={sdk?.isLocating || sdk?.isScanning ? "destructive" : "default"}
-        className="w-full gap-2"
-      >
-        {sdk?.isLocating || sdk?.isScanning ? (
-          <>
-            <Square className="h-4 w-4" /> Stop locating
-          </>
-        ) : (
-          <>
-            <Play className="h-4 w-4" /> Start locating
-          </>
-        )}
-      </Button>
+      {sdk?.available ? (
+        <Button
+          onClick={() => {
+            if (sdk.startLocate && sdk.stopLocate) {
+              sdk.isLocating ? sdk.stopLocate() : sdk.startLocate();
+              return;
+            }
+            sdk.isScanning ? sdk.stopScan() : sdk.startScan();
+          }}
+          variant={sdk.isLocating || sdk.isScanning ? "destructive" : "default"}
+          className="w-full gap-2"
+        >
+          {sdk.isLocating || sdk.isScanning ? (
+            <>
+              <Square className="h-4 w-4" /> Stop locating
+            </>
+          ) : (
+            <>
+              <Play className="h-4 w-4" /> Start locating
+            </>
+          )}
+        </Button>
+      ) : (
+        <div className="rounded-lg border border-border bg-muted/40 p-2 text-center">
+          <p className="text-[11px] font-semibold text-foreground">Trigger scanning mode</p>
+          <p className="text-[10px] text-muted-foreground">
+            Hold the reader trigger and sweep — every read of this tag feeds the meter
+          </p>
+        </div>
+      )}
 
       <p className="text-[10px] text-muted-foreground text-center">
         {sdk?.available
           ? sdk.isLocating || sdk.isScanning
             ? "Sweep the reader around — beeps speed up as you get closer"
             : "Pull the TC22 trigger OR tap Start locating above"
-          : "Native reader control only works inside the installed Android APK on the TC22R/TC22 — not in a browser preview."}
+          : "Beeps speed up the more often the tag is read. Keep this screen open while scanning."}
       </p>
     </div>
   );
