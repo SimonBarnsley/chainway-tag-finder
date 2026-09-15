@@ -57,7 +57,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
           </div>
 
           <h1 className="absolute left-1/2 -translate-x-1/2 text-xl sm:text-3xl font-extrabold tracking-tight text-foreground pointer-events-none">
-            ZEBRA - ZEBRA
+            ScanLoc8
           </h1>
 
           <div className="flex items-center gap-2">
