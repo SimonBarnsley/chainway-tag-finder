@@ -50,7 +50,7 @@ import { toast } from "sonner";
 import { ItemDetails } from "@/components/ItemDetails";
 import { GeigerSearch } from "@/components/GeigerSearch";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
-import type { RfidTag } from "@/hooks/use-rfid-scanner";
+import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/$company/dashboard")({
@@ -139,6 +139,14 @@ function DashboardPage() {
   const handleGeigerTag = useCallback((tag: RfidTag) => {
     setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
   }, []);
+
+  // Keyboard-wedge (DataWedge / Chainway HID) input feeds the locate meter
+  // whenever the search panel is open — this is what makes searching work
+  // outside the native APK.
+  useRfidScanner({
+    enabled: !!geigerEpc,
+    onTagScanned: handleGeigerTag,
+  });
 
   const zebra = useZebraSdk({
     enabled: true,
