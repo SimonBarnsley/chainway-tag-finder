@@ -12,7 +12,7 @@ import type { CapacitorConfig } from "@capacitor/cli";
  */
 const config: CapacitorConfig = {
   appId: "com.barcodewarehouse.uhftagfinder",
-  appName: "UHF Tag Finder",
+  appName: "ScanLoc8",
   webDir: "dist/client",
   server: {
     url: "https://rfid-zeba-android.lovable.app",

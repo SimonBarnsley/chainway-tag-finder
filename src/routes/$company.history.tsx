@@ -12,7 +12,7 @@ export const Route = createFileRoute("/$company/history")({
   component: HistoryPage,
   head: () => ({
     meta: [
-      { title: "Scan History — RFID Scanner" },
+      { title: "Scan History — ScanLoc8" },
       { name: "description", content: "View and manage saved RFID tag scan history" },
     ],
   }),
