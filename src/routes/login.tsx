@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import barcodeWarehouseLogo from "@/assets/barcode-warehouse-logo.jpg";
+import scanLoc8Icon from "@/assets/scanloc8-icon.png";
 
 export const Route = createFileRoute("/login")({
   component: LoginPage,
@@ -60,9 +60,9 @@ function LoginPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <img
-            src={barcodeWarehouseLogo}
-            alt="The Barcode Warehouse"
-            className="mx-auto h-16 w-auto mb-4"
+            src={scanLoc8Icon}
+            alt="ScanLoc8"
+            className="mx-auto mb-4 h-20 w-20 rounded-lg object-cover"
           />
           <h1 className="text-2xl font-bold text-foreground">Sign In</h1>
           <p className="mt-1 text-sm text-muted-foreground">
