@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import scanLoc8Icon from "@/assets/scanloc8-icon.png";
+import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
@@ -52,9 +52,9 @@ function SignupPage() {
       <div className="w-full max-w-sm space-y-6">
         <div className="text-center">
           <img
-            src={scanLoc8Icon}
+            src={scanLoc8Logo.url}
             alt="ScanLoc8"
-            className="mx-auto mb-4 h-20 w-20 rounded-lg object-cover"
+            className="mx-auto mb-4 h-auto w-full max-w-xs rounded-lg object-contain"
           />
           <h1 className="text-2xl font-bold text-foreground">Create Account</h1>
           <p className="mt-1 text-sm text-muted-foreground">

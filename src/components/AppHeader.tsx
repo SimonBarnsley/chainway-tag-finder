@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign } from "lucide-react";
-import scanLoc8Icon from "@/assets/scanloc8-icon.png";
+import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -49,9 +49,9 @@ export function AppHeader({ actions }: AppHeaderProps) {
           <div className="flex items-center gap-3">
             <Link to="/$company" params={{ company }}>
               <img
-                src={scanLoc8Icon}
+                src={scanLoc8Logo.url}
                 alt="ScanLoc8"
-                className="h-10 w-10 rounded-md object-cover"
+                className="h-10 w-20 rounded-md object-cover"
               />
             </Link>
           </div>
