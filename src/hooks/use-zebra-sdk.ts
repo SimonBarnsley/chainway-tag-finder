@@ -4,11 +4,9 @@ import type { RfidTag } from "@/hooks/use-rfid-scanner";
 /**
  * Bridge to the native Zebra RFID SDK plugin (Android only).
  *
- * Works with both Zebra UHF reader types:
- *   - TC22R / TC27R with the RFID reader BUILT IN (SERVICE_SERIAL transport)
- *   - RFD40 sled + TC22 over the e-Connex adapter, or Bluetooth snap-ons
- * The native plugin auto-detects which one is present and reports it back
- * as `deviceType` ("integrated") plus the transport used.
+ * Targets the Zebra TC22R / TC27R all-in-one handheld, where the UHF RFID
+ * reader is BUILT IN (SERVICE_SERIAL transport). Sled hardware (RFD40 and
+ * Bluetooth snap-ons) is not supported.
  *
  * When running inside the Capacitor APK, `Capacitor.Plugins.ZebraRFID` is
  * injected by the native plugin (see android-plugin/ZebraTC22RPlugin.kt).
