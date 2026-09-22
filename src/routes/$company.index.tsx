@@ -8,7 +8,6 @@ import { TagList } from "@/components/TagList";
 import { LocationSelector } from "@/components/LocationSelector";
 
 import { GeigerSearch } from "@/components/GeigerSearch";
-import { ScannerStatus } from "@/components/ScannerStatus";
 
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
@@ -55,10 +54,6 @@ function ScannerPage() {
   // normal case in geiger mode — the target tag is read over and over).
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
   const [tagPrefix, setTagPrefix] = useState<string>("");
-  // Diagnostics: tags that arrived from the reader but were dropped by the
-  // company EPC prefix filter. Surfaced in the UI so a mis-set prefix doesn't
-  // look like "the trigger isn't reading anything".
-  const [filtered, setFiltered] = useState<{ count: number; lastEpc: string } | null>(null);
 
   useEffect(() => {
     const fetchCompanyName = async () => {
