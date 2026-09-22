@@ -19,7 +19,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
   const params = useParams({ strict: false }) as { company?: string };
   const company = params.company || companySlug || "default";
 
-  const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload"; icon: typeof Radio; perm: PermissionKey | null }[] = [
+  const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof Radio; perm: PermissionKey | null }[] = [
     { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
     { label: "Mobile Dashboard", to: "/$company/dashboard", icon: BarChart3, perm: "dashboard.admin" },
     { label: "Items", to: "/$company/items", icon: Package, perm: "items.view" },
