@@ -23,7 +23,7 @@ interface GeigerSearchProps {
    * means the tag is right in front of the antenna. `seq` is monotonic so the
    * effect fires on every update, including repeats of the same value.
    */
-  nativeProximity?: { value: number; seq: number } | null;
+  nativeProximity?: { value: number; rssi?: number; seq: number } | null;
   /** Optional manual scan controls — shown when the native Zebra SDK is available */
   sdk?: {
     available: boolean;
@@ -97,9 +97,27 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (!nativeProximity) return;
     if (nativeProximity.seq === lastProxSeqRef.current) return;
     lastProxSeqRef.current = nativeProximity.seq;
-    setUsingLocationing(true);
     setHitCount((c) => c + 1);
-    const target = Math.max(0, Math.min(100, nativeProximity.value));
+
+    // Some readers (incl. the TC22R built-in) do not populate the SDK's
+    // relativeDistance field and report 0 forever. In that case the meter must
+    // fall back to RSSI, otherwise only the hit counter moves.
+    const raw = Math.max(0, Math.min(100, nativeProximity.value ?? 0));
+    let target: number;
+    if (raw > 0) {
+      setUsingLocationing(true);
+      target = raw;
+    } else if (typeof nativeProximity.rssi === "number" && nativeProximity.rssi !== 0) {
+      setUsingLocationing(false);
+      setHasRssi(true);
+      setLastRssi(nativeProximity.rssi);
+      target = rssiToPercent(nativeProximity.rssi);
+    } else {
+      // No usable strength at all — at least show that reads are arriving.
+      setUsingLocationing(false);
+      target = Math.min(100, signalRef.current + 20);
+    }
+
     setSignal((prev) => Math.round(prev * 0.35 + target * 0.65));
     if (navigator.vibrate) {
       navigator.vibrate(target > 70 ? [80] : target > 40 ? [50] : [25]);
