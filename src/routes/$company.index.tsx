@@ -349,7 +349,31 @@ function ScannerPage() {
           </Button>
         </div>
 
-        
+        <ScannerStatus
+          isListening={wedge.isListening}
+          tagCount={totalScans}
+          uniqueCount={tags.size}
+          wedgeStatus={wedge.wedgeStatus}
+          sdkAvailable={zebra.isNativeSdkAvailable}
+          sdkStatus={zebra.status}
+          sdkError={zebra.errorMessage}
+          sdkScanning={zebra.isScanning}
+          readerName={zebra.readerName}
+          deviceType={zebra.deviceType}
+        />
+
+        {filtered && filtered.count > 0 && (
+          <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 text-xs">
+            <p className="font-semibold text-warning">
+              {filtered.count} tag read{filtered.count === 1 ? "" : "s"} ignored by the tag filter
+            </p>
+            <p className="text-muted-foreground">
+              The reader is working, but these tags don't start with "{tagPrefix}". Last read:{" "}
+              {filtered.lastEpc}. Change or clear the filter in User Management &amp; Settings.
+            </p>
+          </div>
+        )}
+
 
         {geigerEpc && (
           <GeigerSearch
