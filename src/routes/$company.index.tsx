@@ -8,7 +8,6 @@ import { TagList } from "@/components/TagList";
 import { LocationSelector } from "@/components/LocationSelector";
 
 import { GeigerSearch } from "@/components/GeigerSearch";
-import { ScannerStatus } from "@/components/ScannerStatus";
 
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
@@ -55,10 +54,6 @@ function ScannerPage() {
   // normal case in geiger mode — the target tag is read over and over).
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
   const [tagPrefix, setTagPrefix] = useState<string>("");
-  // Diagnostics: tags that arrived from the reader but were dropped by the
-  // company EPC prefix filter. Surfaced in the UI so a mis-set prefix doesn't
-  // look like "the trigger isn't reading anything".
-  const [filtered, setFiltered] = useState<{ count: number; lastEpc: string } | null>(null);
 
   useEffect(() => {
     const fetchCompanyName = async () => {
@@ -88,10 +83,8 @@ function ScannerPage() {
   }, [company]);
 
   const handleTagScanned = useCallback((tag: RfidTag) => {
-    // Company-wide EPC prefix filter (set by admin). Non-matching tags are
-    // ignored, but counted so the screen can show they were received.
+    // Company-wide EPC prefix filter (set by admin). Non-matching tags are ignored.
     if (tagPrefix && !tag.epc.toUpperCase().startsWith(tagPrefix)) {
-      setFiltered((prev) => ({ count: (prev?.count ?? 0) + 1, lastEpc: tag.epc.toUpperCase() }));
       return;
     }
     setTotalScans((prev) => {
@@ -125,7 +118,7 @@ function ScannerPage() {
 
   }, [geigerEpc, tagPrefix]);
 
-  const wedge = useRfidScanner({
+  useRfidScanner({
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
   });
@@ -350,30 +343,6 @@ function ScannerPage() {
           </Button>
         </div>
 
-        <ScannerStatus
-          isListening={wedge.isListening}
-          tagCount={totalScans}
-          uniqueCount={tags.size}
-          wedgeStatus={wedge.wedgeStatus}
-          sdkAvailable={zebra.isNativeSdkAvailable}
-          sdkStatus={zebra.status}
-          sdkError={zebra.errorMessage}
-          sdkScanning={zebra.isScanning}
-          readerName={zebra.readerName}
-          deviceType={zebra.deviceType}
-        />
-
-        {filtered && filtered.count > 0 && (
-          <div className="rounded-lg border border-warning/40 bg-warning/5 p-3 text-xs">
-            <p className="font-semibold text-warning">
-              {filtered.count} tag read{filtered.count === 1 ? "" : "s"} ignored by the tag filter
-            </p>
-            <p className="text-muted-foreground">
-              The reader is working, but these tags don't start with "{tagPrefix}". Last read:{" "}
-              {filtered.lastEpc}. Change or clear the filter in User Management &amp; Settings.
-            </p>
-          </div>
-        )}
 
 
         {geigerEpc && (
