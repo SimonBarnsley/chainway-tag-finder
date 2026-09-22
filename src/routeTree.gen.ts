@@ -17,6 +17,7 @@ import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
 import { Route as CompanyUsersRouteImport } from './routes/$company.users'
 import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
+import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-audit'
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
@@ -75,6 +76,11 @@ const CompanyUsersRoute = CompanyUsersRouteImport.update({
 const CompanySignupDebugRoute = CompanySignupDebugRouteImport.update({
   id: '/signup-debug',
   path: '/signup-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyScanAuditRoute = CompanyScanAuditRouteImport.update({
+  id: '/scan-audit',
+  path: '/scan-audit',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyRolesRoute = CompanyRolesRouteImport.update({
@@ -192,6 +198,7 @@ export interface FileRoutesByFullPath {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -220,6 +227,7 @@ export interface FileRoutesByTo {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -250,6 +258,7 @@ export interface FileRoutesById {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
@@ -281,6 +290,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
@@ -309,6 +319,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
@@ -338,6 +349,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
     | '/api/zebra-reader'
@@ -418,6 +430,13 @@ declare module '@tanstack/react-router' {
       path: '/signup-debug'
       fullPath: '/$company/signup-debug'
       preLoaderRoute: typeof CompanySignupDebugRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/scan-audit': {
+      id: '/$company/scan-audit'
+      path: '/scan-audit'
+      fullPath: '/$company/scan-audit'
+      preLoaderRoute: typeof CompanyScanAuditRouteImport
       parentRoute: typeof CompanyRoute
     }
     '/$company/roles': {
@@ -569,6 +588,7 @@ interface CompanyRouteChildren {
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
+  CompanyScanAuditRoute: typeof CompanyScanAuditRoute
   CompanySignupDebugRoute: typeof CompanySignupDebugRoute
   CompanyUsersRoute: typeof CompanyUsersRoute
   CompanyIndexRoute: typeof CompanyIndexRoute
@@ -590,6 +610,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
+  CompanyScanAuditRoute: CompanyScanAuditRoute,
   CompanySignupDebugRoute: CompanySignupDebugRoute,
   CompanyUsersRoute: CompanyUsersRoute,
   CompanyIndexRoute: CompanyIndexRoute,
