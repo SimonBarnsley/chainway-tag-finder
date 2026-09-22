@@ -106,55 +106,35 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
     @PluginMethod
     fun init(call: PluginCall) {
         try {
-            // Transport auto-detection.
-            //  SERVICE_SERIAL -> integrated reader (TC22R / TC27R built-in)
-            //  SERIAL         -> RFD40 sled over e-Connex pin connection
-            //  BLUETOOTH      -> snap-on / standalone sled variants
-            // An explicit { transport: "service_serial" | "serial" | "bluetooth" }
-            // can be passed from JS to skip detection.
-            val requested = call.getString("transport")?.lowercase()
-            val candidates: List<Pair<String, ENUM_TRANSPORT>> = when (requested) {
-                "service_serial", "builtin", "internal" -> listOf("service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL)
-                "serial" -> listOf("serial" to ENUM_TRANSPORT.SERIAL)
-                "bluetooth" -> listOf("bluetooth" to ENUM_TRANSPORT.BLUETOOTH)
-                else -> listOf(
-                    "service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL,
-                    "serial" to ENUM_TRANSPORT.SERIAL,
-                    "bluetooth" to ENUM_TRANSPORT.BLUETOOTH,
-                )
-            }
-
+            // TC22R / TC27R only: the built-in reader is exposed over
+            // SERVICE_SERIAL. No sled transports are probed.
             var found: ReaderDevice? = null
-            var usedTransport: String? = null
             var lastError: String? = null
 
-            for ((label, transport) in candidates) {
-                try {
-                    val r = Readers(context, transport)
-                    val available = try { r.GetAvailableRFIDReaderList() } catch (e: Throwable) {
-                        lastError = e.message; null
-                    }
-                    val first = available?.firstOrNull()
-                    if (first != null) {
-                        r.attach(this)
-                        readers = r
-                        found = first
-                        usedTransport = label
-                        break
-                    }
-                    try { r.Dispose() } catch (_: Throwable) {}
-                } catch (e: Throwable) {
-                    Log.w(TAG, "transport $label unavailable", e)
-                    lastError = e.message
+            try {
+                val r = Readers(context, ENUM_TRANSPORT.SERVICE_SERIAL)
+                val available = try { r.GetAvailableRFIDReaderList() } catch (e: Throwable) {
+                    lastError = e.message; null
                 }
+                val first = available?.firstOrNull()
+                if (first != null) {
+                    r.attach(this)
+                    readers = r
+                    found = first
+                } else {
+                    try { r.Dispose() } catch (_: Throwable) {}
+                }
+            } catch (e: Throwable) {
+                Log.w(TAG, "built-in reader unavailable", e)
+                lastError = e.message
             }
 
-            if (found == null || usedTransport == null) {
+            if (found == null) {
                 val ret = JSObject()
                 ret.put("success", false)
                 ret.put(
                     "error",
-                    "No Zebra RFID reader detected (checked built-in TC22R, e-Connex sled and Bluetooth)" +
+                    "Built-in Zebra UHF reader not found — this app requires a TC22R / TC27R" +
                         (lastError?.let { " — $it" } ?: "")
                 )
                 call.resolve(ret)
@@ -168,12 +148,12 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
             heartbeatHandler.removeCallbacks(heartbeatRunnable)
             heartbeatHandler.postDelayed(heartbeatRunnable, 2000L)
 
-            val name = found.name ?: if (usedTransport == "service_serial") "Built-in UHF" else "RFD40"
+            val name = found.name ?: "Built-in UHF"
             val ret = JSObject()
             ret.put("success", true)
             ret.put("readerName", name)
-            ret.put("transport", usedTransport)
-            ret.put("deviceType", if (usedTransport == "service_serial") "integrated" else "sled")
+            ret.put("transport", "service_serial")
+            ret.put("deviceType", "integrated")
             call.resolve(ret)
         } catch (e: InvalidUsageException) {
             Log.e(TAG, "init InvalidUsage", e)
