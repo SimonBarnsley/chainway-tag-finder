@@ -68,7 +68,7 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
     @Volatile private var locateEpc: String? = null
 
     // Heartbeat: the Zebra SDK doesn't always fire DISCONNECTION_EVENT promptly
-    // when the RFD40 sled is powered off via its physical switch (vs. unplugged).
+    // when the built-in reader service stops or is disabled.
     // We poll reader.isConnected every 2s and emit readerStatus so the UI can
     // reliably show "SCANNER NOT ON" within a couple of seconds of power loss.
     private val heartbeatHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -341,18 +341,18 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
         call.resolve()
     }
 
-    // Readers.RFIDReaderEventHandler — fired when the sled is attached/detached
+    // Readers.RFIDReaderEventHandler — fired when the built-in reader appears/disappears
     override fun RFIDReaderAppeared(device: ReaderDevice) {
         val payload = JSObject()
         payload.put("connected", true)
-        payload.put("name", device.name ?: "RFD40")
+        payload.put("name", device.name ?: "Built-in UHF")
         notifyListeners("readerStatus", payload)
     }
 
     override fun RFIDReaderDisappeared(device: ReaderDevice) {
         val payload = JSObject()
         payload.put("connected", false)
-        payload.put("name", device.name ?: "RFD40")
+        payload.put("name", device.name ?: "Built-in UHF")
         notifyListeners("readerStatus", payload)
     }
 
