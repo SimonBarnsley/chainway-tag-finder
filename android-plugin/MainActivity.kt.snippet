@@ -4,13 +4,12 @@
  *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/MainActivity.kt
  *
  * Key things this does:
- *   1) Registers the ZebraRFD40 plugin
- *   2) Captures the hardware trigger key sent by the e-Connex adapter when
- *      the TC22 is docked into the RFD40 sled OR the integrated trigger on a
- *      TC22R is pulled, and forwards press/release to the plugin.
- *      IMPORTANT on TC22R: disable/undefine the RFID trigger in DataWedge for
- *      this app's profile, otherwise DataWedge consumes the trigger and the
- *      SDK never sees it.
+ *   1) Registers the ZebraTC22R plugin
+ *   2) Captures the integrated scan trigger on the Zebra TC22R / TC27R and
+ *      forwards press/release to the plugin.
+ *      IMPORTANT: disable/undefine the RFID trigger in DataWedge for this
+ *      app's profile, otherwise DataWedge consumes the trigger and the SDK
+ *      never sees it.
  */
 package com.barcodewarehouse.uhftagfinder
 
@@ -20,13 +19,12 @@ import com.getcapacitor.BridgeActivity
 
 class MainActivity : BridgeActivity() {
 
-    // Hardware trigger keycodes.
-    //   293 / 280  -> RFD40 sled via e-Connex
-    //   10036      -> TC22R / TC27R integrated scan trigger (Zebra "SCAN" key)
-    //   KEYCODE 131/132 are also used by some DataWedge profiles.
-    // On the TC22R the SDK usually also raises HANDHELD_TRIGGER status events,
-    // so the plugin de-dupes: either path starts/stops the same operation.
-    private val triggerKeyCodes = setOf(293, 280, 10036, 131, 132)
+    // Hardware trigger keycodes for the TC22R / TC27R integrated trigger.
+    //   10036      -> Zebra "SCAN" key on the all-in-one handheld
+    //   131 / 132  -> used by some DataWedge profiles
+    // The SDK usually also raises HANDHELD_TRIGGER status events, so the
+    // plugin de-dupes: either path starts/stops the same operation.
+    private val triggerKeyCodes = setOf(10036, 131, 132)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         registerPlugin(ZebraTC22RPlugin::class.java)
