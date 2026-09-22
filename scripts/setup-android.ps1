@@ -94,9 +94,9 @@ if (Test-Path $Gradle) {
 # --- 4. Copy the native plugin + MainActivity --------------------------------
 Say "Installing native Kotlin sources"
 New-Item -ItemType Directory -Force -Path $PkgPath | Out-Null
-Copy-Item "android-plugin\ZebraRFD40Plugin.kt"    "$PkgPath\ZebraRFD40Plugin.kt" -Force
+Copy-Item "android-plugin\ZebraTC22RPlugin.kt"    "$PkgPath\ZebraTC22RPlugin.kt" -Force
 Copy-Item "android-plugin\MainActivity.kt.snippet" "$PkgPath\MainActivity.kt"    -Force
-Ok "ZebraRFD40Plugin.kt and MainActivity.kt written to $PkgPath"
+Ok "ZebraTC22RPlugin.kt and MainActivity.kt written to $PkgPath"
 
 # --- 5. Permissions ----------------------------------------------------------
 Say "Checking AndroidManifest permissions"
@@ -138,7 +138,7 @@ Next steps:
 
  1. Open the project:      $RUN cap open android
                            (or open the .\android folder in Android Studio)
- 2. Let Gradle sync, then Run onto the TC22R / TC22+RFD40.
+ 2. Let Gradle sync, then Run onto the TC22R.
  3. On the device, open DataWedge -> your app's profile ->
     disable the RFID trigger input, otherwise DataWedge swallows
     the trigger and the Geiger search never starts.

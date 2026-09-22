@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from "@capacitor/cli";
 
 /**
- * Capacitor configuration for the Zebra UHF wrapper (TC22R built-in + RFD40 sled).
+ * Capacitor configuration for the Zebra TC22R all-in-one UHF handheld.
  *
  * This app is server-rendered (TanStack Start), so `dist/client` contains no
  * index.html and CANNOT be bundled as static web assets. The WebView therefore

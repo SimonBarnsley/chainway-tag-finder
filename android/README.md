@@ -1,24 +1,22 @@
-# Android (Capacitor) — Zebra UHF RFID Wrapper (TC22R & RFD40)
+# Android (Capacitor) — Zebra TC22R All-in-One UHF RFID Wrapper
 
-Native wrapper for Zebra UHF RFID hardware. Two supported configurations, both
-handled by the same plugin — the transport is auto-detected at `init()`:
+Native wrapper for the Zebra **TC22R / TC27R** all-in-one handheld, where the
+UHF RFID reader is built into the device. Sled hardware (RFD40 + e-Connex,
+Bluetooth snap-ons) is **not** supported.
 
 | Device | RFID hardware | RFID3 transport |
 | --- | --- | --- |
 | **TC22R / TC27R** | **built into the device** | `ENUM_TRANSPORT.SERVICE_SERIAL` |
-| TC22 + **RFD40** sled | e-Connex pin serial | `ENUM_TRANSPORT.SERIAL` |
-| Snap-on / standalone sled | Bluetooth | `ENUM_TRANSPORT.BLUETOOTH` |
 
-`init()` returns `{ readerName, transport, deviceType }` where `deviceType` is
-`"integrated"` (TC22R built-in) or `"sled"`, and the UI labels itself
-accordingly. You can force one with `init({ transport: "service_serial" })`.
+`init()` returns `{ readerName, transport, deviceType }` with `deviceType`
+always `"integrated"`; only `SERVICE_SERIAL` is probed.
 
 ### TC22R specifics
 
 - Use **RFID3 SDK (API3) 2.0.3.x or newer** — earlier builds don't enumerate the
   integrated reader. Drop the `.aar` in `android/app/libs/`.
 - The built-in reader appears via `GetAvailableRFIDReaderList()` on
-  `SERVICE_SERIAL`, typically named `BUILTIN` / `RFD40-INTERNAL`.
+  `SERVICE_SERIAL`, typically named `BUILTIN`.
 - **DataWedge**: for this app's profile, disable the RFID input plugin (or the
   RFID trigger), otherwise DataWedge owns the radio and the SDK connect fails
   with a "reader in use" style error. Barcode scanning can stay enabled.
@@ -26,8 +24,8 @@ accordingly. You can force one with `init({ transport: "service_serial" })`.
   (Zebra ships them via LifeGuard); the SDK talks to them over SERVICE_SERIAL.
 - The integrated trigger arrives as an SDK `HANDHELD_TRIGGER` status event and
   (depending on key config) as keycode `10036`; both paths are handled.
-- Antenna power on the TC22R maxes lower than the RFD40 sled — expect shorter
-  read range; there is no separate battery/charging state to monitor.
+- The integrated antenna has a lower maximum power than sled readers — expect
+  shorter read range; there is no separate battery/charging state to monitor.
 
 This folder is **not** generated yet. Capacitor scaffolds the Android Studio
 project on your local machine — it cannot be created from inside the Lovable
@@ -70,8 +68,8 @@ preview because Android Studio + JDK + the Android SDK aren't available here.
      ```
 
 6. **Copy the plugin source** from this repo into the Android project:
-   - Copy `android-plugin/ZebraRFD40Plugin.kt` to:
-     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt`
+   - Copy `android-plugin/ZebraTC22RPlugin.kt` to:
+     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt`
    - Merge `android-plugin/MainActivity.kt.snippet` into your generated
      `MainActivity.kt`. It registers the plugin and forwards the e-Connex
      hardware trigger key (KEYCODE 293 / 280) to the plugin.
@@ -82,7 +80,7 @@ preview because Android Studio + JDK + the Android SDK aren't available here.
    ```
    Then Build → Build Bundle(s) / APK(s) → Build APK(s).
 
-8. **Sideload to the TC22** via USB (with the RFD40 docked via e-Connex):
+8. **Sideload to the TC22R** via USB:
    ```bash
    adb install android/app/build/outputs/apk/debug/app-debug.apk
    ```
@@ -97,12 +95,10 @@ app open.
 
 ## How it talks to the reader
 
-- **Transport**: auto-detected in order `SERVICE_SERIAL` (TC22R built-in) →
-  `SERIAL` (RFD40 over e-Connex) → `BLUETOOTH`. The first transport that
-  reports an available reader wins.
-- **Trigger key**: the e-Connex passes the RFD40 trigger up as Android keycode
-  **293** (some firmware uses **280**); the TC22R integrated trigger is
-  **10036** (and also raises an SDK handheld-trigger event). `MainActivity`
+- **Transport**: `SERVICE_SERIAL` only — the TC22R built-in reader. No sled
+  transports are probed.
+- **Trigger key**: the TC22R integrated trigger is keycode **10036** (and also
+  raises an SDK handheld-trigger event). `MainActivity`
   captures them and forwards `triggerPressed` / `triggerReleased` events to the plugin,
   which calls `Inventory.perform()` / `Inventory.stop()`.
 - **Tag reads**: the plugin subscribes to `RfidEventsListener.eventReadNotify`
@@ -134,18 +130,13 @@ or read-rate.
 
 If the native plugin is unavailable (browser preview, SDK init failure, etc.)
 the app falls back to keyboard-wedge input. Configure a DataWedge profile on
-the TC22 to send EPC strings + Enter — the `useRfidScanner` hook will pick
+the TC22R to send EPC strings + Enter — the `useRfidScanner` hook will pick
 them up automatically.
 
 ## Permissions
 
 The Zebra RFID3 SDK needs no special runtime permissions for the TC22R
-built-in reader or the e-Connex serial connection. If you switch to a Bluetooth-paired RFD40 variant, add:
-```xml
-<uses-permission android:name="android.permission.BLUETOOTH_CONNECT" />
-<uses-permission android:name="android.permission.BLUETOOTH_SCAN" />
-```
-to `android/app/src/main/AndroidManifest.xml`.
+built-in reader.
 
 ## Note: the WebView loads the published site (not bundled assets)
 

@@ -1,7 +1,7 @@
 {
   "name": "ScanLoc8",
   "short_name": "ScanLoc8",
-  "description": "UHF RFID tag scanner for Zebra TC22R built-in readers and the RFD40 sled",
+  "description": "UHF RFID tag scanner for the Zebra TC22R all-in-one handheld",
   "start_url": "/",
   "scope": "/",
   "display": "standalone",

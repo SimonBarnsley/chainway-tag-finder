@@ -38,7 +38,7 @@ interface GeigerSearchProps {
 }
 
 // RSSI dBm range we map to 0-100% signal.
-// RFD40 typically reports between roughly -80 (far/weak) and -30 (very close).
+// The TC22R built-in reader typically reports between roughly -80 (far/weak) and -30 (very close).
 const RSSI_FAR = -80;
 const RSSI_NEAR = -30;
 
@@ -123,7 +123,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
 
     let nextSignal: number;
     if (typeof lastScan.rssi === "number") {
-      // Proximity mode (RFD40 native SDK): RSSI directly indicates distance.
+      // Proximity mode (TC22R native SDK): RSSI directly indicates distance.
       setHasRssi(true);
       setLastRssi(lastScan.rssi);
       const target = rssiToPercent(lastScan.rssi);
@@ -145,7 +145,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   // Continuous beeping at a rate proportional to signal strength.
   // This is the classic Geiger-counter behavior — clicks get faster as you
   // get closer. Without this, the only audio feedback came on each tag read,
-  // which on the RFD40 happens at a fairly steady rate regardless of distance.
+  // which on the TC22R happens at a fairly steady rate regardless of distance.
   useEffect(() => {
     if (!soundEnabled || signal < 5) {
       if (beepLoopRef.current) {
@@ -297,7 +297,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
         {sdk?.available
           ? sdk.isLocating || sdk.isScanning
             ? "Sweep the reader around — beeps speed up as you get closer"
-            : "Pull the TC22 trigger OR tap Start locating above"
+            : "Pull the TC22R trigger OR tap Start locating above"
           : "Beeps speed up the more often the tag is read. Keep this screen open while scanning."}
       </p>
     </div>

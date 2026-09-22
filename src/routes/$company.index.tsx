@@ -23,7 +23,7 @@ export const Route = createFileRoute("/$company/")({
   head: () => ({
     meta: [
       { title: "ScanLoc8 — UHF RFID Tag Scanner" },
-      { name: "description", content: "UHF RFID tag scanner for Zebra TC22R built-in readers and the RFD40 sled" },
+      { name: "description", content: "UHF RFID tag scanner for the Zebra TC22R all-in-one handheld" },
     ],
   }),
 });
@@ -124,7 +124,7 @@ function ScannerPage() {
   });
 
   // Native Zebra RFID SDK bridge — active only inside the Capacitor APK, on a
-  // TC22R with a built-in reader or a TC22 docked in an RFD40 sled. In a browser this
+  // TC22R all-in-one handheld with its built-in UHF reader. In a browser this
   // is a no-op and the keyboard wedge / DataWedge handles input.
   const zebra = useZebraSdk({
     enabled: scanEnabled,

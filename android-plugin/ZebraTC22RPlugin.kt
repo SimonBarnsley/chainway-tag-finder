@@ -1,35 +1,30 @@
 /*
- * Zebra UHF RFID Capacitor plugin (Kotlin).
+ * Zebra UHF RFID Capacitor plugin (Kotlin) — Zebra TC22R / TC27R ONLY.
  *
- * Supports BOTH:
- *   1) Zebra TC22R / TC27R — RFID reader BUILT IN to the mobile computer.
- *      The RFID3 SDK exposes it over ENUM_TRANSPORT.SERVICE_SERIAL as a
- *      reader normally named "BUILTIN" / "RFD40-INTERNAL".
- *   2) Zebra RFD40 sled + TC22 via the e-Connex adapter (pin serial), and
- *      Bluetooth snap-on variants.
+ * Targets the all-in-one handheld where the UHF RFID reader is BUILT IN to
+ * the mobile computer. The RFID3 SDK exposes that reader over
+ * ENUM_TRANSPORT.SERVICE_SERIAL (reader normally named "BUILTIN").
  *
- * Transport is auto-detected at init(): we try SERVICE_SERIAL (built-in),
- * then SERIAL (e-Connex sled), then BLUETOOTH, and use the first transport
- * that reports an available reader. The chosen transport + reader name are
- * returned to JS so the UI can label the device correctly.
+ * Sled hardware (RFD40 + e-Connex, Bluetooth snap-ons) is intentionally NOT
+ * supported: only the SERVICE_SERIAL transport is probed.
  *
  * Uses Zebra's RFID3 SDK (com.zebra.rfid.api3), version 2.0.3.x or newer
  * (built-in TC22R reader support requires 2.0.3+).
  *
  * Copy this file into the Android project after running `bunx cap add android`:
- *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt
+ *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt
  *
  * Then register it in MainActivity:
- *   registerPlugin(ZebraRFD40Plugin::class.java)
+ *   registerPlugin(ZebraTC22RPlugin::class.java)
  *
  * Required SDK files in android/app/libs/:
  *   - API3_LIB-x.x.x.aar      (Zebra RFID3 SDK)
  *   - ASCII_SDK_API.jar       (sometimes shipped alongside)
  *
  * Trigger: on the TC22R the integrated trigger arrives as a HANDHELD_TRIGGER
- * status event from the SDK itself; on the sled it may instead arrive as a
- * key event (KEYCODE 293 / 280 / 10036) captured in MainActivity and
- * forwarded via `notifyTriggerPressed()` / `notifyTriggerReleased()`.
+ * status event from the SDK itself; it may also arrive as key event
+ * KEYCODE 10036 captured in MainActivity and forwarded via
+ * `notifyTriggerPressed()` / `notifyTriggerReleased()`.
  */
 
 package com.barcodewarehouse.uhftagfinder
@@ -61,7 +56,7 @@ import com.zebra.rfid.api3.TagData
 import com.zebra.rfid.api3.TriggerInfo
 
 @CapacitorPlugin(name = "ZebraRFID")
-class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
+class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
 
     private var readers: Readers? = null
     private var readerDevice: ReaderDevice? = null
@@ -73,7 +68,7 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     @Volatile private var locateEpc: String? = null
 
     // Heartbeat: the Zebra SDK doesn't always fire DISCONNECTION_EVENT promptly
-    // when the RFD40 sled is powered off via its physical switch (vs. unplugged).
+    // when the built-in reader service stops or is disabled.
     // We poll reader.isConnected every 2s and emit readerStatus so the UI can
     // reliably show "SCANNER NOT ON" within a couple of seconds of power loss.
     private val heartbeatHandler = android.os.Handler(android.os.Looper.getMainLooper())
@@ -98,9 +93,9 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     }
 
     companion object {
-        private const val TAG = "ZebraRFD40Plugin"
+        private const val TAG = "ZebraTC22RPlugin"
         // Singleton handle so MainActivity can forward trigger key events
-        @Volatile var instance: ZebraRFD40Plugin? = null
+        @Volatile var instance: ZebraTC22RPlugin? = null
     }
 
     override fun load() {
@@ -111,55 +106,35 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     @PluginMethod
     fun init(call: PluginCall) {
         try {
-            // Transport auto-detection.
-            //  SERVICE_SERIAL -> integrated reader (TC22R / TC27R built-in)
-            //  SERIAL         -> RFD40 sled over e-Connex pin connection
-            //  BLUETOOTH      -> snap-on / standalone sled variants
-            // An explicit { transport: "service_serial" | "serial" | "bluetooth" }
-            // can be passed from JS to skip detection.
-            val requested = call.getString("transport")?.lowercase()
-            val candidates: List<Pair<String, ENUM_TRANSPORT>> = when (requested) {
-                "service_serial", "builtin", "internal" -> listOf("service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL)
-                "serial" -> listOf("serial" to ENUM_TRANSPORT.SERIAL)
-                "bluetooth" -> listOf("bluetooth" to ENUM_TRANSPORT.BLUETOOTH)
-                else -> listOf(
-                    "service_serial" to ENUM_TRANSPORT.SERVICE_SERIAL,
-                    "serial" to ENUM_TRANSPORT.SERIAL,
-                    "bluetooth" to ENUM_TRANSPORT.BLUETOOTH,
-                )
-            }
-
+            // TC22R / TC27R only: the built-in reader is exposed over
+            // SERVICE_SERIAL. No sled transports are probed.
             var found: ReaderDevice? = null
-            var usedTransport: String? = null
             var lastError: String? = null
 
-            for ((label, transport) in candidates) {
-                try {
-                    val r = Readers(context, transport)
-                    val available = try { r.GetAvailableRFIDReaderList() } catch (e: Throwable) {
-                        lastError = e.message; null
-                    }
-                    val first = available?.firstOrNull()
-                    if (first != null) {
-                        r.attach(this)
-                        readers = r
-                        found = first
-                        usedTransport = label
-                        break
-                    }
-                    try { r.Dispose() } catch (_: Throwable) {}
-                } catch (e: Throwable) {
-                    Log.w(TAG, "transport $label unavailable", e)
-                    lastError = e.message
+            try {
+                val r = Readers(context, ENUM_TRANSPORT.SERVICE_SERIAL)
+                val available = try { r.GetAvailableRFIDReaderList() } catch (e: Throwable) {
+                    lastError = e.message; null
                 }
+                val first = available?.firstOrNull()
+                if (first != null) {
+                    r.attach(this)
+                    readers = r
+                    found = first
+                } else {
+                    try { r.Dispose() } catch (_: Throwable) {}
+                }
+            } catch (e: Throwable) {
+                Log.w(TAG, "built-in reader unavailable", e)
+                lastError = e.message
             }
 
-            if (found == null || usedTransport == null) {
+            if (found == null) {
                 val ret = JSObject()
                 ret.put("success", false)
                 ret.put(
                     "error",
-                    "No Zebra RFID reader detected (checked built-in TC22R, e-Connex sled and Bluetooth)" +
+                    "Built-in Zebra UHF reader not found — this app requires a TC22R / TC27R" +
                         (lastError?.let { " — $it" } ?: "")
                 )
                 call.resolve(ret)
@@ -173,12 +148,12 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
             heartbeatHandler.removeCallbacks(heartbeatRunnable)
             heartbeatHandler.postDelayed(heartbeatRunnable, 2000L)
 
-            val name = found.name ?: if (usedTransport == "service_serial") "Built-in UHF" else "RFD40"
+            val name = found.name ?: "Built-in UHF"
             val ret = JSObject()
             ret.put("success", true)
             ret.put("readerName", name)
-            ret.put("transport", usedTransport)
-            ret.put("deviceType", if (usedTransport == "service_serial") "integrated" else "sled")
+            ret.put("transport", "service_serial")
+            ret.put("deviceType", "integrated")
             call.resolve(ret)
         } catch (e: InvalidUsageException) {
             Log.e(TAG, "init InvalidUsage", e)
@@ -366,18 +341,18 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
         call.resolve()
     }
 
-    // Readers.RFIDReaderEventHandler — fired when the sled is attached/detached
+    // Readers.RFIDReaderEventHandler — fired when the built-in reader appears/disappears
     override fun RFIDReaderAppeared(device: ReaderDevice) {
         val payload = JSObject()
         payload.put("connected", true)
-        payload.put("name", device.name ?: "RFD40")
+        payload.put("name", device.name ?: "Built-in UHF")
         notifyListeners("readerStatus", payload)
     }
 
     override fun RFIDReaderDisappeared(device: ReaderDevice) {
         val payload = JSObject()
         payload.put("connected", false)
-        payload.put("name", device.name ?: "RFD40")
+        payload.put("name", device.name ?: "Built-in UHF")
         notifyListeners("readerStatus", payload)
     }
 

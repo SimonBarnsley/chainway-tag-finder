@@ -1,6 +1,6 @@
-# Step-by-step: Build the TC22R / RFD40 Android APK
+# Step-by-step: Build the Zebra TC22R Android APK
 
-This guide gets you from the Lovable project to a working `.apk` on a Zebra TC22R (or RFD40 sled).
+This guide gets you from the Lovable project to a working `.apk` on a Zebra TC22R all-in-one handheld.
 
 ## What you need installed
 
@@ -13,7 +13,7 @@ This guide gets you from the Lovable project to a working `.apk` on a Zebra TC22
 | **Git** | Clone the repo | https://git-scm.com |
 | **Zebra RFID3 SDK** | Native RFID driver | https://developer.zebra.com/rfid-sdk-android (API3 2.0.3.x or newer) |
 
-You also need a **TC22R** device with USB debugging enabled, or an RFD40 sled docked to a TC22/TC27.
+You also need a **TC22R** (or TC27R) device with USB debugging enabled.
 
 ## 1. Get the project onto your machine
 
@@ -60,8 +60,8 @@ Copy the native plugin into the Android project:
 
 ```bash
 # From the repo root
-cp android-plugin/ZebraRFD40Plugin.kt \
-   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt
+cp android-plugin/ZebraTC22RPlugin.kt \
+   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt
 ```
 
 ## 5. Wire up the hardware trigger
@@ -76,7 +76,7 @@ Replace its contents with the snippet in `android-plugin/MainActivity.kt.snippet
 
 ```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
-    registerPlugin(ZebraRFD40Plugin::class.java)
+    registerPlugin(ZebraTC22RPlugin::class.java)
     super.onCreate(savedInstanceState)
 }
 ```
@@ -116,7 +116,7 @@ Before the SDK can talk to the built-in reader:
 
 1. **DataWedge** — for this app's profile, disable or undefine the **RFID input plugin / RFID trigger**. If DataWedge owns the trigger, the SDK cannot connect.
 2. Keep **RFID Manager / Zebra RFID services** updated via LifeGuard updates.
-3. Expect shorter read range than an RFD40 sled — the integrated antenna has lower maximum power.
+3. Expect a shorter read range than a sled reader — the integrated antenna has lower maximum power.
 
 ## Testing Geiger search
 
