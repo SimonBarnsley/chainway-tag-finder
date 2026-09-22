@@ -54,6 +54,10 @@ function ScannerPage() {
   // normal case in geiger mode — the target tag is read over and over).
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
   const [tagPrefix, setTagPrefix] = useState<string>("");
+  // Diagnostics: tags that arrived from the reader but were dropped by the
+  // company EPC prefix filter. Surfaced in the UI so a mis-set prefix doesn't
+  // look like "the trigger isn't reading anything".
+  const [filtered, setFiltered] = useState<{ count: number; lastEpc: string } | null>(null);
 
   useEffect(() => {
     const fetchCompanyName = async () => {
