@@ -26,6 +26,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
     { label: "Map", to: "/$company/maps/view", icon: MapIcon, perm: null },
     { label: "History", to: "/$company/history", icon: History, perm: "history.view" },
     { label: "Bulk Upload", to: "/$company/bulk-upload", icon: Upload, perm: "bulk_upload.use" },
+    { label: "Scan Audit", to: "/$company/scan-audit", icon: Sparkles, perm: "scanner.use" },
   ];
   const navItems = permLoading
     ? allNavItems
