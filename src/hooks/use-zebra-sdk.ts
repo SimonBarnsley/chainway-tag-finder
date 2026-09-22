@@ -33,7 +33,7 @@ type Listener<T> = (data: T) => void;
 type RemovableHandle = { remove: () => void };
 
 interface ZebraRFIDNative {
-  init: (opts?: { transport?: "service_serial" | "serial" | "bluetooth" }) => Promise<{
+  init: (opts?: { transport?: "service_serial" }) => Promise<{
     success: boolean;
     error?: string;
     readerName?: string;
@@ -163,9 +163,7 @@ export function useZebraSdk(options: {
         if (!connected) {
           setStatus("error");
           setErrorMessage(
-            deviceTypeRef.current === "integrated"
-              ? "Built-in RFID reader unavailable"
-              : "RFD40 sled disconnected",
+            "Built-in TC22R RFID reader unavailable",
           );
         } else {
           setStatus("ready");
