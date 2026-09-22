@@ -134,7 +134,7 @@ function DashboardPage() {
   // inside the Android APK, with an RSSI/read-rate fallback in the browser.
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
-  const [proximity, setProximity] = useState<{ value: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
 
   const handleGeigerTag = useCallback((tag: RfidTag) => {
     setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
@@ -151,8 +151,8 @@ function DashboardPage() {
   const zebra = useZebraSdk({
     enabled: true,
     onTagScanned: handleGeigerTag,
-    onProximity: useCallback((data: { proximity: number }) => {
-      setProximity((prev) => ({ value: data.proximity, seq: (prev?.seq ?? 0) + 1 }));
+    onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
+      setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
     }, []),
   });
 
