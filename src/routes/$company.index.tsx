@@ -124,7 +124,7 @@ function ScannerPage() {
 
   }, [geigerEpc, tagPrefix]);
 
-  useRfidScanner({
+  const wedge = useRfidScanner({
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
   });
