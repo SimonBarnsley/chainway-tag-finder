@@ -138,7 +138,7 @@ Next steps:
 
  1. Open the project:      $RUN cap open android
                            (or open the .\android folder in Android Studio)
- 2. Let Gradle sync, then Run onto the TC22R / TC22+RFD40.
+ 2. Let Gradle sync, then Run onto the TC22R.
  3. On the device, open DataWedge -> your app's profile ->
     disable the RFID trigger input, otherwise DataWedge swallows
     the trigger and the Geiger search never starts.
