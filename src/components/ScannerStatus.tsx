@@ -12,7 +12,7 @@ interface ScannerStatusProps {
   sdkError?: string | null;
   sdkScanning?: boolean;
   readerName?: string | null;
-  deviceType?: "integrated" | "sled" | null;
+  deviceType?: "integrated" | null;
 }
 
 const wedgeConfig: Record<WedgeStatus, { label: string; color: string; iconColor: string }> = {
@@ -43,7 +43,7 @@ export function ScannerStatus({
   const wedge = wedgeConfig[wedgeStatus];
   const sdk = sdkStatus ? sdkConfig[sdkStatus] : sdkConfig.unavailable;
   const deviceLabel =
-    deviceType === "integrated" ? "Zebra built-in UHF (TC22R)" : deviceType === "sled" ? "Zebra RFD40 sled" : "Zebra UHF reader";
+    deviceType === "integrated" ? "Zebra built-in UHF (TC22R)" : "Zebra TC22R UHF reader";
 
   return (
     <div className="space-y-2">
