@@ -1,17 +1,12 @@
 /*
- * Zebra UHF RFID Capacitor plugin (Kotlin).
+ * Zebra UHF RFID Capacitor plugin (Kotlin) — Zebra TC22R / TC27R ONLY.
  *
- * Supports BOTH:
- *   1) Zebra TC22R / TC27R — RFID reader BUILT IN to the mobile computer.
- *      The RFID3 SDK exposes it over ENUM_TRANSPORT.SERVICE_SERIAL as a
- *      reader normally named "BUILTIN" / "RFD40-INTERNAL".
- *   2) Zebra RFD40 sled + TC22 via the e-Connex adapter (pin serial), and
- *      Bluetooth snap-on variants.
+ * Targets the all-in-one handheld where the UHF RFID reader is BUILT IN to
+ * the mobile computer. The RFID3 SDK exposes that reader over
+ * ENUM_TRANSPORT.SERVICE_SERIAL (reader normally named "BUILTIN").
  *
- * Transport is auto-detected at init(): we try SERVICE_SERIAL (built-in),
- * then SERIAL (e-Connex sled), then BLUETOOTH, and use the first transport
- * that reports an available reader. The chosen transport + reader name are
- * returned to JS so the UI can label the device correctly.
+ * Sled hardware (RFD40 + e-Connex, Bluetooth snap-ons) is intentionally NOT
+ * supported: only the SERVICE_SERIAL transport is probed.
  *
  * Uses Zebra's RFID3 SDK (com.zebra.rfid.api3), version 2.0.3.x or newer
  * (built-in TC22R reader support requires 2.0.3+).
@@ -27,9 +22,9 @@
  *   - ASCII_SDK_API.jar       (sometimes shipped alongside)
  *
  * Trigger: on the TC22R the integrated trigger arrives as a HANDHELD_TRIGGER
- * status event from the SDK itself; on the sled it may instead arrive as a
- * key event (KEYCODE 293 / 280 / 10036) captured in MainActivity and
- * forwarded via `notifyTriggerPressed()` / `notifyTriggerReleased()`.
+ * status event from the SDK itself; it may also arrive as key event
+ * KEYCODE 10036 captured in MainActivity and forwarded via
+ * `notifyTriggerPressed()` / `notifyTriggerReleased()`.
  */
 
 package com.barcodewarehouse.uhftagfinder
