@@ -87,8 +87,10 @@ function ScannerPage() {
   }, [company]);
 
   const handleTagScanned = useCallback((tag: RfidTag) => {
-    // Company-wide EPC prefix filter (set by admin). Silently ignore non-matching tags.
+    // Company-wide EPC prefix filter (set by admin). Non-matching tags are
+    // ignored, but counted so the screen can show they were received.
     if (tagPrefix && !tag.epc.toUpperCase().startsWith(tagPrefix)) {
+      setFiltered((prev) => ({ count: (prev?.count ?? 0) + 1, lastEpc: tag.epc.toUpperCase() }));
       return;
     }
     setTotalScans((prev) => {
