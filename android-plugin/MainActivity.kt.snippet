@@ -29,7 +29,7 @@ class MainActivity : BridgeActivity() {
     private val triggerKeyCodes = setOf(293, 280, 10036, 131, 132)
 
     override fun onCreate(savedInstanceState: Bundle?) {
-        registerPlugin(ZebraRFD40Plugin::class.java)
+        registerPlugin(ZebraTC22RPlugin::class.java)
         super.onCreate(savedInstanceState)
     }
 
@@ -38,12 +38,12 @@ class MainActivity : BridgeActivity() {
             when (event.action) {
                 KeyEvent.ACTION_DOWN -> {
                     if (event.repeatCount == 0) {
-                        ZebraRFD40Plugin.instance?.notifyTriggerPressed()
+                        ZebraTC22RPlugin.instance?.notifyTriggerPressed()
                     }
                     return true
                 }
                 KeyEvent.ACTION_UP -> {
-                    ZebraRFD40Plugin.instance?.notifyTriggerReleased()
+                    ZebraTC22RPlugin.instance?.notifyTriggerReleased()
                     return true
                 }
             }

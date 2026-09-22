@@ -60,8 +60,8 @@ Copy the native plugin into the Android project:
 
 ```bash
 # From the repo root
-cp android-plugin/ZebraRFD40Plugin.kt \
-   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt
+cp android-plugin/ZebraTC22RPlugin.kt \
+   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt
 ```
 
 ## 5. Wire up the hardware trigger
@@ -76,7 +76,7 @@ Replace its contents with the snippet in `android-plugin/MainActivity.kt.snippet
 
 ```kotlin
 override fun onCreate(savedInstanceState: Bundle?) {
-    registerPlugin(ZebraRFD40Plugin::class.java)
+    registerPlugin(ZebraTC22RPlugin::class.java)
     super.onCreate(savedInstanceState)
 }
 ```

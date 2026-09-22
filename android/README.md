@@ -70,8 +70,8 @@ preview because Android Studio + JDK + the Android SDK aren't available here.
      ```
 
 6. **Copy the plugin source** from this repo into the Android project:
-   - Copy `android-plugin/ZebraRFD40Plugin.kt` to:
-     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt`
+   - Copy `android-plugin/ZebraTC22RPlugin.kt` to:
+     `android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt`
    - Merge `android-plugin/MainActivity.kt.snippet` into your generated
      `MainActivity.kt`. It registers the plugin and forwards the e-Connex
      hardware trigger key (KEYCODE 293 / 280) to the plugin.

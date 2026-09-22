@@ -83,9 +83,9 @@ fi
 # --- 4. Copy the native plugin + MainActivity --------------------------------
 say "Installing native Kotlin sources"
 mkdir -p "$PKG_PATH"
-cp android-plugin/ZebraRFD40Plugin.kt "$PKG_PATH/ZebraRFD40Plugin.kt"
+cp android-plugin/ZebraTC22RPlugin.kt "$PKG_PATH/ZebraTC22RPlugin.kt"
 cp android-plugin/MainActivity.kt.snippet "$PKG_PATH/MainActivity.kt"
-ok "ZebraRFD40Plugin.kt and MainActivity.kt written to $PKG_PATH"
+ok "ZebraTC22RPlugin.kt and MainActivity.kt written to $PKG_PATH"
 
 # --- 5. Permissions ----------------------------------------------------------
 MANIFEST="android/app/src/main/AndroidManifest.xml"

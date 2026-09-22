@@ -17,10 +17,10 @@
  * (built-in TC22R reader support requires 2.0.3+).
  *
  * Copy this file into the Android project after running `bunx cap add android`:
- *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraRFD40Plugin.kt
+ *   android/app/src/main/java/com/barcodewarehouse/uhftagfinder/ZebraTC22RPlugin.kt
  *
  * Then register it in MainActivity:
- *   registerPlugin(ZebraRFD40Plugin::class.java)
+ *   registerPlugin(ZebraTC22RPlugin::class.java)
  *
  * Required SDK files in android/app/libs/:
  *   - API3_LIB-x.x.x.aar      (Zebra RFID3 SDK)
@@ -61,7 +61,7 @@ import com.zebra.rfid.api3.TagData
 import com.zebra.rfid.api3.TriggerInfo
 
 @CapacitorPlugin(name = "ZebraRFID")
-class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
+class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
 
     private var readers: Readers? = null
     private var readerDevice: ReaderDevice? = null
@@ -98,9 +98,9 @@ class ZebraRFD40Plugin : Plugin(), Readers.RFIDReaderEventHandler {
     }
 
     companion object {
-        private const val TAG = "ZebraRFD40Plugin"
+        private const val TAG = "ZebraTC22RPlugin"
         // Singleton handle so MainActivity can forward trigger key events
-        @Volatile var instance: ZebraRFD40Plugin? = null
+        @Volatile var instance: ZebraTC22RPlugin? = null
     }
 
     override fun load() {

@@ -11,11 +11,11 @@ import type { RfidTag } from "@/hooks/use-rfid-scanner";
  * as `deviceType` ("integrated" | "sled") plus the transport used.
  *
  * When running inside the Capacitor APK, `Capacitor.Plugins.ZebraRFID` is
- * injected by the native plugin (see android-plugin/ZebraRFD40Plugin.kt).
+ * injected by the native plugin (see android-plugin/ZebraTC22RPlugin.kt).
  * In a regular browser preview it's undefined and this hook becomes a no-op —
  * the keyboard wedge handler stays the source of truth.
  *
- * Native plugin contract (see android-plugin/ZebraRFD40Plugin.kt):
+ * Native plugin contract (see android-plugin/ZebraTC22RPlugin.kt):
  *   ZebraRFID.init()       -> Promise<{ success: boolean; error?: string; readerName?: string }>
  *   ZebraRFID.startScan()  -> Promise<void>
  *   ZebraRFID.startLocate({ epc }) -> Promise<void>   (Tag Locationing / Geiger)
