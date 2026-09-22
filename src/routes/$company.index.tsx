@@ -8,6 +8,7 @@ import { TagList } from "@/components/TagList";
 import { LocationSelector } from "@/components/LocationSelector";
 
 import { GeigerSearch } from "@/components/GeigerSearch";
+import { ScannerStatus } from "@/components/ScannerStatus";
 
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
