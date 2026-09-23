@@ -157,31 +157,29 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (lastScan.epc.toUpperCase() !== targetEpc.toUpperCase()) return;
 
     const now = Date.now();
-    const gap = now - lastHitRef.current;
     lastHitRef.current = now;
+    hitTimesRef.current.push(now);
 
     setHitCount((c) => c + 1);
 
-    let nextSignal: number;
     if (typeof lastScan.rssi === "number") {
-      // Proximity mode (TC22R native SDK): RSSI directly indicates distance.
+      // Proximity mode (native SDK): RSSI directly indicates distance.
+      usingRssiRef.current = true;
       setHasRssi(true);
       setLastRssi(lastScan.rssi);
       const target = rssiToPercent(lastScan.rssi);
-      // Smooth toward the new RSSI reading so the meter doesn't jitter
-      nextSignal = Math.round(signalRef.current * 0.4 + target * 0.6);
+      const nextSignal = Math.round(signalRef.current * 0.4 + target * 0.6);
+      setSignal(nextSignal);
+      if (navigator.vibrate) {
+        navigator.vibrate(nextSignal > 70 ? [80] : nextSignal > 40 ? [50] : [25]);
+      }
     } else {
-      // Fallback (keyboard wedge / browser): infer proximity from read frequency
-      const boost = gap < 300 ? 45 : gap < 600 ? 30 : gap < 1200 ? 18 : 10;
-      nextSignal = Math.min(100, signalRef.current + boost);
-    }
-
-    setSignal(nextSignal);
-
-    if (navigator.vibrate) {
-      navigator.vibrate(nextSignal > 70 ? [80] : nextSignal > 40 ? [50] : [25]);
+      // Keyboard wedge / browser: the read-rate ticker drives the bar.
+      usingRssiRef.current = false;
+      if (navigator.vibrate) navigator.vibrate([25]);
     }
   }, [lastScan, targetEpc, usingLocationing]);
+
 
   // Continuous beeping at a rate proportional to signal strength.
   // This is the classic Geiger-counter behavior — clicks get faster as you
