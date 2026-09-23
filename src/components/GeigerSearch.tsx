@@ -63,16 +63,26 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   const signalRef = useRef(0);
   signalRef.current = signal;
 
-  // Hold the meter steady for a moment after each read, then decay gently so
-  // the bar stays visible long enough to act on between reads.
-  const HOLD_MS = 2000;
+  // Read-rate meter: the bar tracks how often the target tag is being read in
+  // the last couple of seconds, so it keeps moving up and down live while the
+  // trigger is held, instead of only reacting to a single read.
+  const hitTimesRef = useRef<number[]>([]);
+  const RATE_WINDOW_MS = 2000;
+  const MAX_READS_PER_SEC = 8; // ~full bar
+
   useEffect(() => {
     decayRef.current = setInterval(() => {
-      if (Date.now() - lastHitRef.current < HOLD_MS) return; // hold
-      setSignal((prev) => Math.max(0, prev - 2));
-    }, 300);
+      const now = Date.now();
+      hitTimesRef.current = hitTimesRef.current.filter((t) => now - t < RATE_WINDOW_MS);
+      // RSSI (native reader) is a better distance signal when it's fresh.
+      if (usingRssiRef.current && now - lastHitRef.current < 1500) return;
+      const rate = (hitTimesRef.current.length / RATE_WINDOW_MS) * 1000;
+      const target = Math.min(100, Math.round((rate / MAX_READS_PER_SEC) * 100));
+      setSignal((prev) => Math.round(prev * 0.5 + target * 0.5));
+    }, 200);
     return () => { if (decayRef.current) clearInterval(decayRef.current); };
   }, []);
+
 
 
   const playBeep = useCallback((strength: number) => {
