@@ -69,8 +69,10 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   // the last couple of seconds, so it keeps moving up and down live while the
   // trigger is held, instead of only reacting to a single read.
   const hitTimesRef = useRef<number[]>([]);
-  const RATE_WINDOW_MS = 2000;
-  const MAX_READS_PER_SEC = 8; // ~full bar
+  const RATE_WINDOW_MS = 3000;
+  // Tuned for keyboard-wedge delivery (DataWedge in a browser), which sends
+  // far fewer reads per second than the native SDK — 4/sec must fill the bar.
+  const MAX_READS_PER_SEC = 4; // ~full bar
 
   useEffect(() => {
     decayRef.current = setInterval(() => {
@@ -221,7 +223,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     return "bg-green-500";
   };
 
-  const signalLabel = signal === 0 ? "No signal" : signal < 30 ? "Weak" : signal < 60 ? "Medium" : signal < 85 ? "Strong" : "Very Strong";
+  const signalLabel = signal < 5 ? "No signal" : signal < 30 ? "Weak" : signal < 60 ? "Medium" : signal < 85 ? "Strong" : "Very Strong";
 
   return (
     <div className="rounded-xl border-2 border-primary/50 bg-card p-4 space-y-4 shadow-[0_0_30px_rgba(34,197,94,0.15)]">
