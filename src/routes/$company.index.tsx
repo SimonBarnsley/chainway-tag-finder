@@ -48,7 +48,7 @@ function ScannerPage() {
   const [location, setLocation] = useState("");
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   // Live proximity (0-100) streamed by the Zebra SDK's Tag Locationing mode
-  const [proximity, setProximity] = useState<{ value: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
   // Monotonic counter + last scan info — using a counter ensures the GeigerSearch
   // effect re-fires even when the SAME EPC is scanned repeatedly (which is the
   // normal case in geiger mode — the target tag is read over and over).
@@ -124,20 +124,22 @@ function ScannerPage() {
 
   }, [geigerEpc, tagPrefix]);
 
-  useRfidScanner({
-    enabled: scanEnabled,
-    onTagScanned: handleTagScanned,
-  });
-
   // Native Zebra RFID SDK bridge — active only inside the Capacitor APK, on a
   // TC22R all-in-one handheld with its built-in UHF reader. In a browser this
   // is a no-op and the keyboard wedge / DataWedge handles input.
   const zebra = useZebraSdk({
     enabled: scanEnabled,
     onTagScanned: handleTagScanned,
-    onProximity: useCallback((data: { proximity: number }) => {
-      setProximity((prev) => ({ value: data.proximity, seq: (prev?.seq ?? 0) + 1 }));
+    onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
+      setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
     }, []),
+  });
+
+  // The native SDK must exclusively own the TC22R reader. Leaving DataWedge's
+  // keyboard stream active at the same time causes an all-tags inventory.
+  useRfidScanner({
+    enabled: scanEnabled && !zebra.isNativeSdkAvailable,
+    onTagScanned: handleTagScanned,
   });
 
   // Arm/disarm the hardware trigger for Zebra Tag Locationing whenever the

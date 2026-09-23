@@ -147,20 +147,19 @@ function DashboardPage() {
   }, []);
 
 
-  // Keyboard-wedge (DataWedge / Chainway HID) input feeds the locate meter
-  // whenever the search panel is open — this is what makes searching work
-  // outside the native APK.
-  useRfidScanner({
-    enabled: !!geigerEpc,
-    onTagScanned: handleGeigerTag,
-  });
-
   const zebra = useZebraSdk({
     enabled: true,
     onTagScanned: handleGeigerTag,
     onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
       setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
     }, []),
+  });
+
+  // DataWedge/HID is only the browser fallback. Inside the APK the native SDK
+  // owns the TC22R trigger, preventing a second all-tags inventory stream.
+  useRfidScanner({
+    enabled: !!geigerEpc && !zebra.isNativeSdkAvailable,
+    onTagScanned: handleGeigerTag,
   });
 
   useEffect(() => {

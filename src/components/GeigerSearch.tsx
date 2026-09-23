@@ -126,13 +126,23 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (raw > 0) {
       setUsingLocationing(true);
       usingRssiRef.current = true;
-      target = raw;
+      // Blend Zebra's distance estimate with live read frequency. Distance is
+      // the primary signal; repeated target reads keep the display responsive.
+      const now = Date.now();
+      hitTimesRef.current = hitTimesRef.current.filter((t) => now - t < RATE_WINDOW_MS);
+      const rate = (hitTimesRef.current.length / RATE_WINDOW_MS) * 1000;
+      const ratePercent = Math.min(100, Math.round((rate / MAX_READS_PER_SEC) * 100));
+      target = Math.round(raw * 0.75 + ratePercent * 0.25);
     } else if (typeof nativeProximity.rssi === "number" && nativeProximity.rssi !== 0) {
       setUsingLocationing(false);
       usingRssiRef.current = true;
       setHasRssi(true);
       setLastRssi(nativeProximity.rssi);
-      target = rssiToPercent(nativeProximity.rssi);
+      const now = Date.now();
+      hitTimesRef.current = hitTimesRef.current.filter((t) => now - t < RATE_WINDOW_MS);
+      const rate = (hitTimesRef.current.length / RATE_WINDOW_MS) * 1000;
+      const ratePercent = Math.min(100, Math.round((rate / MAX_READS_PER_SEC) * 100));
+      target = Math.round(rssiToPercent(nativeProximity.rssi) * 0.75 + ratePercent * 0.25);
     } else {
       // No usable strength at all — let the read-rate meter drive the bar.
       setUsingLocationing(false);

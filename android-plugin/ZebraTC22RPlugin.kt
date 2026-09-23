@@ -193,10 +193,24 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
             // for the target EPC instead of ordinary inventory reads.
             if (isLocating) {
                 val target = locateEpc
-                val tag = e.readEventData?.tagData
-                if (tag != null && (target == null || tag.tagID.equals(target, ignoreCase = true))) {
+                // Always drain the SDK queue. On the integrated TC22R reader the
+                // event's single tagData value can be stale or absent, while the
+                // current RSSI/location samples are waiting in getReadTags().
+                val queued = try { reader?.Actions?.getReadTags(100) } catch (_: Throwable) { null }
+                val matching = queued
+                    ?.filter { tag -> target != null && tag.tagID.equals(target, ignoreCase = true) }
+                    .orEmpty()
+                val eventTag = e.readEventData?.tagData
+                val samples = if (matching.isNotEmpty()) {
+                    matching
+                } else if (eventTag != null && target != null && eventTag.tagID.equals(target, ignoreCase = true)) {
+                    listOf(eventTag)
+                } else {
+                    emptyList()
+                }
+                samples.forEach { tag ->
                     val payload = JSObject()
-                    payload.put("epc", tag.tagID ?: target ?: "")
+                    payload.put("epc", target ?: tag.tagID ?: "")
                     payload.put("proximity", tag.LocationInfo?.relativeDistance ?: 0)
                     payload.put("rssi", tag.peakRSSI.toInt())
                     notifyListeners("locateProximity", payload)
@@ -311,10 +325,19 @@ class ZebraTC22RPlugin : Plugin(), Readers.RFIDReaderEventHandler {
         }
         try {
             // Locationing and inventory are mutually exclusive
-            if (isInventorying) {
-                try { r.Actions.Inventory.stop() } catch (_: Throwable) {}
-                isInventorying = false
+            // Stop inventory unconditionally because the SDK may have started it
+            // from a previous trigger even when our local flag is out of sync.
+            try { r.Actions.Inventory.stop() } catch (_: Throwable) {}
+            isInventorying = false
+            if (isLocating) {
+                if (locateEpc.equals(epc, ignoreCase = true)) {
+                    call.resolve()
+                    return
+                }
+                try { r.Actions.TagLocationing.Stop() } catch (_: Throwable) {}
+                isLocating = false
             }
+            try { r.Actions.getReadTags(1000) } catch (_: Throwable) {}
             locateEpc = epc
             isLocating = true
             r.Actions.TagLocationing.Perform(epc, null, null)
