@@ -48,7 +48,7 @@ function ScannerPage() {
   const [location, setLocation] = useState("");
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   // Live proximity (0-100) streamed by the Zebra SDK's Tag Locationing mode
-  const [proximity, setProximity] = useState<{ value: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
   // Monotonic counter + last scan info — using a counter ensures the GeigerSearch
   // effect re-fires even when the SAME EPC is scanned repeatedly (which is the
   // normal case in geiger mode — the target tag is read over and over).
