@@ -87,6 +87,12 @@ function ScannerPage() {
     if (tagPrefix && !tag.epc.toUpperCase().startsWith(tagPrefix)) {
       return;
     }
+    // While a Geiger search is running the reader is locked to that one EPC —
+    // every other tag read is discarded so it can't affect the meter or list.
+    if (geigerEpc && tag.epc.toUpperCase() !== geigerEpc.toUpperCase()) {
+      return;
+    }
+
     setTotalScans((prev) => {
       const next = prev + 1;
       setLastScan({ epc: tag.epc, rssi: tag.rssi, seq: next });
