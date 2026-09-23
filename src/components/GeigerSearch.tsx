@@ -63,13 +63,17 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   const signalRef = useRef(0);
   signalRef.current = signal;
 
-  // Decay signal slowly so the meter falls when reads stop or weaken
+  // Hold the meter steady for a moment after each read, then decay gently so
+  // the bar stays visible long enough to act on between reads.
+  const HOLD_MS = 2000;
   useEffect(() => {
     decayRef.current = setInterval(() => {
-      setSignal((prev) => Math.max(0, prev - 4));
-    }, 250);
+      if (Date.now() - lastHitRef.current < HOLD_MS) return; // hold
+      setSignal((prev) => Math.max(0, prev - 2));
+    }, 300);
     return () => { if (decayRef.current) clearInterval(decayRef.current); };
   }, []);
+
 
   const playBeep = useCallback((strength: number) => {
     try {
