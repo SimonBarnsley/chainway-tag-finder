@@ -101,7 +101,9 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (!nativeProximity) return;
     if (nativeProximity.seq === lastProxSeqRef.current) return;
     lastProxSeqRef.current = nativeProximity.seq;
+    lastHitRef.current = Date.now();
     setHitCount((c) => c + 1);
+
 
     // Some readers (incl. the TC22R built-in) do not populate the SDK's
     // relativeDistance field and report 0 forever. In that case the meter must
