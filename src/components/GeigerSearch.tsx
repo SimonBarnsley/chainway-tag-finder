@@ -62,6 +62,8 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   const beepLoopRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const signalRef = useRef(0);
   signalRef.current = signal;
+  const usingRssiRef = useRef(false);
+
 
   // Read-rate meter: the bar tracks how often the target tag is being read in
   // the last couple of seconds, so it keeps moving up and down live while the
