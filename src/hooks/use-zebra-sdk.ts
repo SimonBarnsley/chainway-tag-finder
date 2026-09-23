@@ -131,6 +131,8 @@ export function useZebraSdk(options: {
 
     plugin
       .addListener("locateProximity", (data) => {
+        const target = locateEpcRef.current;
+        if (!target || data.epc.toUpperCase() !== target) return;
         onProximityRef.current?.(data);
       })
       .then((h) => handles.push(h));
