@@ -136,9 +136,16 @@ function DashboardPage() {
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
   const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
 
+  const geigerEpcRef = useRef<string | null>(null);
+  geigerEpcRef.current = geigerEpc;
+
   const handleGeigerTag = useCallback((tag: RfidTag) => {
+    const target = geigerEpcRef.current;
+    // Only the tag being searched for feeds the meter — all other reads ignored.
+    if (!target || tag.epc.toUpperCase() !== target.toUpperCase()) return;
     setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
   }, []);
+
 
   // Keyboard-wedge (DataWedge / Chainway HID) input feeds the locate meter
   // whenever the search panel is open — this is what makes searching work
