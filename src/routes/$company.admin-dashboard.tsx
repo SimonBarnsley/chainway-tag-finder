@@ -511,6 +511,11 @@ function AdminDashboardContent() {
               CSV
             </Button>
 
+            <Button onClick={handleExportItems} variant="outline" size="sm" className="gap-1.5" disabled={exportingItems}>
+              <Download className={`h-3.5 w-3.5 ${exportingItems ? "animate-pulse" : ""}`} />
+              {exportingItems ? "Exporting..." : "Export Items"}
+            </Button>
+
             <Button onClick={() => setGroupBySku(!groupBySku)} variant={groupBySku ? "default" : "outline"} size="sm" className="gap-1.5">
               <Layers className="h-3.5 w-3.5" />
               {groupBySku ? "Grouped" : "Group SKU"}
