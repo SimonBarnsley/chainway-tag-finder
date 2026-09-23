@@ -35,6 +35,7 @@ import {
   AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
 import { backfillTagItems } from "@/lib/backfill-tag-items";
+import { decodeSgtin } from "@/lib/sgtin-decoder";
 
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -353,6 +354,94 @@ function AdminDashboardContent() {
     toast.success("CSV exported");
   };
 
+  const [exportingItems, setExportingItems] = useState(false);
+
+  const handleExportItems = async () => {
+    setExportingItems(true);
+    try {
+      const pageSize = 1000;
+      // All items for this company
+      const all: Record<string, unknown>[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("items")
+          .select("id, sku, name, description, gtin, company_prefix")
+          .eq("company_slug", company)
+          .order("created_at", { ascending: true })
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        all.push(...data);
+        if (data.length < pageSize) break;
+      }
+      if (all.length === 0) {
+        toast.error("No items found to export");
+        return;
+      }
+
+      // Linked EPC tags for these items
+      const tags: { epc: string; item_id: string; gtin: string | null }[] = [];
+      for (let from = 0; ; from += pageSize) {
+        const { data, error } = await supabase
+          .from("tag_items")
+          .select("epc, item_id, gtin")
+          .eq("company_slug", company)
+          .range(from, from + pageSize - 1);
+        if (error) throw error;
+        if (!data || data.length === 0) break;
+        tags.push(...data);
+        if (data.length < pageSize) break;
+      }
+      const tagsByItem = new Map<string, typeof tags>();
+      tags.forEach((t) => {
+        const list = tagsByItem.get(t.item_id) ?? [];
+        list.push(t);
+        tagsByItem.set(t.item_id, list);
+      });
+
+      const header = "SKU,Item Name,Description,EPC,GS1 Company Prefix,Serial Number,GTIN";
+      const esc = (v: unknown) => {
+        const s = v === null || v === undefined ? "" : String(v);
+        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+      };
+      const rows: string[] = [];
+      all.forEach((item) => {
+        const itemTags = tagsByItem.get(String(item.id)) ?? [];
+        const base = [item.sku, item.name, item.description];
+        if (itemTags.length === 0) {
+          rows.push([...base, "", item.company_prefix ?? "", "", item.gtin ?? ""].map(esc).join(","));
+          return;
+        }
+        itemTags.forEach((t) => {
+          const d = decodeSgtin(t.epc);
+          const ok = !("error" in d);
+          rows.push(
+            [
+              ...base,
+              t.epc,
+              ok ? d.companyPrefix : item.company_prefix ?? "",
+              ok ? d.serial : "",
+              ok ? d.gtin14 : t.gtin ?? item.gtin ?? "",
+            ].map(esc).join(",")
+          );
+        });
+      });
+      const csv = [header, ...rows].join("\n");
+      const blob = new Blob([csv], { type: "text/csv" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `all-items-${company}-${new Date().toISOString().slice(0, 10)}.csv`;
+      a.click();
+      URL.revokeObjectURL(url);
+      toast.success(`Exported ${all.length} items`);
+    } catch (err: unknown) {
+      toast.error(err instanceof Error ? err.message : "Export failed");
+    } finally {
+      setExportingItems(false);
+    }
+  };
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -420,6 +509,11 @@ function AdminDashboardContent() {
             <Button onClick={handleExport} variant="outline" size="sm" className="gap-1.5" disabled={filtered.length === 0}>
               <Download className="h-3.5 w-3.5" />
               CSV
+            </Button>
+
+            <Button onClick={handleExportItems} variant="outline" size="sm" className="gap-1.5" disabled={exportingItems}>
+              <Download className={`h-3.5 w-3.5 ${exportingItems ? "animate-pulse" : ""}`} />
+              {exportingItems ? "Exporting..." : "Export Items"}
             </Button>
 
             <Button onClick={() => setGroupBySku(!groupBySku)} variant={groupBySku ? "default" : "outline"} size="sm" className="gap-1.5">
