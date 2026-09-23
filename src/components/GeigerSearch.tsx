@@ -114,6 +114,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (nativeProximity.seq === lastProxSeqRef.current) return;
     lastProxSeqRef.current = nativeProximity.seq;
     lastHitRef.current = Date.now();
+    hitTimesRef.current.push(Date.now());
     setHitCount((c) => c + 1);
 
 
@@ -124,19 +125,23 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     let target: number;
     if (raw > 0) {
       setUsingLocationing(true);
+      usingRssiRef.current = true;
       target = raw;
     } else if (typeof nativeProximity.rssi === "number" && nativeProximity.rssi !== 0) {
       setUsingLocationing(false);
+      usingRssiRef.current = true;
       setHasRssi(true);
       setLastRssi(nativeProximity.rssi);
       target = rssiToPercent(nativeProximity.rssi);
     } else {
-      // No usable strength at all — at least show that reads are arriving.
+      // No usable strength at all — let the read-rate meter drive the bar.
       setUsingLocationing(false);
-      target = Math.min(100, signalRef.current + 20);
+      usingRssiRef.current = false;
+      return;
     }
 
     setSignal((prev) => Math.round(prev * 0.35 + target * 0.65));
+
     if (navigator.vibrate) {
       navigator.vibrate(target > 70 ? [80] : target > 40 ? [50] : [25]);
     }
