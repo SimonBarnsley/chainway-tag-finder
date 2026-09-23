@@ -163,21 +163,14 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     setHitCount((c) => c + 1);
 
     if (typeof lastScan.rssi === "number") {
-      // Proximity mode (native SDK): RSSI directly indicates distance.
-      usingRssiRef.current = true;
+      // Show signal strength when the reader supplies it, but let the read-rate
+      // ticker drive the bar so it climbs the closer (and faster-reading) you get.
       setHasRssi(true);
       setLastRssi(lastScan.rssi);
-      const target = rssiToPercent(lastScan.rssi);
-      const nextSignal = Math.round(signalRef.current * 0.4 + target * 0.6);
-      setSignal(nextSignal);
-      if (navigator.vibrate) {
-        navigator.vibrate(nextSignal > 70 ? [80] : nextSignal > 40 ? [50] : [25]);
-      }
-    } else {
-      // Keyboard wedge / browser: the read-rate ticker drives the bar.
-      usingRssiRef.current = false;
-      if (navigator.vibrate) navigator.vibrate([25]);
     }
+    usingRssiRef.current = false;
+    if (navigator.vibrate) navigator.vibrate([25]);
+
   }, [lastScan, targetEpc, usingLocationing]);
 
 
