@@ -21,6 +21,7 @@ import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-aud
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
+import { Route as CompanyLogDoctorRouteImport } from './routes/$company.log-doctor'
 import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
 import { Route as CompanyItemsRouteImport } from './routes/$company.items'
 import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
@@ -96,6 +97,11 @@ const CompanyReadersRoute = CompanyReadersRouteImport.update({
 const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
   id: '/reader-debug',
   path: '/reader-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyLogDoctorRoute = CompanyLogDoctorRouteImport.update({
+  id: '/log-doctor',
+  path: '/log-doctor',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
@@ -195,6 +201,7 @@ export interface FileRoutesByFullPath {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/log-doctor': typeof CompanyLogDoctorRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -224,6 +231,7 @@ export interface FileRoutesByTo {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/log-doctor': typeof CompanyLogDoctorRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -255,6 +263,7 @@ export interface FileRoutesById {
   '/$company/history': typeof CompanyHistoryRoute
   '/$company/items': typeof CompanyItemsRoute
   '/$company/locations': typeof CompanyLocationsRoute
+  '/$company/log-doctor': typeof CompanyLogDoctorRoute
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
@@ -287,6 +296,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/log-doctor'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -316,6 +326,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/log-doctor'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -346,6 +357,7 @@ export interface FileRouteTypes {
     | '/$company/history'
     | '/$company/items'
     | '/$company/locations'
+    | '/$company/log-doctor'
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
@@ -458,6 +470,13 @@ declare module '@tanstack/react-router' {
       path: '/reader-debug'
       fullPath: '/$company/reader-debug'
       preLoaderRoute: typeof CompanyReaderDebugRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/log-doctor': {
+      id: '/$company/log-doctor'
+      path: '/log-doctor'
+      fullPath: '/$company/log-doctor'
+      preLoaderRoute: typeof CompanyLogDoctorRouteImport
       parentRoute: typeof CompanyRoute
     }
     '/$company/locations': {
@@ -585,6 +604,7 @@ interface CompanyRouteChildren {
   CompanyHistoryRoute: typeof CompanyHistoryRoute
   CompanyItemsRoute: typeof CompanyItemsRoute
   CompanyLocationsRoute: typeof CompanyLocationsRoute
+  CompanyLogDoctorRoute: typeof CompanyLogDoctorRoute
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
@@ -607,6 +627,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyHistoryRoute: CompanyHistoryRoute,
   CompanyItemsRoute: CompanyItemsRoute,
   CompanyLocationsRoute: CompanyLocationsRoute,
+  CompanyLogDoctorRoute: CompanyLogDoctorRoute,
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
@@ -649,10 +670,11 @@ export const routeTree = rootRouteImport
   ._addFileTypes<FileRouteTypes>()
 
 import type { getRouter } from './router.tsx'
-import type { createStart } from '@tanstack/react-start'
+import type { startInstance } from './start.ts'
 declare module '@tanstack/react-start' {
   interface Register {
     ssr: true
     router: Awaited<ReturnType<typeof getRouter>>
+    config: Awaited<ReturnType<typeof startInstance.getOptions>>
   }
 }
