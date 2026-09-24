@@ -466,19 +466,20 @@ function DashboardPage() {
                   <SortHeader label="Scans" field="scan_count" current={sortField} dir={sortDir} onSort={toggleSort} />
                   {groupBySku && <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />}
                   <SortHeader label="Last Seen" field="last_seen" current={sortField} dir={sortDir} onSort={toggleSort} />
+                  <th className="px-3 py-2 text-right font-medium text-muted-foreground w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 5 : 3} className="px-3 py-12 text-center">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center">
                       <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
                       <p className="text-muted-foreground">Loading...</p>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 5 : 3} className="px-3 py-12 text-center text-muted-foreground">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center text-muted-foreground">
                       No tag reads found
                     </td>
                   </tr>
