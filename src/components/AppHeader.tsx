@@ -185,6 +185,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
                             Reader Debug
                           </Link>
                           <Link
+                            to="/$company/log-doctor"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Activity className="h-4 w-4" />
+                            Reader Log Doctor
+                          </Link>
+                          <Link
                             to="/$company/maps"
                             params={{ company }}
                             onClick={() => setOpen(false)}
