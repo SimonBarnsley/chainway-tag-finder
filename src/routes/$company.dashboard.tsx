@@ -20,7 +20,19 @@ import {
   ChevronDown,
   ChevronRight,
   Link2,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { backfillTagItems } from "@/lib/backfill-tag-items";
 
 import { Button } from "@/components/ui/button";
@@ -338,6 +350,34 @@ function DashboardPage() {
     a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV exported");
+  };
+
+  const handleDeleteTag = async (r: ScanRecord) => {
+    const [scanRes, linkRes] = await Promise.all([
+      supabase.from("rfid_scans").delete().eq("id", r.id),
+      supabase.from("tag_items").delete().eq("epc", r.epc).eq("company_slug", company),
+    ]);
+    if (scanRes.error || linkRes.error) {
+      toast.error("Failed to delete tag");
+      return;
+    }
+    toast.success("Tag deleted");
+    fetchRecords();
+  };
+
+  const handleDeleteAllUngrouped = async (group: SkuGroup) => {
+    const epcs = group.records.map((r) => r.epc);
+    const ids = group.records.map((r) => r.id);
+    const [scanRes, linkRes] = await Promise.all([
+      supabase.from("rfid_scans").delete().in("id", ids),
+      supabase.from("tag_items").delete().eq("company_slug", company).in("epc", epcs),
+    ]);
+    if (scanRes.error || linkRes.error) {
+      toast.error("Failed to delete ungrouped tags");
+      return;
+    }
+    toast.success(`Deleted ${ids.length} ungrouped tag${ids.length !== 1 ? "s" : ""}`);
+    fetchRecords();
   };
 
   const toggleSort = (field: SortField) => {
