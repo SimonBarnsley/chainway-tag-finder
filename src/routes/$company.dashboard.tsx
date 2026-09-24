@@ -484,7 +484,7 @@ function DashboardPage() {
                       </tr>
                       {expandedSku === group.sku && group.item_description && (
                         <tr key={`desc-${group.sku}`} className="bg-muted/20 border-b border-border/50">
-                          <td colSpan={groupBySku ? 7 : 6} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
+                          <td colSpan={5} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
                             {group.item_description}
                           </td>
                         </tr>
