@@ -683,6 +683,41 @@ function ScanRow({
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
       </td>
+      <td
+        className="px-3 py-2.5 text-right whitespace-nowrap"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {canDelete && onDelete && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                title="Delete tag"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this tag scan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the scan record for EPC{" "}
+                  <span className="font-mono text-xs">{r.epc}</span> and unlink it from any item. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(r)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
+      </td>
     </tr>
   );
 }
