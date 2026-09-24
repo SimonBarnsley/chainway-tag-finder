@@ -578,7 +578,7 @@ function DashboardPage() {
                           fetchRecords={fetchRecords}
                           companySlug={company}
                           indent
-                          canDelete={!r.sku}
+                          canDelete
                           onDelete={handleDeleteTag}
                         />
                       ))}
@@ -596,7 +596,7 @@ function DashboardPage() {
                       handleCopyEpc={handleCopyEpc}
                       fetchRecords={fetchRecords}
                       companySlug={company}
-                      canDelete={!r.sku}
+                      canDelete
                       onDelete={handleDeleteTag}
                     />
                   ))
