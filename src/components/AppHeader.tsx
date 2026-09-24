@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles } from "lucide-react";
+import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
@@ -173,6 +173,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
                           >
                             <Router className="h-4 w-4" />
                             Readers
+                          </Link>
+                          <Link
+                            to="/$company/reader-debug"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Activity className="h-4 w-4" />
+                            Reader Debug
                           </Link>
                           <Link
                             to="/$company/maps"
