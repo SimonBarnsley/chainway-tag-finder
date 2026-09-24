@@ -522,10 +522,46 @@ function DashboardPage() {
                         <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
                           {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
                         </td>
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          {group.sku === "__ungrouped__" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  disabled={group.records.length === 0}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Delete all
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete all {group.records.length} ungrouped tag{group.records.length !== 1 ? "s" : ""}?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove all ungrouped scan records and unlink them from any items. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteAllUngrouped(group)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete all
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </td>
                       </tr>
                       {expandedSku === group.sku && group.item_description && (
                         <tr key={`desc-${group.sku}`} className="bg-muted/20 border-b border-border/50">
-                          <td colSpan={5} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
+                          <td colSpan={6} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
                             {group.item_description}
                           </td>
                         </tr>
