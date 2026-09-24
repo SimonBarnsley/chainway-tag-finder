@@ -621,6 +621,8 @@ function ScanRow({
   fetchRecords,
   indent,
   companySlug,
+  canDelete,
+  onDelete,
 }: {
   r: ScanRecord;
   showSku: boolean;
@@ -631,6 +633,8 @@ function ScanRow({
   fetchRecords: () => void;
   indent?: boolean;
   companySlug: string;
+  canDelete?: boolean;
+  onDelete?: (r: ScanRecord) => void;
 }) {
   return (
     <tr
