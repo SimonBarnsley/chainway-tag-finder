@@ -20,7 +20,19 @@ import {
   ChevronDown,
   ChevronRight,
   Link2,
+  Trash2,
 } from "lucide-react";
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+  AlertDialogTrigger,
+} from "@/components/ui/alert-dialog";
 import { backfillTagItems } from "@/lib/backfill-tag-items";
 
 import { Button } from "@/components/ui/button";
@@ -340,6 +352,34 @@ function DashboardPage() {
     toast.success("CSV exported");
   };
 
+  const handleDeleteTag = async (r: ScanRecord) => {
+    const [scanRes, linkRes] = await Promise.all([
+      supabase.from("rfid_scans").delete().eq("id", r.id),
+      supabase.from("tag_items").delete().eq("epc", r.epc).eq("company_slug", company),
+    ]);
+    if (scanRes.error || linkRes.error) {
+      toast.error("Failed to delete tag");
+      return;
+    }
+    toast.success("Tag deleted");
+    fetchRecords();
+  };
+
+  const handleDeleteAllUngrouped = async (group: SkuGroup) => {
+    const epcs = group.records.map((r) => r.epc);
+    const ids = group.records.map((r) => r.id);
+    const [scanRes, linkRes] = await Promise.all([
+      supabase.from("rfid_scans").delete().in("id", ids),
+      supabase.from("tag_items").delete().eq("company_slug", company).in("epc", epcs),
+    ]);
+    if (scanRes.error || linkRes.error) {
+      toast.error("Failed to delete ungrouped tags");
+      return;
+    }
+    toast.success(`Deleted ${ids.length} ungrouped tag${ids.length !== 1 ? "s" : ""}`);
+    fetchRecords();
+  };
+
   const toggleSort = (field: SortField) => {
     if (sortField === field) {
       setSortDir((d) => (d === "asc" ? "desc" : "asc"));
@@ -426,19 +466,20 @@ function DashboardPage() {
                   <SortHeader label="Scans" field="scan_count" current={sortField} dir={sortDir} onSort={toggleSort} />
                   {groupBySku && <SortHeader label="Location" field="location" current={sortField} dir={sortDir} onSort={toggleSort} />}
                   <SortHeader label="Last Seen" field="last_seen" current={sortField} dir={sortDir} onSort={toggleSort} />
+                  <th className="px-3 py-2 text-right font-medium text-muted-foreground w-10"></th>
                 </tr>
               </thead>
               <tbody>
                 {loading && filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 5 : 3} className="px-3 py-12 text-center">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center">
                       <RefreshCw className="h-5 w-5 animate-spin text-muted-foreground mx-auto mb-2" />
                       <p className="text-muted-foreground">Loading...</p>
                     </td>
                   </tr>
                 ) : filtered.length === 0 ? (
                   <tr>
-                    <td colSpan={groupBySku ? 5 : 3} className="px-3 py-12 text-center text-muted-foreground">
+                    <td colSpan={groupBySku ? 6 : 4} className="px-3 py-12 text-center text-muted-foreground">
                       No tag reads found
                     </td>
                   </tr>
@@ -481,10 +522,46 @@ function DashboardPage() {
                         <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap text-xs">
                           {group.lastSeen ? new Date(group.lastSeen).toLocaleString() : "—"}
                         </td>
+                        <td className="px-3 py-2.5 text-right whitespace-nowrap" onClick={(e) => e.stopPropagation()}>
+                          {group.sku === "__ungrouped__" && (
+                            <AlertDialog>
+                              <AlertDialogTrigger asChild>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  className="h-7 gap-1.5 text-destructive hover:text-destructive hover:bg-destructive/10"
+                                  disabled={group.records.length === 0}
+                                >
+                                  <Trash2 className="h-3.5 w-3.5" />
+                                  Delete all
+                                </Button>
+                              </AlertDialogTrigger>
+                              <AlertDialogContent>
+                                <AlertDialogHeader>
+                                  <AlertDialogTitle>
+                                    Delete all {group.records.length} ungrouped tag{group.records.length !== 1 ? "s" : ""}?
+                                  </AlertDialogTitle>
+                                  <AlertDialogDescription>
+                                    This will permanently remove all ungrouped scan records and unlink them from any items. This action cannot be undone.
+                                  </AlertDialogDescription>
+                                </AlertDialogHeader>
+                                <AlertDialogFooter>
+                                  <AlertDialogCancel>Cancel</AlertDialogCancel>
+                                  <AlertDialogAction
+                                    onClick={() => handleDeleteAllUngrouped(group)}
+                                    className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                                  >
+                                    Delete all
+                                  </AlertDialogAction>
+                                </AlertDialogFooter>
+                              </AlertDialogContent>
+                            </AlertDialog>
+                          )}
+                        </td>
                       </tr>
                       {expandedSku === group.sku && group.item_description && (
                         <tr key={`desc-${group.sku}`} className="bg-muted/20 border-b border-border/50">
-                          <td colSpan={5} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
+                          <td colSpan={6} className="px-3 py-2 pl-10 text-xs text-muted-foreground italic">
                             {group.item_description}
                           </td>
                         </tr>
@@ -501,6 +578,8 @@ function DashboardPage() {
                           fetchRecords={fetchRecords}
                           companySlug={company}
                           indent
+                          canDelete={!r.sku}
+                          onDelete={handleDeleteTag}
                         />
                       ))}
                     </Fragment>
@@ -517,6 +596,8 @@ function DashboardPage() {
                       handleCopyEpc={handleCopyEpc}
                       fetchRecords={fetchRecords}
                       companySlug={company}
+                      canDelete={!r.sku}
+                      onDelete={handleDeleteTag}
                     />
                   ))
                 )}
@@ -540,6 +621,8 @@ function ScanRow({
   fetchRecords,
   indent,
   companySlug,
+  canDelete,
+  onDelete,
 }: {
   r: ScanRecord;
   showSku: boolean;
@@ -550,6 +633,8 @@ function ScanRow({
   fetchRecords: () => void;
   indent?: boolean;
   companySlug: string;
+  canDelete?: boolean;
+  onDelete?: (r: ScanRecord) => void;
 }) {
   return (
     <tr
@@ -597,6 +682,41 @@ function ScanRow({
       )}
       <td className="px-3 py-2.5 text-muted-foreground whitespace-nowrap">
         {new Date(r.last_seen).toLocaleString()}
+      </td>
+      <td
+        className="px-3 py-2.5 text-right whitespace-nowrap"
+        onClick={(e) => e.stopPropagation()}
+      >
+        {canDelete && onDelete && (
+          <AlertDialog>
+            <AlertDialogTrigger asChild>
+              <button
+                className="p-1 rounded hover:bg-destructive/10 text-muted-foreground hover:text-destructive transition-colors"
+                title="Delete tag"
+              >
+                <Trash2 className="h-3.5 w-3.5" />
+              </button>
+            </AlertDialogTrigger>
+            <AlertDialogContent>
+              <AlertDialogHeader>
+                <AlertDialogTitle>Delete this tag scan?</AlertDialogTitle>
+                <AlertDialogDescription>
+                  This will permanently remove the scan record for EPC{" "}
+                  <span className="font-mono text-xs">{r.epc}</span> and unlink it from any item. This action cannot be undone.
+                </AlertDialogDescription>
+              </AlertDialogHeader>
+              <AlertDialogFooter>
+                <AlertDialogCancel>Cancel</AlertDialogCancel>
+                <AlertDialogAction
+                  onClick={() => onDelete(r)}
+                  className="bg-destructive text-destructive-foreground hover:bg-destructive/90"
+                >
+                  Delete
+                </AlertDialogAction>
+              </AlertDialogFooter>
+            </AlertDialogContent>
+          </AlertDialog>
+        )}
       </td>
     </tr>
   );
