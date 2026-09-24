@@ -468,7 +468,9 @@ function EndpointUrlCard({ company }: { company: string }) {
   const [apiKey, setApiKey] = useState("");
   const [fetchingKey, setFetchingKey] = useState(false);
   const getZebraApiKeyFn = useServerFn(getZebraApiKey);
-  const origin = typeof window !== "undefined" ? window.location.origin : "";
+  // Always point the reader at the live published site — preview addresses
+  // require a Lovable login and will be refused by the FX9600.
+  const origin = "https://rfid-zeba-android.lovable.app";
   const keyForUrl = apiKey.trim() || "<API_KEY>";
   const pathUrl = `${origin}/api/zebra-reader/${company}/${encodeURIComponent(keyForUrl)}`;
   const queryUrl = `${origin}/api/zebra-reader?company=${company}&key=${encodeURIComponent(keyForUrl)}`;
