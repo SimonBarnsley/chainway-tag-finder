@@ -81,7 +81,7 @@ export function CompanySwitcher() {
               const rest = currentCompany
                 ? pathname.replace(new RegExp(`^/${currentCompany}`), "")
                 : "";
-              navigate({ to: `/${c.company_slug}${rest}` as string });
+              navigate({ to: `/${c.company_slug}${rest}` as never });
             }
             }
           >
