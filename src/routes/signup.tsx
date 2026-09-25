@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/signup")({
@@ -35,9 +36,20 @@ function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const company = companyName.trim();
+    if (!company) {
+      toast.error("Please enter your company name");
+      return;
+    }
     setLoading(true);
     try {
-      await signUp(email, password, displayName || undefined, companyName || undefined);
+      const { data: exists, error: checkErr } = await supabase.rpc("company_exists", { _name: company });
+      if (checkErr) throw checkErr;
+      if (!exists) {
+        toast.error("That company isn't registered. Check the exact name with your administrator.");
+        return;
+      }
+      await signUp(email, password, displayName || undefined, company);
       toast.success("Account created! Check your email to confirm.");
       navigate({ to: "/login" });
     } catch (err: unknown) {
@@ -75,13 +87,14 @@ function SignupPage() {
             />
            </div>
           <div className="space-y-2">
-            <Label htmlFor="company">Company Name</Label>
+            <Label htmlFor="company">Company Name (as given by your administrator)</Label>
             <Input
               id="company"
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Acme Ltd"
+              placeholder="Exact company name"
+              required
               maxLength={150}
             />
           </div>
