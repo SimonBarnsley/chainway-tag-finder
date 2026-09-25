@@ -80,6 +80,27 @@ export type Database = {
           },
         ]
       }
+      companies: {
+        Row: {
+          created_at: string
+          id: string
+          name: string
+          slug: string
+        }
+        Insert: {
+          created_at?: string
+          id?: string
+          name: string
+          slug: string
+        }
+        Update: {
+          created_at?: string
+          id?: string
+          name?: string
+          slug?: string
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           company_slug: string
@@ -633,6 +654,7 @@ export type Database = {
     }
     Functions: {
       cleanup_zebra_debug_logs: { Args: never; Returns: undefined }
+      company_exists: { Args: { _name: string }; Returns: boolean }
       generate_slug: { Args: { input: string }; Returns: string }
       get_user_company_slug: { Args: { _user_id: string }; Returns: string }
       has_role: {
