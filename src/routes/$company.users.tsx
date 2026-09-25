@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
+import { CompaniesManager } from "@/components/CompaniesManager";
 import {
   listCompanies,
   updateUserCompany,
@@ -270,6 +271,7 @@ function UsersContent() {
     <div className="flex min-h-screen flex-col bg-background">
       <AppHeader />
       <main className="flex-1 px-4 py-4 space-y-4 max-w-3xl mx-auto w-full">
+        {isSuperAdmin && <CompaniesManager />}
         <div className="flex items-center gap-2">
           <UsersIcon className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold text-foreground">Users</h1>
