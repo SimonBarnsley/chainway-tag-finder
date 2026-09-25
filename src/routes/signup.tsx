@@ -11,7 +11,7 @@ import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
   head: () => ({
-    meta: [{ title: "Sign Up — The Barcode Warehouse" }],
+    meta: [{ title: "Sign Up — ScanLoc8" }],
   }),
 });
 
