@@ -6,6 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
+import { supabase } from "@/integrations/supabase/client";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/signup")({
@@ -86,13 +87,14 @@ function SignupPage() {
             />
            </div>
           <div className="space-y-2">
-            <Label htmlFor="company">Company Name</Label>
+            <Label htmlFor="company">Company Name (as given by your administrator)</Label>
             <Input
               id="company"
               type="text"
               value={companyName}
               onChange={(e) => setCompanyName(e.target.value)}
-              placeholder="Acme Ltd"
+              placeholder="Exact company name"
+              required
               maxLength={150}
             />
           </div>
