@@ -9,7 +9,7 @@ import { EmailChangeEmail } from '@/lib/email-templates/email-change'
 import { ReauthenticationEmail } from '@/lib/email-templates/reauthentication'
 
 // Configuration
-const SITE_NAME = "Zebra \u0026 Zebra"
+const SITE_NAME = "rfid-zeba-android"
 const SENDER_DOMAIN = "notify.simonbarnsley.com"
 const ROOT_DOMAIN = "simonbarnsley.com"
 const FROM_DOMAIN = "simonbarnsley.com"
