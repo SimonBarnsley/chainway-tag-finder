@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Link, useParams } from "@tanstack/react-router";
 import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
+import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
@@ -14,10 +15,33 @@ export function AppHeader({ actions }: AppHeaderProps) {
   const [open, setOpen] = useState(false);
   const [adminOpen, setAdminOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
-  const { isAuthenticated, isAdmin, isSuperAdmin, user, signOut, companySlug } = useAuth();
+  const { isAuthenticated, isAdmin, isSuperAdmin, user, signOut, companySlug, companyName, homeCompanySlug } = useAuth();
   const { has, loading: permLoading } = usePermissions();
   const params = useParams({ strict: false }) as { company?: string };
   const company = params.company || companySlug || "default";
+
+  // When a super admin is viewing another company, look up that company's name.
+  const [viewCompanyName, setViewCompanyName] = useState<string | null>(null);
+  useEffect(() => {
+    let cancelled = false;
+    if (params.company && params.company !== homeCompanySlug) {
+      supabase
+        .from("profiles")
+        .select("company_name")
+        .eq("company_slug", params.company)
+        .limit(1)
+        .then(({ data }) => {
+          if (!cancelled) setViewCompanyName(data?.[0]?.company_name ?? null);
+        });
+    } else {
+      setViewCompanyName(null);
+    }
+    return () => {
+      cancelled = true;
+    };
+  }, [params.company, homeCompanySlug]);
+
+  const headerTitle = viewCompanyName || companyName || company;
 
   const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof Radio; perm: PermissionKey | null }[] = [
     { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
@@ -57,8 +81,8 @@ export function AppHeader({ actions }: AppHeaderProps) {
             </Link>
           </div>
 
-          <h1 className="absolute left-1/2 -translate-x-1/2 text-xl sm:text-3xl font-extrabold tracking-tight text-foreground pointer-events-none">
-            ScanLoc8
+          <h1 className="absolute left-1/2 -translate-x-1/2 max-w-[46%] truncate text-lg sm:text-2xl font-extrabold tracking-tight text-foreground pointer-events-none">
+            {headerTitle}
           </h1>
 
           <div className="flex items-center gap-2">

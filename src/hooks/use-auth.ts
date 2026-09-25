@@ -10,6 +10,7 @@ interface AuthState {
   session: Session | null;
   role: AppRole | null;
   companySlug: string | null;
+  companyName: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -22,6 +23,7 @@ export function useAuth() {
     session: null,
     role: null,
     companySlug: null,
+    companyName: null,
     isLoading: true,
     isAuthenticated: false,
     isAdmin: false,
@@ -43,14 +45,17 @@ export function useAuth() {
   const fetchCompanySlug = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("company_slug")
+      .select("company_slug, company_name")
       .eq("user_id", userId)
       .single();
-    return data?.company_slug ?? null;
+    return {
+      companySlug: data?.company_slug ?? null,
+      companyName: data?.company_name ?? null,
+    };
   }, []);
 
   const loadUserData = useCallback(async (session: Session) => {
-    const [role, companySlug] = await Promise.all([
+    const [role, profile] = await Promise.all([
       fetchRole(session.user.id),
       fetchCompanySlug(session.user.id),
     ]);
@@ -58,7 +63,8 @@ export function useAuth() {
       user: session.user,
       session,
       role,
-      companySlug,
+      companySlug: profile.companySlug,
+      companyName: profile.companyName,
       isLoading: false,
       isAuthenticated: true,
       isAdmin: role === "admin" || role === "super_admin",
@@ -77,6 +83,7 @@ export function useAuth() {
             session: null,
             role: null,
             companySlug: null,
+            companyName: null,
             isLoading: false,
             isAuthenticated: false,
             isAdmin: false,
