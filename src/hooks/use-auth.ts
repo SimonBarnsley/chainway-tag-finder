@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useParams } from "@tanstack/react-router";
 import { supabase } from "@/integrations/supabase/client";
 import type { User, Session } from "@supabase/supabase-js";
 
@@ -117,5 +118,14 @@ export function useAuth() {
     await supabase.auth.signOut();
   }, []);
 
-  return { ...state, signIn, signUp, signOut };
+  // Super admins act on whichever company is open in the address bar,
+  // so they can view and change any company's data.
+  const params = useParams({ strict: false }) as { company?: string };
+  const homeCompanySlug = state.companySlug;
+  const companySlug =
+    state.isSuperAdmin && params.company && params.company !== "default"
+      ? params.company
+      : state.companySlug;
+
+  return { ...state, companySlug, homeCompanySlug, signIn, signUp, signOut };
 }

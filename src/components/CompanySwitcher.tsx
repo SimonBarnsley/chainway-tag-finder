@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { useNavigate, useParams } from "@tanstack/react-router";
+import { useNavigate, useParams, useRouterState } from "@tanstack/react-router";
 import { Building2, ChevronDown } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import {
@@ -25,6 +25,7 @@ export function CompanySwitcher() {
   const navigate = useNavigate();
   const params = useParams({ strict: false }) as { company?: string };
   const currentCompany = params.company;
+  const pathname = useRouterState({ select: (s) => s.location.pathname });
 
   useEffect(() => {
     const fetchCompanies = async () => {
@@ -75,10 +76,13 @@ export function CompanySwitcher() {
             key={c.company_slug}
             className={`cursor-pointer text-sm ${c.company_slug === currentCompany ? "bg-accent font-medium" : ""}`}
             onClick={() =>
-              navigate({
-                to: "/$company",
-                params: { company: c.company_slug },
-              })
+            {
+              // Stay on the same page, just switch company
+              const rest = currentCompany
+                ? pathname.replace(new RegExp(`^/${currentCompany}`), "")
+                : "";
+              navigate({ to: `/${c.company_slug}${rest}` as never });
+            }
             }
           >
             <div className="flex flex-col gap-0.5 min-w-0">
