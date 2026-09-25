@@ -35,9 +35,20 @@ function SignupPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const company = companyName.trim();
+    if (!company) {
+      toast.error("Please enter your company name");
+      return;
+    }
     setLoading(true);
     try {
-      await signUp(email, password, displayName || undefined, companyName || undefined);
+      const { data: exists, error: checkErr } = await supabase.rpc("company_exists", { _name: company });
+      if (checkErr) throw checkErr;
+      if (!exists) {
+        toast.error("That company isn't registered. Check the exact name with your administrator.");
+        return;
+      }
+      await signUp(email, password, displayName || undefined, company);
       toast.success("Account created! Check your email to confirm.");
       navigate({ to: "/login" });
     } catch (err: unknown) {

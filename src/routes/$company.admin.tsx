@@ -10,6 +10,7 @@ import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { CompaniesManager } from "@/components/CompaniesManager";
 
 export const Route = createFileRoute("/$company/admin")({
   component: AdminPage,
@@ -209,6 +210,8 @@ function AdminContent() {
             <Plus className="h-4 w-4" /> {showCreateForm ? "Cancel" : "Create User"}
           </Button>
         </div>
+
+        {isSuperAdmin && <CompaniesManager />}
 
         {/* Zebra IoT Connector Endpoint */}
         <Card>
