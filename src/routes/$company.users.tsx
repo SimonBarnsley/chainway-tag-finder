@@ -11,10 +11,13 @@ import { Label } from "@/components/ui/label";
 import { Users as UsersIcon, Search, Trash2, Building2, UserPlus } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { useAuth } from "@/hooks/use-auth";
 import {
   listCompanies,
   updateUserCompany,
   createUser,
+  deleteUserCompletely,
   type CompanyOption,
 } from "@/lib/admin-users.functions";
 
@@ -58,6 +61,8 @@ function UsersPage() {
 }
 
 function UsersContent() {
+  const { isSuperAdmin, user } = useAuth();
+  const deleteUserFn = useServerFn(deleteUserCompletely);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
@@ -189,15 +194,16 @@ function UsersContent() {
     }
   };
 
-  const handleRemove = async (user: UserRow) => {
-    if (!user.role_id || user.role === "super_admin") return;
+  const handleRemove = async (target: UserRow) => {
+    if (!isSuperAdmin || target.role === "super_admin") return;
+    const label = target.email ?? target.display_name ?? "this user";
+    if (!confirm(`Permanently delete ${label}? They will be removed from the system completely and cannot sign in again. This cannot be undone.`)) return;
     try {
-      const { error } = await supabase.from("user_roles").delete().eq("id", user.role_id);
-      if (error) throw error;
-      toast.success("Role removed");
+      await deleteUserFn({ data: { userId: target.user_id } });
+      toast.success("User deleted");
       fetchUsers();
     } catch (e) {
-      toast.error(e instanceof Error ? e.message : "Failed to remove role");
+      toast.error(e instanceof Error ? e.message : "Failed to delete user");
     }
   };
 
@@ -424,11 +430,12 @@ function UsersContent() {
                           </SelectContent>
                         </Select>
                       )}
-                      {!isSuper && u.role_id && (
+                      {!isSuper && isSuperAdmin && u.user_id !== user?.id && (
                         <Button
                           variant="ghost"
                           size="sm"
                           onClick={() => handleRemove(u)}
+                          aria-label="Delete user"
                           className="text-destructive hover:text-destructive"
                         >
                           <Trash2 className="h-4 w-4" />
