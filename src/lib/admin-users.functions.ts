@@ -276,3 +276,30 @@ export const createUser = createServerFn({ method: "POST" })
 
     return { ok: true, userId: created.user.id };
   });
+
+export const deleteUserCompletely = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { userId: string }) => {
+    if (!input?.userId || typeof input.userId !== "string" || !/^[0-9a-f-]{36}$/i.test(input.userId)) {
+      throw new Response("Valid userId required", { status: 400 });
+    }
+    return input;
+  })
+  .handler(async ({ context, data }) => {
+    const { data: isSuper } = await context.supabase.rpc("has_role", {
+      _user_id: context.userId,
+      _role: "super_admin",
+    });
+    if (!isSuper) throw new Response("Forbidden: super admin only", { status: 403 });
+    if (data.userId === context.userId) throw new Response("You cannot delete your own account", { status: 400 });
+
+    const { data: targetSuper } = await supabaseAdmin
+      .from("user_roles").select("id").eq("user_id", data.userId).eq("role", "super_admin").maybeSingle();
+    if (targetSuper) throw new Response("Cannot delete a super admin", { status: 400 });
+
+    await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
+    await supabaseAdmin.from("profiles").delete().eq("user_id", data.userId);
+    const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
+    if (error) throw new Response(error.message, { status: 500 });
+    return { ok: true };
+  });
