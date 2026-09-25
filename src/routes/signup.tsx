@@ -39,6 +39,7 @@ function SignupPage() {
     try {
       await signUp(email, password, displayName || undefined, companyName || undefined);
       toast.success("Account created! Check your email to confirm.");
+      navigate({ to: "/login" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign up failed";
       toast.error(msg);
