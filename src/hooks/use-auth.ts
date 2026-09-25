@@ -43,22 +43,26 @@ export function useAuth() {
   const fetchCompanySlug = useCallback(async (userId: string) => {
     const { data } = await supabase
       .from("profiles")
-      .select("company_slug")
+      .select("company_slug, company_name")
       .eq("user_id", userId)
       .single();
-    return data?.company_slug ?? null;
+    return {
+      companySlug: data?.company_slug ?? null,
+      companyName: data?.company_name ?? null,
+    };
   }, []);
 
   const loadUserData = useCallback(async (session: Session) => {
-    const [role, companySlug] = await Promise.all([
-      fetchRole(session.user.id),
+    const [profile] = await Promise.all([
       fetchCompanySlug(session.user.id),
+      fetchRole(session.user.id),
     ]);
     setState({
       user: session.user,
       session,
-      role,
-      companySlug,
+      role: profile.companySlug === undefined ? null : undefined as never,
+      companySlug: profile.companySlug,
+      companyName: profile.companyName,
       isLoading: false,
       isAuthenticated: true,
       isAdmin: role === "admin" || role === "super_admin",
