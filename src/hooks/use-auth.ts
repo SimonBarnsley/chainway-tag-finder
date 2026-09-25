@@ -10,6 +10,7 @@ interface AuthState {
   session: Session | null;
   role: AppRole | null;
   companySlug: string | null;
+  companyName: string | null;
   isLoading: boolean;
   isAuthenticated: boolean;
   isAdmin: boolean;
@@ -53,14 +54,14 @@ export function useAuth() {
   }, []);
 
   const loadUserData = useCallback(async (session: Session) => {
-    const [profile] = await Promise.all([
-      fetchCompanySlug(session.user.id),
+    const [role, profile] = await Promise.all([
       fetchRole(session.user.id),
+      fetchCompanySlug(session.user.id),
     ]);
     setState({
       user: session.user,
       session,
-      role: profile.companySlug === undefined ? null : undefined as never,
+      role,
       companySlug: profile.companySlug,
       companyName: profile.companyName,
       isLoading: false,
