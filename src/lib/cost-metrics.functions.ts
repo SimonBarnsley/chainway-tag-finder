@@ -137,11 +137,16 @@ export const getCostMetrics = createServerFn({ method: "GET" })
     }
 
     // Debug logs by day (last 7d)
-    const { data: debugRows } = await supabaseAdmin
-      .from("zebra_reader_debug_logs")
-      .select("created_at")
-      .gte("created_at", d7)
-      .limit(10000);
+    const debug7dQ = (() => {
+      let q = supabaseAdmin
+        .from("zebra_reader_debug_logs")
+        .select("created_at")
+        .gte("created_at", d7)
+        .limit(10000);
+      if (companySlug) q = q.eq("company_slug", companySlug);
+      return q;
+    })();
+    const { data: debugRows } = await debug7dQ;
     const dayMap = new Map<string, number>();
     for (let i = 6; i >= 0; i--) {
       const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
