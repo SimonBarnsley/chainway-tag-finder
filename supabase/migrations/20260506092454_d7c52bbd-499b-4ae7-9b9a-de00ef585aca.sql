@@ -1,1 +1,0 @@
-ALTER TABLE public.antenna_zones ADD COLUMN IF NOT EXISTS capacity integer NOT NULL DEFAULT 0;

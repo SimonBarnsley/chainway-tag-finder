@@ -1,1 +1,0 @@
-ALTER TABLE public.rfid_scans ADD CONSTRAINT rfid_scans_epc_unique UNIQUE (epc);
