@@ -74,26 +74,27 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     }
     const isAndroid = /android/i.test(navigator.userAgent);
     if (isAndroid) {
-      // Chrome on Android requires a non-empty host in intent:// URLs and
-      // handles them most reliably via a real anchor click (a user gesture).
+      // From an installed home-screen app (PWA), same-tab intent:// navigation
+      // is swallowed. Opening the intent URL in a NEW window hands it to Chrome,
+      // which resolves the intent and launches 123RFID directly. No Play Store
+      // fallback URL is included, so a missing app just shows a toast below
+      // instead of hijacking the user into a browser page.
       const intentUrl =
-        "intent://launch/#Intent;scheme=launch;package=com.zebra.rfidreaderAPI.demo;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=" +
-        encodeURIComponent("https://play.google.com/store/apps/details?id=com.zebra.rfidreaderAPI.demo") +
-        ";end";
+        "intent://launch/#Intent;scheme=launch;package=com.zebra.rfidreaderAPI.demo;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;end";
       const a = document.createElement("a");
       a.href = intentUrl;
+      a.target = "_blank";
+      a.rel = "noopener";
       a.style.display = "none";
       document.body.appendChild(a);
       a.click();
       a.remove();
-      // Safety net: if nothing opened after 2s (app missing, intent blocked),
-      // take the user to the Play Store listing.
+      // If we're still in the foreground after 2.5s, the app didn't launch.
       setTimeout(() => {
         if (document.visibilityState === "visible") {
-          toast.info("123RFID didn't open — opening the Play Store listing instead");
-          window.location.href = "https://play.google.com/store/apps/details?id=com.zebra.rfidreaderAPI.demo";
+          toast.error("123RFID Mobile didn't open — check it's installed on this device");
         }
-      }, 2000);
+      }, 2500);
     }
   }, [targetEpc]);
   const audioCtxRef = useRef<AudioContext | null>(null);
