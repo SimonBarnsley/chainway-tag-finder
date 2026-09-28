@@ -81,6 +81,9 @@ function CostDashboard() {
           <div className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-primary" />
             <h1 className="text-lg font-semibold">Cloud Cost Dashboard</h1>
+            <span className="text-xs text-muted-foreground border border-border rounded px-2 py-0.5">
+              {company}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setAuto(!auto)} size="sm" variant={auto ? "default" : "outline"}>
