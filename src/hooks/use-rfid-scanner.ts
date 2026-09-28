@@ -134,7 +134,7 @@ export function useRfidScanner(options: {
     Object.defineProperty(hiddenInput, "value", {
       configurable: true,
       get() {
-        return (this as HTMLElement).textContent ?? "";
+        return (this as HTMLElement).innerText ?? (this as HTMLElement).textContent ?? "";
       },
       set(v: string) {
         (this as HTMLElement).textContent = v;
@@ -264,6 +264,17 @@ export function useRfidScanner(options: {
       const target = e.target as HTMLElement | null;
       const isHiddenInputTarget = target === hiddenInput;
       if (isRealInputElement(target)) return;
+
+      // Android often delivers the DataWedge Enter suffix as a line-break
+      // input event instead of a keydown — treat it as a tag terminator.
+      if (e.inputType === "insertParagraph" || e.inputType === "insertLineBreak") {
+        e.preventDefault();
+        if (hiddenInput.value) bufferRef.current = hiddenInput.value;
+        processBuffer();
+        hiddenInput.value = "";
+        focusHiddenInput();
+        return;
+      }
 
       if (isHiddenInputTarget) {
         if (syncFromHiddenInput(e.type)) {
