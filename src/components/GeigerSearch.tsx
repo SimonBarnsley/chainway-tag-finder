@@ -288,6 +288,32 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
         <p className="font-mono text-xs font-bold text-foreground truncate">{targetEpc}</p>
       </div>
 
+      {/* Open in 123RFID Mobile — copies the EPC and launches Zebra's app so the
+          user can paste it into Locate Tag for the native Geiger search. */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className="flex-1 gap-2"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(targetEpc);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2500);
+              toast.success("EPC copied to clipboard");
+            } catch {
+              toast.error("Couldn't copy the EPC");
+            }
+          }}
+        >
+          {copied ? <Check className="h-4 w-4 text-green-500" /> : <ClipboardCopy className="h-4 w-4" />}
+          {copied ? "Copied" : "Copy EPC"}
+        </Button>
+        <Button variant="secondary" className="flex-1 gap-2" onClick={openIn123Rfid}>
+          <ExternalLink className="h-4 w-4" />
+          Open in 123RFID
+        </Button>
+      </div>
+
       {/* Signal meter */}
       <div className="space-y-2">
         <div className="flex items-end gap-[3px] h-16 justify-center">
