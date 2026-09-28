@@ -6,7 +6,7 @@ export const Route = createFileRoute("/")({
   head: () => ({
     meta: [
       { title: "ScanLoc8 — UHF RFID Tag Scanner" },
-      { name: "description", content: "UHF RFID tag scanner for the Zebra TC22R all-in-one handheld" },
+      { name: "description", content: "UHF RFID tag scanner for Chainway C75 and Zebra handhelds plus Chainway UA4E and Zebra FX fixed readers" },
     ],
   }),
 });

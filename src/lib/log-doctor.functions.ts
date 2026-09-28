@@ -36,7 +36,7 @@ export interface LogDoctorResult {
 // never leave the app.
 function redact(text: string) {
   return text
-    .replace(/(\/api\/zebra-reader\/[^/\s]+\/)[^\s"'?]+/gi, "$1[KEY]")
+    .replace(/(\/api\/(?:zebra|chainway)-reader\/[^/\s]+\/)[^\s"'?]+/gi, "$1[KEY]")
     .replace(/((?:key|api[-_]?key|apikey|authorization|token|password)["']?\s*[:=]\s*["']?)[^\s"'&,}]+/gi, "$1[REDACTED]")
     .replace(/(Bearer\s+)[A-Za-z0-9._\-]+/gi, "$1[REDACTED]");
 }
@@ -92,7 +92,7 @@ export const diagnoseReaderLog = createServerFn({ method: "POST" })
         model: lovable.responses("openai/gpt-6-astra"),
         output: Output.object({ schema }),
         system:
-          "You are a Zebra FX-series fixed RFID reader support engineer. The reader posts tag data over HTTPS to /api/zebra-reader/<company>/<key>; a 401 'Invalid API key' means the key in the reader's URL does not match. Diagnose the pasted log for connection problems (DNS, TLS, timeouts, disconnects, wrong URL), antenna problems (disconnected ports, high VSWR/reflected power, no reads on a port), and API-key problems. Quote short evidence lines from the log. Give practical fixes an operator can do on the reader's web console. Plain language, summary under 100 words, at most 6 issues. If the log looks healthy, say so and return no issues. Never invent log content.",
+          "You are a fixed RFID reader support engineer for Zebra FX-series and Chainway UA4E readers. Readers post tag data over HTTPS to /api/zebra-reader/<company>/<key> (Zebra) or /api/chainway-reader/<company>/<key> (Chainway); a 401 'Invalid API key' means the key in the reader's URL does not match. Diagnose the pasted log for connection problems (DNS, TLS, timeouts, disconnects, wrong URL), antenna problems (disconnected ports, high VSWR/reflected power, no reads on a port), and API-key problems. Quote short evidence lines from the log. Give practical fixes an operator can do on the reader's web console. Plain language, summary under 100 words, at most 6 issues. If the log looks healthy, say so and return no issues. Never invent log content.",
         prompt: JSON.stringify({ signals, logExcerpt: sample }),
         providerOptions: {
           openai: {

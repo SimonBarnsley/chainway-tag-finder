@@ -43,7 +43,7 @@ export function ScannerStatus({
   const wedge = wedgeConfig[wedgeStatus];
   const sdk = sdkStatus ? sdkConfig[sdkStatus] : sdkConfig.unavailable;
   const deviceLabel =
-    deviceType === "integrated" ? "Zebra built-in UHF (TC22R)" : "Zebra TC22R UHF reader";
+    deviceType === "integrated" ? "Zebra built-in UHF (TC22R)" : "Chainway C75 / Zebra UHF reader (keyboard wedge)";
 
   return (
     <div className="space-y-2">

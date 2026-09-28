@@ -219,7 +219,7 @@ function ReadersContent() {
                     maxLength={255}
                   />
                   <p className="text-xs text-muted-foreground">
-                    The network hostname of the reader as configured in Zebra IoT Connector
+                    The network hostname of the reader as configured in Zebra IoT Connector or the Chainway UA4E app
                   </p>
                 </div>
                 <div className="space-y-1.5">
