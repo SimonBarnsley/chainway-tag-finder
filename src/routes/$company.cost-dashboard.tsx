@@ -107,6 +107,19 @@ function CostDashboard() {
                 hint="Watch for abnormal spikes"
                 warn={data.scansLast24h > 50000}
               />
+              <MetricCard
+                label="Est. cost · today"
+                value={fmtGbp(data.estimatedCostTodayGbp)}
+                hint="Approximate, from usage"
+              />
+              <MetricCard
+                label="Est. cost · last 7d"
+                value={fmtGbp(data.estimatedCost7dGbp)}
+                hint="Approximate, from usage"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
               <MetricCard label="Scans · last 7d" value={fmt(data.scansLast7d)} />
               <MetricCard
                 label="Debug logs · 24h"
@@ -115,6 +128,38 @@ function CostDashboard() {
                 warn={data.debugLogsLast24h > 1000}
               />
             </div>
+
+            <Card>
+              <CardHeader>
+                <CardTitle className="text-sm flex items-center gap-2">
+                  <DollarSign className="h-4 w-4" /> Estimated daily cost — last 7d (GBP)
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="h-64">
+                  <ResponsiveContainer width="100%" height="100%">
+                    <BarChart data={data.dailyCosts}>
+                      <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
+                      <XAxis dataKey="bucket" tickFormatter={fmtDay} className="text-xs" />
+                      <YAxis
+                        className="text-xs"
+                        tickFormatter={(v: number) => `£${v.toFixed(3)}`}
+                      />
+                      <Tooltip
+                        formatter={(value) => [`£${Number(value).toFixed(4)}`, "Est. cost"]}
+                        labelFormatter={(v) => String(v)}
+                        contentStyle={{ background: "hsl(var(--card))", border: "1px solid hsl(var(--border))" }}
+                      />
+                      <Bar dataKey="costGbp" fill="hsl(var(--primary))" />
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+                <p className="text-xs text-muted-foreground mt-2">
+                  Estimate only, based on scan and log volume. Your exact charges are shown in
+                  Settings → Plans &amp; credits.
+                </p>
+              </CardContent>
+            </Card>
 
             <Card>
               <CardHeader>
