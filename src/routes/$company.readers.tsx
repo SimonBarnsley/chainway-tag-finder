@@ -219,7 +219,7 @@ function ReadersContent() {
                     maxLength={255}
                   />
                   <p className="text-xs text-muted-foreground">
-                    The network hostname of the reader as configured in Zebra IoT Connector
+                    The network hostname of the reader as configured in Zebra IoT Connector or the Chainway UA4E app
                   </p>
                 </div>
                 <div className="space-y-1.5">
@@ -466,14 +466,15 @@ function ReaderCard({
 
 function EndpointUrlCard({ company }: { company: string }) {
   const [apiKey, setApiKey] = useState("");
+  const [brand, setBrand] = useState<"zebra" | "chainway">("zebra");
   const [fetchingKey, setFetchingKey] = useState(false);
   const getZebraApiKeyFn = useServerFn(getZebraApiKey);
-  // Always point the reader at the live published site — preview addresses
-  // require a Lovable login and will be refused by the FX9600.
-  const origin = "https://rfid-zeba-android.lovable.app";
+  // Always point readers at the live site — preview addresses require a login.
+  const origin = "https://scanloc8.com";
+  const basePath = brand === "zebra" ? "zebra-reader" : "chainway-reader";
   const keyForUrl = apiKey.trim() || "<API_KEY>";
-  const pathUrl = `${origin}/api/zebra-reader/${company}/${encodeURIComponent(keyForUrl)}`;
-  const queryUrl = `${origin}/api/zebra-reader?company=${company}&key=${encodeURIComponent(keyForUrl)}`;
+  const pathUrl = `${origin}/api/${basePath}/${company}/${encodeURIComponent(keyForUrl)}`;
+  const queryUrl = `${origin}/api/${basePath}?company=${company}&key=${encodeURIComponent(keyForUrl)}`;
 
   const copy = async (text: string, label: string) => {
     try {
@@ -504,8 +505,8 @@ function EndpointUrlCard({ company }: { company: string }) {
       }
       const url =
         kind === "path"
-          ? `${origin}/api/zebra-reader/${company}/${encodeURIComponent(res.apiKey)}`
-          : `${origin}/api/zebra-reader?company=${company}&key=${encodeURIComponent(res.apiKey)}`;
+          ? `${origin}/api/${basePath}/${company}/${encodeURIComponent(res.apiKey)}`
+          : `${origin}/api/${basePath}?company=${company}&key=${encodeURIComponent(res.apiKey)}`;
       await navigator.clipboard.writeText(url);
       toast.success(
         `${kind === "path" ? "Path URL" : "Query URL"} with API key copied`
@@ -523,12 +524,22 @@ function EndpointUrlCard({ company }: { company: string }) {
         <div className="flex items-center gap-2">
           <LinkIcon className="h-4 w-4 text-primary" />
           <h2 className="text-sm font-semibold text-foreground">
-            Zebra IoT Connector HTTPS POST Endpoint
+            Fixed Reader HTTPS POST Endpoint
           </h2>
         </div>
+        <div className="flex gap-2">
+          <Button type="button" size="sm" variant={brand === "zebra" ? "default" : "outline"} onClick={() => setBrand("zebra")}>
+            Zebra FX
+          </Button>
+          <Button type="button" size="sm" variant={brand === "chainway" ? "default" : "outline"} onClick={() => setBrand("chainway")}>
+            Chainway UA4E
+          </Button>
+        </div>
         <p className="text-xs text-muted-foreground">
-          Configure your FX9600 IoT Connector to POST tag reads to one of the URLs
-          below. The path-based URL is preferred (single field, no <code>&amp;</code>).
+          {brand === "zebra"
+            ? "Configure your FX9600 IoT Connector to POST tag reads to one of the URLs below."
+            : "In the UA4E reader app, turn on HTTP upload / post mode and paste one of the URLs below as the server address. JSON, plain-text and form-encoded EPC lists are all accepted."}{" "}
+          The path-based URL is preferred (single field, no <code>&amp;</code>).
           Use <span className="font-semibold text-foreground">Copy with key</span> to
           fetch your API key from backend secrets and copy a ready-to-paste URL.
         </p>

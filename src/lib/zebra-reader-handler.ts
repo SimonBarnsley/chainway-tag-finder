@@ -56,12 +56,40 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+/**
+ * Plain-text / form-encoded bodies (e.g. Chainway UA4E "HTTP upload" mode):
+ * pull out every hex EPC-looking token (24+ hex chars, or `epc=...` values).
+ */
+function extractTagsFromText(body: string): TagRead[] {
+  const tags: TagRead[] = [];
+  const seen = new Set<string>();
+  let text = body;
+  try {
+    text = decodeURIComponent(body.replace(/\+/g, " "));
+  } catch {
+    // keep raw
+  }
+  const re = /\b([0-9A-Fa-f]{24,64})\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const epc = m[1].toUpperCase();
+    if (seen.has(epc)) continue;
+    seen.add(epc);
+    tags.push({ epc });
+  }
+  return tags;
+}
+
 function extractTagsFromJson(payload: unknown): TagRead[] {
   const tags: TagRead[] = [];
   const nestedKeys = [
     "data",
+    "Data",
     "tag_reads",
     "tags",
+    "Tags",
+    "tagList",
+    "TagList",
     "events",
     "event",
     "inventory",
@@ -70,13 +98,16 @@ function extractTagsFromJson(payload: unknown): TagRead[] {
   ];
 
   const extractOne = (item: Record<string, unknown>) => {
-    const epc = item?.epc || item?.idHex || item?.tagId || item?.tagID || item?.epcId;
+    const epc =
+      item?.epc || item?.EPC || item?.Epc || item?.idHex || item?.tagId || item?.tagID ||
+      item?.epcId || item?.EpcId || item?.TagId;
     if (typeof epc !== "string" || epc.length < 4) return;
     const port =
-      item?.antennaPort ?? item?.antenna_port ?? item?.antenna ?? item?.antPort ?? item?.antennaID;
+      item?.antennaPort ?? item?.antenna_port ?? item?.antenna ?? item?.antPort ??
+      item?.antennaID ?? item?.ant ?? item?.Ant ?? item?.Antenna;
     tags.push({
-      epc: epc.toUpperCase(),
-      rssi: asNumber(item?.peakRssi ?? item?.rssi ?? item?.RSSI),
+      epc: epc.replace(/\s+/g, "").toUpperCase(),
+      rssi: asNumber(item?.peakRssi ?? item?.rssi ?? item?.RSSI ?? item?.Rssi),
       antennaPort: asNumber(port),
     });
   };
@@ -140,6 +171,7 @@ function extractTagsFromXml(xml: string): TagRead[] {
 export interface ZebraOverrides {
   companySlug?: string | null;
   apiKey?: string | null;
+  defaultDeviceName?: string;
 }
 
 /**
@@ -178,7 +210,8 @@ export async function handleZebraReaderPost(
     url.searchParams.get("device") ||
     request.headers.get("x-device-name") ||
     readerHostname ||
-    "Zebra FX Reader";
+    overrides.defaultDeviceName ||
+    (/chainway|ua4e/i.test(ua) ? "Chainway UA4E Reader" : "Zebra FX Reader");
 
   const contentType = (request.headers.get("content-type") || "").toLowerCase();
   const rawBody = await request.text();
@@ -226,6 +259,7 @@ export async function handleZebraReaderPost(
     return respond({ error: "Missing company" }, 400);
   }
 
+  // One shared key for all fixed readers (Zebra FX and Chainway UA4E).
   const expectedKey = process.env.ZEBRA_READER_API_KEY;
   if (expectedKey && apiKey !== expectedKey) {
     await writeDebug(null, "invalid api key");
@@ -245,8 +279,13 @@ export async function handleZebraReaderPost(
       const payload = JSON.parse(rawBody);
       tags = extractTagsFromJson(payload);
     } catch (e) {
-      await writeDebug(0, `json parse error: ${(e as Error).message}`);
-      return respond({ error: "Invalid JSON body" }, 400);
+      // Chainway UA4E and other Android readers may post plain text or
+      // form-encoded EPC lists instead of JSON.
+      tags = extractTagsFromText(rawBody);
+      if (tags.length === 0) {
+        await writeDebug(0, `unrecognised body: ${(e as Error).message}`);
+        return respond({ error: "Unrecognised body format" }, 400);
+      }
     }
   }
 
