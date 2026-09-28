@@ -173,7 +173,7 @@ export const getCostMetrics = createServerFn({ method: "GET" })
     const estimatedCostTodayGbp = dailyCosts[dailyCosts.length - 1]?.costGbp ?? 0;
     const estimatedCost7dGbp = dailyCosts.reduce((s, d) => s + d.costGbp, 0);
 
-    // Table sizes — count rows per main table
+    // Table sizes — count rows per main table (company-scoped where applicable)
     const tableNames = [
       "rfid_scans",
       "zebra_reader_debug_logs",
@@ -183,12 +183,15 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       "fixed_readers",
       "antenna_zones",
       "location_maps",
-      "email_send_log",
-      "profiles",
     ];
+    const globalTables = ["email_send_log", "profiles"];
     const tableCounts = await Promise.all(
-      tableNames.map(async (name) => {
-        const { count } = await supabaseAdmin.from(name as never).select("*", { count: "exact", head: true });
+      [...tableNames, ...globalTables].map(async (name) => {
+        let q = supabaseAdmin.from(name as never).select("*", { count: "exact", head: true });
+        if (companySlug && tableNames.includes(name)) {
+          q = (q as unknown as { eq: (c: string, v: string) => typeof q }).eq("company_slug", companySlug);
+        }
+        const { count } = await q;
         return { name, rows: count ?? 0, sizeBytes: 0, sizePretty: "—" };
       })
     );
