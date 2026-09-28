@@ -2,6 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export interface DailyCost {
+  bucket: string; // YYYY-MM-DD
+  scans: number;
+  debugLogs: number;
+  costGbp: number;
+}
+
 export interface CostMetrics {
   scansLast1h: number;
   scansLast24h: number;
@@ -10,11 +17,19 @@ export interface CostMetrics {
   debugLogsTotal: number;
   scanVolumeByHour: { bucket: string; count: number }[];
   debugLogsByDay: { bucket: string; count: number }[];
+  dailyCosts: DailyCost[];
+  estimatedCostTodayGbp: number;
+  estimatedCost7dGbp: number;
   tables: { name: string; rows: number; sizeBytes: number; sizePretty: string }[];
   dbSizeBytes: number;
   dbSizePretty: string;
   generatedAt: string;
 }
+
+// Rough Lovable Cloud unit costs (GBP), used for the estimate only.
+// ~£0.000002 per scan row write/read, ~£0.000001 per debug log row.
+const COST_PER_SCAN_GBP = 0.000002;
+const COST_PER_DEBUG_LOG_GBP = 0.000001;
 
 export const getCostMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
