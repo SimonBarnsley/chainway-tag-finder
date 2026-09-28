@@ -15,6 +15,7 @@ import { Route as CompanyRouteImport } from './routes/$company'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
+import { Route as ApiChainwayReaderRouteImport } from './routes/api.chainway-reader'
 import { Route as CompanyUsersRouteImport } from './routes/$company.users'
 import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
 import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-audit'
@@ -37,6 +38,7 @@ import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
+import { Route as ApiChainwayReaderCompanyKeyRouteImport } from './routes/api.chainway-reader.$company.$key'
 
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
@@ -66,6 +68,11 @@ const CompanyIndexRoute = CompanyIndexRouteImport.update({
 const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
   id: '/api/zebra-reader',
   path: '/api/zebra-reader',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiChainwayReaderRoute = ApiChainwayReaderRouteImport.update({
+  id: '/api/chainway-reader',
+  path: '/api/chainway-reader',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyUsersRoute = CompanyUsersRouteImport.update({
@@ -179,6 +186,12 @@ const ApiZebraReaderCompanyKeyRoute =
     path: '/$company/$key',
     getParentRoute: () => ApiZebraReaderRoute,
   } as any)
+const ApiChainwayReaderCompanyKeyRoute =
+  ApiChainwayReaderCompanyKeyRouteImport.update({
+    id: '/$company/$key',
+    path: '/$company/$key',
+    getParentRoute: () => ApiChainwayReaderRoute,
+  } as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -201,11 +214,13 @@ export interface FileRoutesByFullPath {
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
+  '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
+  '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -230,11 +245,13 @@ export interface FileRoutesByTo {
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
+  '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
+  '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -261,11 +278,13 @@ export interface FileRoutesById {
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
+  '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
   '/$company/': typeof CompanyIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
+  '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -293,11 +312,13 @@ export interface FileRouteTypes {
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
+    | '/api/chainway-reader'
     | '/api/zebra-reader'
     | '/$company/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps/'
+    | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -322,11 +343,13 @@ export interface FileRouteTypes {
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
+    | '/api/chainway-reader'
     | '/api/zebra-reader'
     | '/$company'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps'
+    | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -352,11 +375,13 @@ export interface FileRouteTypes {
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
+    | '/api/chainway-reader'
     | '/api/zebra-reader'
     | '/$company/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps/'
+    | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -367,6 +392,7 @@ export interface RootRouteChildren {
   CompanyRoute: typeof CompanyRouteWithChildren
   LoginRoute: typeof LoginRoute
   SignupRoute: typeof SignupRoute
+  ApiChainwayReaderRoute: typeof ApiChainwayReaderRouteWithChildren
   ApiZebraReaderRoute: typeof ApiZebraReaderRouteWithChildren
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
@@ -414,6 +440,13 @@ declare module '@tanstack/react-router' {
       path: '/api/zebra-reader'
       fullPath: '/api/zebra-reader'
       preLoaderRoute: typeof ApiZebraReaderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chainway-reader': {
+      id: '/api/chainway-reader'
+      path: '/api/chainway-reader'
+      fullPath: '/api/chainway-reader'
+      preLoaderRoute: typeof ApiChainwayReaderRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$company/users': {
@@ -570,6 +603,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiZebraReaderCompanyKeyRouteImport
       parentRoute: typeof ApiZebraReaderRoute
     }
+    '/api/chainway-reader/$company/$key': {
+      id: '/api/chainway-reader/$company/$key'
+      path: '/$company/$key'
+      fullPath: '/api/chainway-reader/$company/$key'
+      preLoaderRoute: typeof ApiChainwayReaderCompanyKeyRouteImport
+      parentRoute: typeof ApiChainwayReaderRoute
+    }
   }
 }
 
@@ -622,6 +662,17 @@ const CompanyRouteChildren: CompanyRouteChildren = {
 const CompanyRouteWithChildren =
   CompanyRoute._addFileChildren(CompanyRouteChildren)
 
+interface ApiChainwayReaderRouteChildren {
+  ApiChainwayReaderCompanyKeyRoute: typeof ApiChainwayReaderCompanyKeyRoute
+}
+
+const ApiChainwayReaderRouteChildren: ApiChainwayReaderRouteChildren = {
+  ApiChainwayReaderCompanyKeyRoute: ApiChainwayReaderCompanyKeyRoute,
+}
+
+const ApiChainwayReaderRouteWithChildren =
+  ApiChainwayReaderRoute._addFileChildren(ApiChainwayReaderRouteChildren)
+
 interface ApiZebraReaderRouteChildren {
   ApiZebraReaderCompanyKeyRoute: typeof ApiZebraReaderCompanyKeyRoute
 }
@@ -639,6 +690,7 @@ const rootRouteChildren: RootRouteChildren = {
   CompanyRoute: CompanyRouteWithChildren,
   LoginRoute: LoginRoute,
   SignupRoute: SignupRoute,
+  ApiChainwayReaderRoute: ApiChainwayReaderRouteWithChildren,
   ApiZebraReaderRoute: ApiZebraReaderRouteWithChildren,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
