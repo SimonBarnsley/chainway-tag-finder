@@ -2,6 +2,13 @@ import { createServerFn } from "@tanstack/react-start";
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
+export interface DailyCost {
+  bucket: string; // YYYY-MM-DD
+  scans: number;
+  debugLogs: number;
+  costGbp: number;
+}
+
 export interface CostMetrics {
   scansLast1h: number;
   scansLast24h: number;
@@ -10,11 +17,19 @@ export interface CostMetrics {
   debugLogsTotal: number;
   scanVolumeByHour: { bucket: string; count: number }[];
   debugLogsByDay: { bucket: string; count: number }[];
+  dailyCosts: DailyCost[];
+  estimatedCostTodayGbp: number;
+  estimatedCost7dGbp: number;
   tables: { name: string; rows: number; sizeBytes: number; sizePretty: string }[];
   dbSizeBytes: number;
   dbSizePretty: string;
   generatedAt: string;
 }
+
+// Rough Lovable Cloud unit costs (GBP), used for the estimate only.
+// ~£0.000002 per scan row write/read, ~£0.000001 per debug log row.
+const COST_PER_SCAN_GBP = 0.000002;
+const COST_PER_DEBUG_LOG_GBP = 0.000001;
 
 export const getCostMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
@@ -75,6 +90,23 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       scanVolumeByHour.push({ bucket, count });
     }
 
+    // Scans by day (last 7d) for the cost estimate
+    const { data: scanRows7d } = await supabaseAdmin
+      .from("rfid_scans")
+      .select("last_seen")
+      .gte("last_seen", d7)
+      .limit(50000);
+    const scanDayMap = new Map<string, number>();
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date(now.getTime() - i * 24 * 60 * 60 * 1000);
+      d.setUTCHours(0, 0, 0, 0);
+      scanDayMap.set(d.toISOString().slice(0, 10), 0);
+    }
+    for (const r of (scanRows7d ?? []) as { last_seen: string }[]) {
+      const k = r.last_seen.slice(0, 10);
+      if (scanDayMap.has(k)) scanDayMap.set(k, (scanDayMap.get(k) || 0) + 1);
+    }
+
     // Debug logs by day (last 7d)
     const { data: debugRows } = await supabaseAdmin
       .from("zebra_reader_debug_logs")
@@ -92,6 +124,20 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       if (dayMap.has(k)) dayMap.set(k, (dayMap.get(k) || 0) + 1);
     }
     const debugLogsByDay = Array.from(dayMap.entries()).map(([bucket, count]) => ({ bucket, count }));
+
+    // Daily cost estimate (GBP)
+    const dailyCosts: DailyCost[] = Array.from(dayMap.keys()).map((bucket) => {
+      const scans = scanDayMap.get(bucket) ?? 0;
+      const debugLogs = dayMap.get(bucket) ?? 0;
+      return {
+        bucket,
+        scans,
+        debugLogs,
+        costGbp: scans * COST_PER_SCAN_GBP + debugLogs * COST_PER_DEBUG_LOG_GBP,
+      };
+    });
+    const estimatedCostTodayGbp = dailyCosts[dailyCosts.length - 1]?.costGbp ?? 0;
+    const estimatedCost7dGbp = dailyCosts.reduce((s, d) => s + d.costGbp, 0);
 
     // Table sizes — count rows per main table
     const tableNames = [
@@ -121,6 +167,9 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       debugLogsTotal: debugHeadTotal.count ?? 0,
       scanVolumeByHour,
       debugLogsByDay,
+      dailyCosts,
+      estimatedCostTodayGbp,
+      estimatedCost7dGbp,
       tables: tableCounts.sort((a, b) => b.rows - a.rows),
       dbSizeBytes: 0,
       dbSizePretty: "—",
