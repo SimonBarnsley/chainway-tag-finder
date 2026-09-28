@@ -34,6 +34,7 @@ export const Route = createFileRoute("/$company/cost-dashboard")({
 });
 
 function CostDashboard() {
+  const { company } = Route.useParams();
   const fetchMetrics = useServerFn(getCostMetrics);
   const [data, setData] = useState<CostMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +46,7 @@ function CostDashboard() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       const res = await fetchMetrics({
+        data: { companySlug: company },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       setData(res);
@@ -53,7 +55,7 @@ function CostDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [fetchMetrics]);
+  }, [fetchMetrics, company]);
 
   useEffect(() => {
     load();
