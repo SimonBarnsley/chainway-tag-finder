@@ -34,6 +34,7 @@ export const Route = createFileRoute("/$company/cost-dashboard")({
 });
 
 function CostDashboard() {
+  const { company } = Route.useParams();
   const fetchMetrics = useServerFn(getCostMetrics);
   const [data, setData] = useState<CostMetrics | null>(null);
   const [loading, setLoading] = useState(true);
@@ -45,6 +46,7 @@ function CostDashboard() {
       const { data: sessionData } = await supabase.auth.getSession();
       const token = sessionData.session?.access_token;
       const res = await fetchMetrics({
+        data: { companySlug: company },
         headers: token ? { Authorization: `Bearer ${token}` } : undefined,
       });
       setData(res);
@@ -53,7 +55,7 @@ function CostDashboard() {
     } finally {
       setLoading(false);
     }
-  }, [fetchMetrics]);
+  }, [fetchMetrics, company]);
 
   useEffect(() => {
     load();
@@ -79,6 +81,9 @@ function CostDashboard() {
           <div className="flex items-center gap-2">
             <DollarSign className="h-5 w-5 text-primary" />
             <h1 className="text-lg font-semibold">Cloud Cost Dashboard</h1>
+            <span className="text-xs text-muted-foreground border border-border rounded px-2 py-0.5">
+              {company}
+            </span>
           </div>
           <div className="flex gap-2">
             <Button onClick={() => setAuto(!auto)} size="sm" variant={auto ? "default" : "outline"}>
