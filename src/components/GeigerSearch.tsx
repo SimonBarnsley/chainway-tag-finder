@@ -74,10 +74,26 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     }
     const isAndroid = /android/i.test(navigator.userAgent);
     if (isAndroid) {
-      window.location.href =
-        "intent://#Intent;package=com.zebra.rfidreaderAPI.demo;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=" +
+      // Chrome on Android requires a non-empty host in intent:// URLs and
+      // handles them most reliably via a real anchor click (a user gesture).
+      const intentUrl =
+        "intent://launch/#Intent;scheme=launch;package=com.zebra.rfidreaderAPI.demo;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=" +
         encodeURIComponent("https://play.google.com/store/apps/details?id=com.zebra.rfidreaderAPI.demo") +
         ";end";
+      const a = document.createElement("a");
+      a.href = intentUrl;
+      a.style.display = "none";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      // Safety net: if nothing opened after 2s (app missing, intent blocked),
+      // take the user to the Play Store listing.
+      setTimeout(() => {
+        if (document.visibilityState === "visible") {
+          toast.info("123RFID didn't open — opening the Play Store listing instead");
+          window.location.href = "https://play.google.com/store/apps/details?id=com.zebra.rfidreaderAPI.demo";
+        }
+      }, 2000);
     }
   }, [targetEpc]);
   const audioCtxRef = useRef<AudioContext | null>(null);
