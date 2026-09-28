@@ -1,9 +1,11 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useState, useCallback, useEffect } from "react";
-import { Save, Trash2 } from "lucide-react";
+import { useState, useCallback, useEffect, useRef } from "react";
+import { Save, Trash2, Radio } from "lucide-react";
 import { AppHeader } from "@/components/AppHeader";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Button } from "@/components/ui/button";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { TagList } from "@/components/TagList";
 import { LocationSelector } from "@/components/LocationSelector";
 
@@ -148,6 +150,49 @@ function ScannerPage() {
     zebra.setLocateTarget(geigerEpc);
     if (!geigerEpc) setProximity(null);
   }, [geigerEpc, zebra.setLocateTarget]);
+
+  // Instant save: each newly scanned tag is written straight away (needs a location).
+  const [instantSave, setInstantSave] = useState(true);
+  const inFlightRef = useRef(new Set<string>());
+  useEffect(() => {
+    const loc = location.trim();
+    if (!instantSave || !loc || !companySlug || geigerEpc) return;
+    const pending = Array.from(tags.values()).filter(
+      (t) => !t.saved && !inFlightRef.current.has(t.epc)
+    );
+    if (pending.length === 0) return;
+    const timer = setTimeout(async () => {
+      const epcs = pending.map((t) => t.epc.toUpperCase());
+      epcs.forEach((e) => inFlightRef.current.add(e));
+      const now = new Date().toISOString();
+      const { error } = await supabase.from("rfid_scans").upsert(
+        pending.map((t) => ({
+          epc: t.epc.toUpperCase(),
+          company_slug: companySlug,
+          last_seen: t.lastSeen.toISOString() || now,
+          scan_count: t.count,
+          location: loc,
+          device_name: "Handheld",
+        })),
+        { onConflict: "epc" }
+      );
+      epcs.forEach((e) => inFlightRef.current.delete(e));
+      if (error) {
+        toast.error(`Instant save failed: ${error.message}`);
+        return;
+      }
+      setTags((prev) => {
+        const next = new Map(prev);
+        for (const t of pending) {
+          const entry = next.get(t.epc);
+          if (entry) next.set(t.epc, { ...entry, saved: true });
+        }
+        return next;
+      });
+      linkSavedEpcsFn({ data: { epcs } }).catch((e) => console.error("[instant-save] link failed", e));
+    }, 400);
+    return () => clearTimeout(timer);
+  }, [tags, instantSave, location, companySlug, geigerEpc, linkSavedEpcsFn]);
 
   const handleSaveAll = async () => {
     const selectedLocation = location.trim();
@@ -350,6 +395,31 @@ function ScannerPage() {
             Clear
           </Button>
         </div>
+
+        {/* Always-ready scan box: Chainway C75 / Zebra keyboard wedge (tag + Enter) */}
+        <div className="rounded-lg border-2 border-dashed border-primary/60 bg-primary/5 p-4 text-center space-y-2">
+          <div className="flex items-center justify-center gap-2">
+            <Radio className={`h-5 w-5 ${scanEnabled ? "text-primary animate-pulse" : "text-muted-foreground"}`} />
+            <span className="text-base font-semibold text-foreground">
+              {scanEnabled ? "Ready — pull the trigger to scan" : "Scanning paused"}
+            </span>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Works with the Chainway C75 built-in reader (keyboard wedge, Enter suffix) and Zebra handhelds.
+          </p>
+          <div className="flex items-center justify-center gap-4 text-sm">
+            <span><span className="font-semibold text-foreground">{tags.size}</span> unique</span>
+            <span><span className="font-semibold text-foreground">{totalScans}</span> reads</span>
+          </div>
+          <div className="flex items-center justify-center gap-2 pt-1">
+            <Switch id="instant-save" checked={instantSave} onCheckedChange={setInstantSave} />
+            <Label htmlFor="instant-save" className="text-sm">
+              Save each tag instantly{instantSave && !location.trim() ? " (pick a location first)" : ""}
+            </Label>
+          </div>
+        </div>
+
+
 
 
 
