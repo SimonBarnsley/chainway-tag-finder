@@ -50,29 +50,37 @@ export function useRfidScanner(options: {
       return;
     }
 
-    // Try to extract a hex EPC from the raw buffer (strip spaces, dashes, prefixes)
-    const hexOnly = raw.replace(/[^a-fA-F0-9]/g, "").toUpperCase();
-    // Fallback: use the trimmed raw string as-is if no hex found
-    const epc = hexOnly.length >= 4 ? hexOnly : raw.trim().toUpperCase();
+    // A fast DataWedge burst can deliver many tags in one chunk (separated by
+    // newlines/Enter, spaces, commas or tabs). Split into individual EPCs.
+    const segments = raw.split(/[\s,;|]+/).filter(Boolean);
+    const epcs: string[] = [];
+    for (const seg of segments) {
+      const hex = seg.replace(/[^a-fA-F0-9]/g, "").toUpperCase();
+      if (hex.length >= 48 && hex.length % 24 === 0) {
+        // Concatenated 96-bit EPCs with no separator — chop into 24-char tags
+        for (let i = 0; i < hex.length; i += 24) epcs.push(hex.slice(i, i + 24));
+      } else if (hex.length >= 4) {
+        epcs.push(hex);
+      } else if (seg.trim().length >= 4) {
+        epcs.push(seg.trim().toUpperCase());
+      } else {
+        emitDebug("ignored", `discarded — too short: "${seg}"`);
+      }
+    }
 
-    emitDebug("info", `parsed epc="${epc}" (hexOnly=${hexOnly.length} chars, raw=${raw.length})`);
+    emitDebug("info", `parsed ${epcs.length} epc(s) from raw len=${raw.length}`);
 
-    if (epc.length >= 4) {
-      const tag: RfidTag = { epc, timestamp: new Date() };
-
-      console.log("[RFID Wedge] Emitting tag:", epc);
-      emitDebug("info", `EMIT EPC ${epc}`);
-
+    if (epcs.length) {
       setWedgeStatus("detected");
       if (wedgeTimeoutRef.current) clearTimeout(wedgeTimeoutRef.current);
       wedgeTimeoutRef.current = setTimeout(() => setWedgeStatus("unknown"), 60_000);
-
-      options.onTagScanned?.(tag);
-    } else {
-      console.log("[RFID Wedge] Buffer too short, discarded");
-      emitDebug("ignored", `discarded — too short: "${epc}"`);
+    }
+    for (const epc of epcs) {
+      emitDebug("info", `EMIT EPC ${epc}`);
+      options.onTagScanned?.({ epc, timestamp: new Date() });
     }
   }, [options.onTagScanned]);
+
 
   useEffect(() => {
     if (!options.enabled) {
@@ -126,7 +134,7 @@ export function useRfidScanner(options: {
     Object.defineProperty(hiddenInput, "value", {
       configurable: true,
       get() {
-        return (this as HTMLElement).textContent ?? "";
+        return (this as HTMLElement).innerText ?? (this as HTMLElement).textContent ?? "";
       },
       set(v: string) {
         (this as HTMLElement).textContent = v;
@@ -256,6 +264,17 @@ export function useRfidScanner(options: {
       const target = e.target as HTMLElement | null;
       const isHiddenInputTarget = target === hiddenInput;
       if (isRealInputElement(target)) return;
+
+      // Android often delivers the DataWedge Enter suffix as a line-break
+      // input event instead of a keydown — treat it as a tag terminator.
+      if (e.inputType === "insertParagraph" || e.inputType === "insertLineBreak") {
+        e.preventDefault();
+        if (hiddenInput.value) bufferRef.current = hiddenInput.value;
+        processBuffer();
+        hiddenInput.value = "";
+        focusHiddenInput();
+        return;
+      }
 
       if (isHiddenInputTarget) {
         if (syncFromHiddenInput(e.type)) {
