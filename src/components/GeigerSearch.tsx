@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Crosshair, X, Volume2, VolumeX, Play, Square } from "lucide-react";
+import { Crosshair, X, Volume2, VolumeX, Play, Square, ExternalLink, ClipboardCopy, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface LastScan {
