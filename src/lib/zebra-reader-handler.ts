@@ -56,12 +56,40 @@ function asNumber(value: unknown): number | undefined {
   return undefined;
 }
 
+/**
+ * Plain-text / form-encoded bodies (e.g. Chainway UA4E "HTTP upload" mode):
+ * pull out every hex EPC-looking token (24+ hex chars, or `epc=...` values).
+ */
+function extractTagsFromText(body: string): TagRead[] {
+  const tags: TagRead[] = [];
+  const seen = new Set<string>();
+  let text = body;
+  try {
+    text = decodeURIComponent(body.replace(/\+/g, " "));
+  } catch {
+    // keep raw
+  }
+  const re = /\b([0-9A-Fa-f]{24,64})\b/g;
+  let m: RegExpExecArray | null;
+  while ((m = re.exec(text)) !== null) {
+    const epc = m[1].toUpperCase();
+    if (seen.has(epc)) continue;
+    seen.add(epc);
+    tags.push({ epc });
+  }
+  return tags;
+}
+
 function extractTagsFromJson(payload: unknown): TagRead[] {
   const tags: TagRead[] = [];
   const nestedKeys = [
     "data",
+    "Data",
     "tag_reads",
     "tags",
+    "Tags",
+    "tagList",
+    "TagList",
     "events",
     "event",
     "inventory",
