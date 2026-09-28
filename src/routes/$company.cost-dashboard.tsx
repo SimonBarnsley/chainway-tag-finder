@@ -66,6 +66,8 @@ function CostDashboard() {
   }, [auto, load]);
 
   const fmt = (n: number) => n.toLocaleString();
+  const fmtGbp = (n: number) =>
+    n < 0.01 && n > 0 ? `< £0.01` : `£${n.toFixed(2)}`;
   const fmtHour = (iso: string) => new Date(iso).toLocaleTimeString([], { hour: "2-digit" });
   const fmtDay = (s: string) => s.slice(5);
 
