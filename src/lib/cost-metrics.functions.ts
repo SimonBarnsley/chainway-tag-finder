@@ -33,7 +33,14 @@ const COST_PER_DEBUG_LOG_GBP = 0.000001;
 
 export const getCostMetrics = createServerFn({ method: "GET" })
   .middleware([requireSupabaseAuth])
-  .handler(async ({ context }): Promise<CostMetrics> => {
+  .inputValidator((input: unknown) => {
+    const companySlug =
+      typeof input === "object" && input !== null && "companySlug" in input
+        ? String((input as { companySlug?: unknown }).companySlug ?? "")
+        : "";
+    return { companySlug };
+  })
+  .handler(async ({ context, data }): Promise<CostMetrics> => {
     // Verify admin
     const { data: roles } = await context.supabase
       .from("user_roles")
@@ -44,10 +51,23 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       throw new Error("Forbidden");
     }
 
+    const companySlug = data.companySlug;
+
     const now = new Date();
     const h1 = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
     const h24 = new Date(now.getTime() - 24 * 60 * 60 * 1000).toISOString();
     const d7 = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000).toISOString();
+
+    const scansQ = () => {
+      let q = supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true });
+      if (companySlug) q = q.eq("company_slug", companySlug);
+      return q;
+    };
+    const debugQ = () => {
+      let q = supabaseAdmin.from("zebra_reader_debug_logs").select("*", { count: "exact", head: true });
+      if (companySlug) q = q.eq("company_slug", companySlug);
+      return q;
+    };
 
     const [
       scansHead1h,
@@ -57,17 +77,21 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       debugHeadTotal,
       scanRowsRes,
     ] = await Promise.all([
-      supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", h1),
-      supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", h24),
-      supabaseAdmin.from("rfid_scans").select("*", { count: "exact", head: true }).gte("last_seen", d7),
-      supabaseAdmin.from("zebra_reader_debug_logs").select("*", { count: "exact", head: true }).gte("created_at", h24),
-      supabaseAdmin.from("zebra_reader_debug_logs").select("*", { count: "exact", head: true }),
-      supabaseAdmin
-        .from("rfid_scans")
-        .select("last_seen")
-        .gte("last_seen", h24)
-        .order("last_seen", { ascending: false })
-        .limit(10000),
+      scansQ().gte("last_seen", h1),
+      scansQ().gte("last_seen", h24),
+      scansQ().gte("last_seen", d7),
+      debugQ().gte("created_at", h24),
+      debugQ(),
+      (() => {
+        let q = supabaseAdmin
+          .from("rfid_scans")
+          .select("last_seen")
+          .gte("last_seen", h24)
+          .order("last_seen", { ascending: false })
+          .limit(10000);
+        if (companySlug) q = q.eq("company_slug", companySlug);
+        return q;
+      })(),
     ]);
 
     // Compute hourly bucket from the fetched scan rows
