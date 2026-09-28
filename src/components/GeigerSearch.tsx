@@ -1,5 +1,6 @@
 import { useState, useEffect, useRef, useCallback } from "react";
-import { Crosshair, X, Volume2, VolumeX, Play, Square } from "lucide-react";
+import { Crosshair, X, Volume2, VolumeX, Play, Square, ExternalLink, ClipboardCopy, Check } from "lucide-react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 
 interface LastScan {
@@ -55,6 +56,30 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   const [usingLocationing, setUsingLocationing] = useState(false);
   const lastProxSeqRef = useRef(0);
   const [soundEnabled, setSoundEnabled] = useState(true);
+  const [copied, setCopied] = useState(false);
+
+  // Copies the target EPC to the clipboard and launches Zebra's 123RFID Mobile
+  // app (package com.zebra.rfidreaderAPI.demo) via an Android intent URL. On a
+  // TC22R the user then pastes the EPC into 123RFID's "Locate Tag" field to use
+  // its native Geiger search. Falls back to the Play Store listing if the app
+  // isn't installed; on non-Android devices it just copies the EPC.
+  const openIn123Rfid = useCallback(async () => {
+    try {
+      await navigator.clipboard.writeText(targetEpc);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2500);
+      toast.success("EPC copied — paste it into 123RFID's Locate Tag field");
+    } catch {
+      toast.error("Couldn't copy the EPC — long-press it to copy manually");
+    }
+    const isAndroid = /android/i.test(navigator.userAgent);
+    if (isAndroid) {
+      window.location.href =
+        "intent://#Intent;package=com.zebra.rfidreaderAPI.demo;action=android.intent.action.MAIN;category=android.intent.category.LAUNCHER;S.browser_fallback_url=" +
+        encodeURIComponent("https://play.google.com/store/apps/details?id=com.zebra.rfidreaderAPI.demo") +
+        ";end";
+    }
+  }, [targetEpc]);
   const audioCtxRef = useRef<AudioContext | null>(null);
   const decayRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const lastHitRef = useRef(0);
@@ -261,6 +286,32 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
       <div className="rounded-lg bg-muted/50 border border-border p-2">
         <p className="text-[10px] text-muted-foreground mb-0.5">Target EPC</p>
         <p className="font-mono text-xs font-bold text-foreground truncate">{targetEpc}</p>
+      </div>
+
+      {/* Open in 123RFID Mobile — copies the EPC and launches Zebra's app so the
+          user can paste it into Locate Tag for the native Geiger search. */}
+      <div className="flex gap-2">
+        <Button
+          variant="outline"
+          className="flex-1 gap-2"
+          onClick={async () => {
+            try {
+              await navigator.clipboard.writeText(targetEpc);
+              setCopied(true);
+              setTimeout(() => setCopied(false), 2500);
+              toast.success("EPC copied to clipboard");
+            } catch {
+              toast.error("Couldn't copy the EPC");
+            }
+          }}
+        >
+          {copied ? <Check className="h-4 w-4 text-green-500" /> : <ClipboardCopy className="h-4 w-4" />}
+          {copied ? "Copied" : "Copy EPC"}
+        </Button>
+        <Button variant="secondary" className="flex-1 gap-2" onClick={openIn123Rfid}>
+          <ExternalLink className="h-4 w-4" />
+          Open in 123RFID
+        </Button>
       </div>
 
       {/* Signal meter */}
