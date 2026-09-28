@@ -51,9 +51,11 @@ export function CompanySwitcher() {
   }, []);
 
   const currentLabel =
-    companies.find((c) => c.company_slug === currentCompany)?.company_name ||
-    currentCompany ||
-    "Select Company";
+    currentCompany === "default"
+      ? "Super Admin"
+      : companies.find((c) => c.company_slug === currentCompany)?.company_name ||
+        currentCompany ||
+        "Select Company";
 
   if (loading) return null;
 

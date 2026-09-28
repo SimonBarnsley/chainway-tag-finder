@@ -41,7 +41,10 @@ export function AppHeader({ actions }: AppHeaderProps) {
     };
   }, [params.company, homeCompanySlug]);
 
-  const headerTitle = viewCompanyName || companyName || company;
+  const headerTitle =
+    viewCompanyName ||
+    companyName ||
+    (company === "default" ? "Super Admin" : company);
 
   const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof Radio; perm: PermissionKey | null }[] = [
     { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
