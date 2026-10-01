@@ -232,7 +232,8 @@ export const createUser = createServerFn({ method: "POST" })
       return input;
     }
   )
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }): Promise<{ ok: boolean; userId?: string; error?: string }> => {
+   try {
     await assertAdmin(context.userId);
 
     let companyName = data.companyName?.trim() || null;
@@ -287,6 +288,13 @@ export const createUser = createServerFn({ method: "POST" })
     }
 
     return { ok: true, userId: created.user.id };
+   } catch (e) {
+    const msg = e instanceof Response
+      ? await e.text().catch(() => e.statusText)
+      : e instanceof Error ? e.message : String(e);
+    console.error("createUser failed:", msg);
+    return { ok: false, error: msg };
+   }
   });
 
 export const deleteUserCompletely = createServerFn({ method: "POST" })

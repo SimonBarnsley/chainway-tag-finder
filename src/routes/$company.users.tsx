@@ -238,7 +238,7 @@ function UsersContent() {
     setCreating(true);
     try {
       const headers = await getAuthHeaders();
-      await createUser({
+      const res = await createUser({
         data: {
           email: newEmail.trim(),
           password: newPassword,
@@ -249,6 +249,7 @@ function UsersContent() {
         },
         headers,
       });
+      if (!res?.ok) throw new Error(res?.error || "Failed to create user");
       toast.success("User created");
       setCreateOpen(false);
       resetCreateForm();
