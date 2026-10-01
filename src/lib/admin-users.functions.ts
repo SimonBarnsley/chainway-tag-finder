@@ -288,6 +288,27 @@ export const createUser = createServerFn({ method: "POST" })
       throw new Response(error?.message ?? "Failed to create user", { status: 500 });
     }
 
+    // Ensure profile + base role exist (in case the signup trigger isn't attached).
+    const { data: comp } = companyName
+      ? await supabaseAdmin.from("companies").select("name, slug").ilike("name", companyName).maybeSingle()
+      : { data: null };
+    const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
+      {
+        user_id: created.user.id,
+        email: data.email,
+        display_name: data.displayName || data.email.split("@")[0],
+        company_name: comp?.name ?? companyName,
+        company_slug: comp?.slug ?? companySlug,
+      },
+      { onConflict: "user_id" }
+    );
+    if (pErr) throw new Error(`Could not save profile: ${pErr.message}`);
+    const { data: hasRole } = await supabaseAdmin
+      .from("user_roles").select("id").eq("user_id", created.user.id).limit(1);
+    if (!hasRole?.length) {
+      await supabaseAdmin.from("user_roles").insert({ user_id: created.user.id, role: "user" });
+    }
+
     // If a non-default role was requested, replace the default 'user' role.
     if (data.role && data.role !== "user") {
       await supabaseAdmin
