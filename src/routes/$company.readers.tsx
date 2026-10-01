@@ -485,6 +485,22 @@ function EndpointUrlCard({ company }: { company: string }) {
     }
   };
 
+  const regenerateKey = async () => {
+    if (!confirm("Create a new reader key for this company? Every reader using the old key will stop sending reads until updated.")) return;
+    setFetchingKey(true);
+    try {
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      if (!accessToken) return void toast.error("Please sign in again");
+      const res = await getZebraApiKeyFn({ data: { accessToken, company, regenerate: true } });
+      if (!res.configured) return void toast.error(res.error === "forbidden" ? "Only company admins can do this" : "Could not create a new key");
+      setApiKey(res.apiKey);
+      toast.success("New reader key created — update your readers");
+    } finally {
+      setFetchingKey(false);
+    }
+  };
+
   const copyWithServerKey = async (kind: "path" | "query") => {
     setFetchingKey(true);
     try {
@@ -494,15 +510,20 @@ function EndpointUrlCard({ company }: { company: string }) {
         toast.error("You must be signed in to copy the API key");
         return;
       }
-      const res = await getZebraApiKeyFn({ data: { accessToken } });
+      const res = await getZebraApiKeyFn({ data: { accessToken, company } });
       if (res.error === "unauthorized") {
         toast.error("Session expired — please sign in again");
         return;
       }
-      if (!res.configured || !res.apiKey) {
-        toast.error("ZEBRA_READER_API_KEY is not set in backend secrets");
+      if (res.error === "forbidden") {
+        toast.error("Only admins of this company can copy its reader key");
         return;
       }
+      if (!res.configured || !res.apiKey) {
+        toast.error("Could not get this company's reader key");
+        return;
+      }
+      setApiKey(res.apiKey);
       const url =
         kind === "path"
           ? `${origin}/api/${basePath}/${company}/${encodeURIComponent(res.apiKey)}`
@@ -541,23 +562,26 @@ function EndpointUrlCard({ company }: { company: string }) {
             : "In the UA4E reader app, turn on HTTP upload / post mode and paste one of the URLs below as the server address. JSON, plain-text and form-encoded EPC lists are all accepted."}{" "}
           The path-based URL is preferred (single field, no <code>&amp;</code>).
           Use <span className="font-semibold text-foreground">Copy with key</span> to
-          fetch your API key from backend secrets and copy a ready-to-paste URL.
+          copy a ready-to-paste URL with this company's own reader key. Each company
+          has its own key, so a reader can only send reads to the company it belongs to.
         </p>
 
         <div className="space-y-1.5">
           <Label htmlFor="endpoint-key" className="text-xs">
-            API Key (optional preview)
+            This company's reader key
           </Label>
-          <Input
-            id="endpoint-key"
-            value={apiKey}
-            onChange={(e) => setApiKey(e.target.value)}
-            placeholder="Paste your ZEBRA_READER_API_KEY to preview the full URL"
-            className="text-xs font-mono"
-          />
-          <p className="text-xs text-muted-foreground">
-            Not stored — only used to render the URL below.
-          </p>
+          <div className="flex gap-2">
+            <Input
+              id="endpoint-key"
+              value={apiKey}
+              readOnly
+              placeholder="Click Copy with key to show it"
+              className="text-xs font-mono"
+            />
+            <Button type="button" size="sm" variant="outline" className="h-9 shrink-0" disabled={fetchingKey} onClick={regenerateKey}>
+              New key
+            </Button>
+          </div>
         </div>
 
         <div className="space-y-1.5">
