@@ -148,6 +148,11 @@ export const updateUserCompany = createServerFn({ method: "POST" })
         .maybeSingle();
       companyName = existing?.company_name ?? null;
       if (!companyName) {
+        const { data: reg } = await supabaseAdmin
+          .from("companies").select("name").eq("slug", data.companySlug).maybeSingle();
+        companyName = reg?.name ?? null;
+      }
+      if (!companyName) {
         throw new Response("Unknown company", { status: 400 });
       }
     }
@@ -182,6 +187,8 @@ export const listCompanies = createServerFn({ method: "POST" })
         .not("company_name", "is", null);
       if (error) throw new Response(error.message, { status: 500 });
       const map = new Map<string, string>();
+      const { data: reg } = await supabaseAdmin.from("companies").select("slug, name");
+      for (const c of reg ?? []) if (c.slug && c.name) map.set(c.slug, c.name);
       for (const r of data ?? []) {
         if (r.company_slug && r.company_name && !map.has(r.company_slug)) {
           map.set(r.company_slug, r.company_name);
@@ -241,6 +248,11 @@ export const createUser = createServerFn({ method: "POST" })
         .limit(1)
         .maybeSingle();
       companyName = existing?.company_name ?? null;
+      if (!companyName) {
+        const { data: reg } = await supabaseAdmin
+          .from("companies").select("name").eq("slug", companySlug).maybeSingle();
+        companyName = reg?.name ?? null;
+      }
       if (!companyName) {
         throw new Response("Unknown company", { status: 400 });
       }
