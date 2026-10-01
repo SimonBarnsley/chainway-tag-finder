@@ -113,7 +113,32 @@ function Editor() {
       if (mapRes.error) throw mapRes.error;
       if (locRes.error) throw locRes.error;
 
-      setLocations(locRes.data ?? []);
+      // Bring reader antenna locations into the managed location list so they
+      // can be picked for zones.
+      let locList = locRes.data ?? [];
+      const { data: antData } = await supabase
+        .from("reader_antennas")
+        .select("location")
+        .eq("company_slug", companySlug);
+      const known = new Set(locList.map((l) => l.name.trim().toLowerCase()));
+      const missing = Array.from(
+        new Set(
+          (antData ?? [])
+            .map((a) => a.location?.trim())
+            .filter((v): v is string => !!v && !known.has(v.toLowerCase())),
+        ),
+      );
+      if (missing.length > 0) {
+        const { data: inserted, error: insErr } = await supabase
+          .from("locations")
+          .insert(missing.map((name) => ({ name, company_slug: companySlug })))
+          .select("id, name");
+        if (!insErr && inserted) {
+          locList = [...locList, ...inserted].sort((a, b) => a.name.localeCompare(b.name));
+        }
+      }
+
+      setLocations(locList);
 
       let activeMapId: string | null = null;
       if (mapRes.data) {
