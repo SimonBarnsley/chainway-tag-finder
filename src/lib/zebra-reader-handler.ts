@@ -259,10 +259,16 @@ export async function handleZebraReaderPost(
     return respond({ error: "Missing company" }, 400);
   }
 
-  // One shared key for all fixed readers (Zebra FX and Chainway UA4E).
-  const expectedKey = process.env.ZEBRA_READER_API_KEY;
-  if (expectedKey && apiKey !== expectedKey) {
-    await writeDebug(null, "invalid api key");
+  // Per-company key first; companies without one fall back to the shared key.
+  const { data: companyKeyRow } = await supabaseAdmin
+    .from("company_reader_keys" as never)
+    .select("api_key")
+    .eq("company_slug", companySlug)
+    .maybeSingle();
+  const companyKey = (companyKeyRow as { api_key?: string } | null)?.api_key;
+  const expectedKey = companyKey || process.env.ZEBRA_READER_API_KEY;
+  if (!expectedKey || apiKey !== expectedKey) {
+    await writeDebug(null, companyKey ? "invalid company api key" : "invalid api key");
     return respond({ error: "Invalid API key" }, 401);
   }
 

@@ -101,6 +101,27 @@ export type Database = {
         }
         Relationships: []
       }
+      company_reader_keys: {
+        Row: {
+          api_key: string
+          company_slug: string
+          created_at: string
+          updated_at: string
+        }
+        Insert: {
+          api_key: string
+          company_slug: string
+          created_at?: string
+          updated_at?: string
+        }
+        Update: {
+          api_key?: string
+          company_slug?: string
+          created_at?: string
+          updated_at?: string
+        }
+        Relationships: []
+      }
       company_settings: {
         Row: {
           company_slug: string
