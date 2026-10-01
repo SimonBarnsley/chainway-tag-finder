@@ -470,7 +470,7 @@ function EndpointUrlCard({ company }: { company: string }) {
   const [fetchingKey, setFetchingKey] = useState(false);
   const getZebraApiKeyFn = useServerFn(getZebraApiKey);
   // Always point readers at the live site — preview addresses require a login.
-  const origin = "https://scanloc8.com";
+  const origin = "https://www.scanloc8.com";
   const basePath = brand === "zebra" ? "zebra-reader" : "chainway-reader";
   const keyForUrl = apiKey.trim() || "<API_KEY>";
   const pathUrl = `${origin}/api/${basePath}/${company}/${encodeURIComponent(keyForUrl)}`;
