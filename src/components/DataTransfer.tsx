@@ -84,7 +84,7 @@ export function DataTransfer({ company }: { company: string }) {
       const n = TABLES.reduce((s, t) => s + tables[t].length, 0);
       toast.success(`Exported ${n} records and ${files.length} images`);
     } catch (e: any) {
-      toast.error(`Export failed: ${e.message}`);
+      toast.error(`Export failed: ${e.message}`, { duration: 60000 });
     } finally {
       setBusy(null);
     }
@@ -94,7 +94,9 @@ export function DataTransfer({ company }: { company: string }) {
     setBusy("Importing…");
     try {
       const bundle = JSON.parse(await file.text()) as Bundle;
-      if (bundle.format !== "scanloc8-export") throw new Error("Not a ScanLoc8 export file");
+      if (!bundle || typeof bundle.tables !== "object") throw new Error("This file has no tables section — it isn't a ScanLoc8 export");
+      bundle.files = bundle.files ?? [];
+      bundle.source_company = bundle.source_company ?? "the old project";
       if (!confirm(`Import data from "${bundle.source_company}" into "${company}"? Existing records with the same IDs will be overwritten.`)) return;
 
       // Upload images first and remember new public URLs.
@@ -116,13 +118,20 @@ export function DataTransfer({ company }: { company: string }) {
         });
         if (!rows.length) continue;
         const onConflict = t === "company_settings" ? "company_slug" : "id";
-        const { error } = await (supabase.from(t as any) as any).upsert(rows, { onConflict });
-        if (error) throw new Error(`${t}: ${error.message}`);
+        // Drop columns the old project had but this one doesn't, then retry.
+        for (let attempt = 0; attempt < 20; attempt++) {
+          const { error } = await (supabase.from(t as any) as any).upsert(rows, { onConflict });
+          if (!error) break;
+          const m = error.message.match(/Could not find the '([^']+)' column/);
+          if (!m || attempt === 19) throw new Error(`${t}: ${error.message}`);
+          rows = rows.map(({ [m[1]]: _drop, ...r }) => r);
+        }
         count += rows.length;
       }
       toast.success(`Imported ${count} records and ${bundle.files.length} images`);
     } catch (e: any) {
-      toast.error(`Import failed: ${e.message}`);
+      console.error("Import failed", e);
+      toast.error(`Import failed: ${e.message}`, { duration: 60000 });
     } finally {
       setBusy(null);
       if (fileRef.current) fileRef.current.value = "";
