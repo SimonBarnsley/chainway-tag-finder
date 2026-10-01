@@ -149,11 +149,6 @@ export const updateUserCompany = createServerFn({ method: "POST" })
       companyName = existing?.company_name ?? null;
       if (!companyName) {
         const { data: reg } = await supabaseAdmin
-          .from("companies").select("name").eq("slug", companySlug!).maybeSingle();
-        companyName = reg?.name ?? null;
-      }
-      if (!companyName) {
-        const { data: reg } = await supabaseAdmin
           .from("companies").select("name").eq("slug", data.companySlug).maybeSingle();
         companyName = reg?.name ?? null;
       }
