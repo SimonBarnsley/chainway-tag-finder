@@ -11,6 +11,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
 import { CompaniesManager } from "@/components/CompaniesManager";
+import { DataTransfer } from "@/components/DataTransfer";
 
 export const Route = createFileRoute("/$company/admin")({
   component: AdminPage,
@@ -212,6 +213,7 @@ function AdminContent() {
         </div>
 
         {isSuperAdmin && <CompaniesManager />}
+        {isSuperAdmin && <DataTransfer company={company} />}
 
         {/* Zebra IoT Connector Endpoint */}
         <Card>
