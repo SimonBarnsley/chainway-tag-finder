@@ -64,6 +64,7 @@ function UsersPage() {
 
 function UsersContent() {
   const { isSuperAdmin, user } = useAuth();
+  const { company: routeCompany } = Route.useParams();
   const deleteUserFn = useServerFn(deleteUserCompletely);
   const [users, setUsers] = useState<UserRow[]>([]);
   const [loading, setLoading] = useState(true);
@@ -274,7 +275,7 @@ function UsersContent() {
       <AppHeader />
       <main className="flex-1 px-4 py-4 space-y-4 max-w-3xl mx-auto w-full">
         {isSuperAdmin && <CompaniesManager />}
-        {isSuperAdmin && <DataTransfer company={Route.useParams().company} />}
+        {isSuperAdmin && <DataTransfer company={routeCompany} />}
         <div className="flex items-center gap-2">
           <UsersIcon className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold text-foreground">Users</h1>
