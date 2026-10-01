@@ -249,6 +249,11 @@ export const createUser = createServerFn({ method: "POST" })
         .maybeSingle();
       companyName = existing?.company_name ?? null;
       if (!companyName) {
+        const { data: reg } = await supabaseAdmin
+          .from("companies").select("name").eq("slug", companySlug).maybeSingle();
+        companyName = reg?.name ?? null;
+      }
+      if (!companyName) {
         throw new Response("Unknown company", { status: 400 });
       }
     }
