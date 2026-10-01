@@ -232,7 +232,8 @@ export const createUser = createServerFn({ method: "POST" })
       return input;
     }
   )
-  .handler(async ({ context, data }) => {
+  .handler(async ({ context, data }): Promise<{ ok: boolean; userId?: string; error?: string }> => {
+   try {
     await assertAdmin(context.userId);
 
     let companyName = data.companyName?.trim() || null;
@@ -255,6 +256,20 @@ export const createUser = createServerFn({ method: "POST" })
       }
       if (!companyName) {
         throw new Response("Unknown company", { status: 400 });
+      }
+    }
+
+    // Make sure the company is registered (signup trigger requires it).
+    if (companyName && !companySlug) {
+      const { data: found } = await supabaseAdmin
+        .from("companies").select("slug, name").ilike("name", companyName).maybeSingle();
+      if (found) {
+        companyName = found.name;
+      } else {
+        const { data: slug } = await supabaseAdmin.rpc("generate_slug", { input: companyName });
+        const { error: cErr } = await supabaseAdmin
+          .from("companies").insert({ name: companyName, slug: (slug as string) || companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-") });
+        if (cErr) throw new Error(`Could not register company: ${cErr.message}`);
       }
     }
 
@@ -287,6 +302,13 @@ export const createUser = createServerFn({ method: "POST" })
     }
 
     return { ok: true, userId: created.user.id };
+   } catch (e) {
+    const msg = e instanceof Response
+      ? await e.text().catch(() => e.statusText)
+      : e instanceof Error ? e.message : String(e);
+    console.error("createUser failed:", msg);
+    return { ok: false, error: msg };
+   }
   });
 
 export const deleteUserCompletely = createServerFn({ method: "POST" })
