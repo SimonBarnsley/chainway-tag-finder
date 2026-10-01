@@ -29,22 +29,32 @@ export function CompanySwitcher() {
 
   useEffect(() => {
     const fetchCompanies = async () => {
-      const { data } = await supabase
-        .from("profiles")
-        .select("company_slug, company_name, display_name, email")
-        .not("company_slug", "is", null)
-        .order("company_name");
+      const [{ data: reg }, { data }] = await Promise.all([
+        supabase.from("companies").select("slug, name"),
+        supabase
+          .from("profiles")
+          .select("company_slug, company_name, display_name, email")
+          .not("company_slug", "is", null),
+      ]);
 
-      if (data) {
-        // Deduplicate by company_slug
-        const seen = new Set<string>();
-        const unique = data.filter((p) => {
-          if (!p.company_slug || seen.has(p.company_slug)) return false;
-          seen.add(p.company_slug);
-          return true;
-        }) as Company[];
-        setCompanies(unique);
+      const map = new Map<string, Company>();
+      for (const c of reg ?? []) {
+        map.set(c.slug, { company_slug: c.slug, company_name: c.name, display_name: null, email: null });
       }
+      for (const p of data ?? []) {
+        if (!p.company_slug) continue;
+        const existing = map.get(p.company_slug);
+        if (!existing) {
+          map.set(p.company_slug, p as Company);
+        } else if (!existing.email) {
+          existing.email = p.email;
+        }
+      }
+      setCompanies(
+        Array.from(map.values()).sort((a, b) =>
+          (a.company_name || a.company_slug).localeCompare(b.company_name || b.company_slug)
+        )
+      );
       setLoading(false);
     };
     fetchCompanies();
