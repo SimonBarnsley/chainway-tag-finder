@@ -6,7 +6,8 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
 import { toast } from "sonner";
-import { supabase } from "@/integrations/supabase/client";
+import { useServerFn } from "@tanstack/react-start";
+import { registerAccount } from "@/lib/signup.functions";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/signup")({
@@ -17,7 +18,8 @@ export const Route = createFileRoute("/signup")({
 });
 
 function SignupPage() {
-  const { signUp, isAuthenticated, companySlug, isLoading } = useAuth();
+  const register = useServerFn(registerAccount);
+  const { isAuthenticated, companySlug, isLoading } = useAuth();
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -43,13 +45,19 @@ function SignupPage() {
     }
     setLoading(true);
     try {
-      const { data: exists, error: checkErr } = await supabase.rpc("company_exists", { _name: company });
-      if (checkErr) throw checkErr;
-      if (!exists) {
-        toast.error("That company isn't registered. Check the exact name with your administrator.");
+      const res = await register({
+        data: {
+          email: email.trim(),
+          password,
+          displayName: displayName.trim() || undefined,
+          companyName: company,
+          redirectTo: window.location.origin,
+        },
+      });
+      if (!res.ok) {
+        toast.error(res.error || "Sign up failed");
         return;
       }
-      await signUp(email, password, displayName || undefined, company);
       toast.success("Account created! Check your email to confirm.");
       navigate({ to: "/login" });
     } catch (err: unknown) {
