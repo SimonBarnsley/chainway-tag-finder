@@ -259,6 +259,20 @@ export const createUser = createServerFn({ method: "POST" })
       }
     }
 
+    // Make sure the company is registered (signup trigger requires it).
+    if (companyName && !companySlug) {
+      const { data: found } = await supabaseAdmin
+        .from("companies").select("slug, name").ilike("name", companyName).maybeSingle();
+      if (found) {
+        companyName = found.name;
+      } else {
+        const { data: slug } = await supabaseAdmin.rpc("generate_slug", { input: companyName });
+        const { error: cErr } = await supabaseAdmin
+          .from("companies").insert({ name: companyName, slug: (slug as string) || companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-") });
+        if (cErr) throw new Error(`Could not register company: ${cErr.message}`);
+      }
+    }
+
     // Create the user (auto-confirmed). The handle_new_user trigger will
     // create the profile + default 'user' role and resolve the company slug.
     const { data: created, error } = await supabaseAdmin.auth.admin.createUser({
