@@ -136,6 +136,8 @@ function CostDashboard() {
 
             <CostSimulator />
 
+            <MonthlyBillingBreakdown data={data} />
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
