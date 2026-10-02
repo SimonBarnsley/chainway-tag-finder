@@ -293,6 +293,12 @@ const SIM_COST_PER_DEBUG_LOG_GBP = 0.000001;
 const ITEM_ROW_KB = 1; // one row in the items table
 const ITEM_PHOTO_KB = 300; // one stored photo per item
 const STORAGE_GBP_PER_GB_MONTH = 0.12; // assumed rate — Lovable does not publish per-unit storage rates
+// Reader overhead: each fixed reader posts batches (plus quiet status posts) during
+// working hours — roughly one post a minute, 7am–6pm. Small per-request overhead.
+const READER_POSTS_PER_DAY = 660;
+const SIM_COST_PER_READER_POST_GBP = 0.000001;
+// A location or zone is one small row (~1 KB) in the database.
+const LOC_ZONE_ROW_KB = 1;
 
 function CostSimulator() {
   const [scansPerDay, setScansPerDay] = useState(1000);
