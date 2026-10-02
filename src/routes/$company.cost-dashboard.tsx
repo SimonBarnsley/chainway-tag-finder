@@ -353,16 +353,28 @@ function CostSimulator() {
               onChange={(e) => setItemCount(Math.max(0, Number(e.target.value) || 0))}
               className="h-9 w-36 rounded-md border border-input bg-background px-2" />
           </label>
+          <label className="flex flex-col gap-1">
+            Number of fixed readers
+            <input type="number" min={0} value={readerCount}
+              onChange={(e) => setReaderCount(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 w-36 rounded-md border border-input bg-background px-2" />
+          </label>
+          <label className="flex flex-col gap-1">
+            Locations + zones
+            <input type="number" min={0} value={locZoneCount}
+              onChange={(e) => setLocZoneCount(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 w-36 rounded-md border border-input bg-background px-2" />
+          </label>
         </div>
         <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <MetricCard label="Sim. scans · 1 day" value={scansPerDay.toLocaleString()} />
           <MetricCard label="Sim. items" value={itemCount.toLocaleString()} hint={`${itemStorageGb.toFixed(2)} GB stored (rows + photos)`} />
-          <MetricCard label="Sim. cost · per day" value={gbp(daily)} hint={`Scans ${gbp(scanDaily)} + storage ${gbp(itemStorageDaily)}`} />
-          <MetricCard label="Sim. cost · per month" value={gbp(withItemsMonthly)}
-            hint={withItemsMonthly > scanOnlyMonthly ? `+${gbp(withItemsMonthly - scanOnlyMonthly)} from items` : "Scans only"} />
-          <MetricCard label="Sim. cost · per year" value={gbp(withItemsYearly)}
-            hint={withItemsYearly > scanOnlyYearly ? `+${gbp(withItemsYearly - scanOnlyYearly)} from items` : "Scans only"} />
-          <MetricCard label="Scans only · per month" value={gbp(scanOnlyMonthly)} hint="Without items, for comparison" />
+          <MetricCard label="Sim. readers / locations" value={`${readerCount.toLocaleString()} / ${locZoneCount.toLocaleString()}`} hint={`Reader posts ${gbp(readerDaily)}/day · locations+zones ${locZoneStorageGb.toFixed(3)} GB`} />
+          <MetricCard label="Sim. cost · per day" value={gbp(daily)} hint={`Scans ${gbp(scanDaily)} + readers ${gbp(readerDaily)} + storage ${gbp(itemStorageDaily + locZoneStorageDaily)}`} />
+          <MetricCard label="Sim. cost · per month" value={gbp(withAllMonthly)}
+            hint={withAllMonthly > scanOnlyMonthly ? `+${gbp(withAllMonthly - scanOnlyMonthly)} from items, readers, locations` : "Scans only"} />
+          <MetricCard label="Sim. cost · per year" value={gbp(withAllYearly)}
+            hint={withAllYearly > scanOnlyYearly ? `+${gbp(withAllYearly - scanOnlyYearly)} from items, readers, locations` : "Scans only"} />
         </div>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
@@ -376,10 +388,11 @@ function CostSimulator() {
           </ResponsiveContainer>
         </div>
         <p className="text-xs text-muted-foreground">
-          Estimate of database work for scans plus storage for items (one row of ~1 KB and one photo of ~300 KB
-          per item, at an assumed {`£${STORAGE_GBP_PER_GB_MONTH.toFixed(2)}`} per GB per month). Increasing the item
-          count changes the monthly and yearly figures only through storage — scan cost stays the same unless
-          scans per day also rise. Your plan's base hosting charge and AI usage are extra — see Settings → Plans &amp; credits.
+          Estimate of database work plus storage. Readers add small per-post overhead (assumed ~one post a minute
+          in working hours per reader); the scans they generate are counted in "Scans per day". Items add one row
+          (~1 KB) and one photo (~300 KB) each; each location or zone is one ~1 KB row — at an assumed{" "}
+          {`£${STORAGE_GBP_PER_GB_MONTH.toFixed(2)}`} per GB per month. Your plan's base hosting charge and AI usage
+          are extra — see Settings → Plans &amp; credits.
         </p>
       </CardContent>
     </Card>
