@@ -134,6 +134,8 @@ function CostDashboard() {
               />
             </div>
 
+            <CostSimulator />
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -277,6 +279,68 @@ function MetricCard({
           {value}
         </p>
         {hint && <p className="text-[10px] text-muted-foreground mt-1">{hint}</p>}
+      </CardContent>
+    </Card>
+  );
+}
+
+// Simulation only — nothing is saved. Uses the same unit rates as the live estimate.
+const SIM_COST_PER_SCAN_GBP = 0.000002;
+const SIM_COST_PER_DEBUG_LOG_GBP = 0.000001;
+
+function CostSimulator() {
+  const [scansPerDay, setScansPerDay] = useState(1000);
+  const [logsPerScan, setLogsPerScan] = useState(0.1);
+  const daily = scansPerDay * SIM_COST_PER_SCAN_GBP + scansPerDay * logsPerScan * SIM_COST_PER_DEBUG_LOG_GBP;
+  const gbp = (v: number) => `£${v < 1 ? v.toFixed(4) : v.toFixed(2)}`;
+  const hours = Array.from({ length: 24 }, (_, h) => ({ h, weight: h >= 7 && h < 18 ? 3 : 0.5 }));
+  const totalW = hours.reduce((s, x) => s + x.weight, 0);
+  const chart = hours.map(({ h, weight }) => ({
+    hour: `${String(h).padStart(2, "0")}:00`,
+    scans: Math.round((scansPerDay * weight) / totalW),
+  }));
+  return (
+    <Card className="border-primary/40">
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <Activity className="h-4 w-4" /> Live system simulator (preview only — no data saved)
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-4">
+        <div className="flex flex-wrap gap-4 text-sm">
+          <label className="flex flex-col gap-1">
+            Scans per day
+            <input type="number" min={0} value={scansPerDay}
+              onChange={(e) => setScansPerDay(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 w-36 rounded-md border border-input bg-background px-2" />
+          </label>
+          <label className="flex flex-col gap-1">
+            Debug logs per scan
+            <input type="number" min={0} step={0.1} value={logsPerScan}
+              onChange={(e) => setLogsPerScan(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 w-36 rounded-md border border-input bg-background px-2" />
+          </label>
+        </div>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <MetricCard label="Sim. scans · 1 day" value={scansPerDay.toLocaleString()} />
+          <MetricCard label="Sim. cost · per day" value={gbp(daily)} />
+          <MetricCard label="Sim. cost · per month" value={gbp(daily * 30)} />
+          <MetricCard label="Sim. cost · per year" value={gbp(daily * 365)} />
+        </div>
+        <div className="h-48">
+          <ResponsiveContainer width="100%" height="100%">
+            <BarChart data={chart}>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-muted" />
+              <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={2} />
+              <YAxis tick={{ fontSize: 10 }} />
+              <Tooltip formatter={(v) => [v, "Scans"]} />
+              <Bar dataKey="scans" fill="hsl(var(--primary))" />
+            </BarChart>
+          </ResponsiveContainer>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Estimate of database work for scans only. Your plan's base hosting charge and AI usage are extra — see Settings → Plans &amp; credits.
+        </p>
       </CardContent>
     </Card>
   );
