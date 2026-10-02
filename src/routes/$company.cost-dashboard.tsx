@@ -304,11 +304,17 @@ function CostSimulator() {
   const [scansPerDay, setScansPerDay] = useState(1000);
   const [logsPerScan, setLogsPerScan] = useState(0.1);
   const [itemCount, setItemCount] = useState(500);
+  const [readerCount, setReaderCount] = useState(2);
+  const [locZoneCount, setLocZoneCount] = useState(20);
+  const readerDaily = readerCount * READER_POSTS_PER_DAY * SIM_COST_PER_READER_POST_GBP;
   const scanDaily = scansPerDay * SIM_COST_PER_SCAN_GBP + scansPerDay * logsPerScan * SIM_COST_PER_DEBUG_LOG_GBP;
   // Items add stored data: one item row (~1 KB) plus one photo (~300 KB) per item.
   const itemStorageGb = (itemCount * (ITEM_ROW_KB + ITEM_PHOTO_KB)) / (1024 * 1024);
   const itemStorageDaily = itemStorageGb * STORAGE_GBP_PER_GB_MONTH / 30;
-  const daily = scanDaily + itemStorageDaily;
+  // Locations + zones: one ~1 KB row each.
+  const locZoneStorageGb = (locZoneCount * LOC_ZONE_ROW_KB) / (1024 * 1024);
+  const locZoneStorageDaily = locZoneStorageGb * STORAGE_GBP_PER_GB_MONTH / 30;
+  const daily = scanDaily + readerDaily + itemStorageDaily + locZoneStorageDaily;
   const gbp = (v: number) => `£${v < 1 ? v.toFixed(4) : v.toFixed(2)}`;
   const hours = Array.from({ length: 24 }, (_, h) => ({ h, weight: h >= 7 && h < 18 ? 3 : 0.5 }));
   const totalW = hours.reduce((s, x) => s + x.weight, 0);
@@ -317,9 +323,9 @@ function CostSimulator() {
     scans: Math.round((scansPerDay * weight) / totalW),
   }));
   const scanOnlyMonthly = scanDaily * 30;
-  const withItemsMonthly = daily * 30;
+  const withAllMonthly = daily * 30;
   const scanOnlyYearly = scanDaily * 365;
-  const withItemsYearly = daily * 365;
+  const withAllYearly = daily * 365;
   return (
     <Card className="border-primary/40">
       <CardHeader>
