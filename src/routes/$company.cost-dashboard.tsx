@@ -134,6 +134,8 @@ function CostDashboard() {
               />
             </div>
 
+            <CostSimulator />
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
