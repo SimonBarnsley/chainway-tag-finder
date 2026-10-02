@@ -289,11 +289,20 @@ function MetricCard({
 // Simulation only — nothing is saved. Uses the same unit rates as the live estimate.
 const SIM_COST_PER_SCAN_GBP = 0.000002;
 const SIM_COST_PER_DEBUG_LOG_GBP = 0.000001;
+// Storage assumptions for the simulator's item count.
+const ITEM_ROW_KB = 1; // one row in the items table
+const ITEM_PHOTO_KB = 300; // one stored photo per item
+const STORAGE_GBP_PER_GB_MONTH = 0.12; // assumed rate — Lovable does not publish per-unit storage rates
 
 function CostSimulator() {
   const [scansPerDay, setScansPerDay] = useState(1000);
   const [logsPerScan, setLogsPerScan] = useState(0.1);
-  const daily = scansPerDay * SIM_COST_PER_SCAN_GBP + scansPerDay * logsPerScan * SIM_COST_PER_DEBUG_LOG_GBP;
+  const [itemCount, setItemCount] = useState(500);
+  const scanDaily = scansPerDay * SIM_COST_PER_SCAN_GBP + scansPerDay * logsPerScan * SIM_COST_PER_DEBUG_LOG_GBP;
+  // Items add stored data: one item row (~1 KB) plus one photo (~300 KB) per item.
+  const itemStorageGb = (itemCount * (ITEM_ROW_KB + ITEM_PHOTO_KB)) / (1024 * 1024);
+  const itemStorageDaily = itemStorageGb * STORAGE_GBP_PER_GB_MONTH / 30;
+  const daily = scanDaily + itemStorageDaily;
   const gbp = (v: number) => `£${v < 1 ? v.toFixed(4) : v.toFixed(2)}`;
   const hours = Array.from({ length: 24 }, (_, h) => ({ h, weight: h >= 7 && h < 18 ? 3 : 0.5 }));
   const totalW = hours.reduce((s, x) => s + x.weight, 0);
@@ -301,6 +310,10 @@ function CostSimulator() {
     hour: `${String(h).padStart(2, "0")}:00`,
     scans: Math.round((scansPerDay * weight) / totalW),
   }));
+  const scanOnlyMonthly = scanDaily * 30;
+  const withItemsMonthly = daily * 30;
+  const scanOnlyYearly = scanDaily * 365;
+  const withItemsYearly = daily * 365;
   return (
     <Card className="border-primary/40">
       <CardHeader>
@@ -322,12 +335,22 @@ function CostSimulator() {
               onChange={(e) => setLogsPerScan(Math.max(0, Number(e.target.value) || 0))}
               className="h-9 w-36 rounded-md border border-input bg-background px-2" />
           </label>
+          <label className="flex flex-col gap-1">
+            Number of items
+            <input type="number" min={0} value={itemCount}
+              onChange={(e) => setItemCount(Math.max(0, Number(e.target.value) || 0))}
+              className="h-9 w-36 rounded-md border border-input bg-background px-2" />
+          </label>
         </div>
-        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
           <MetricCard label="Sim. scans · 1 day" value={scansPerDay.toLocaleString()} />
-          <MetricCard label="Sim. cost · per day" value={gbp(daily)} />
-          <MetricCard label="Sim. cost · per month" value={gbp(daily * 30)} />
-          <MetricCard label="Sim. cost · per year" value={gbp(daily * 365)} />
+          <MetricCard label="Sim. items" value={itemCount.toLocaleString()} hint={`${itemStorageGb.toFixed(2)} GB stored (rows + photos)`} />
+          <MetricCard label="Sim. cost · per day" value={gbp(daily)} hint={`Scans ${gbp(scanDaily)} + storage ${gbp(itemStorageDaily)}`} />
+          <MetricCard label="Sim. cost · per month" value={gbp(withItemsMonthly)}
+            hint={withItemsMonthly > scanOnlyMonthly ? `+${gbp(withItemsMonthly - scanOnlyMonthly)} from items` : "Scans only"} />
+          <MetricCard label="Sim. cost · per year" value={gbp(withItemsYearly)}
+            hint={withItemsYearly > scanOnlyYearly ? `+${gbp(withItemsYearly - scanOnlyYearly)} from items` : "Scans only"} />
+          <MetricCard label="Scans only · per month" value={gbp(scanOnlyMonthly)} hint="Without items, for comparison" />
         </div>
         <div className="h-48">
           <ResponsiveContainer width="100%" height="100%">
@@ -341,7 +364,10 @@ function CostSimulator() {
           </ResponsiveContainer>
         </div>
         <p className="text-xs text-muted-foreground">
-          Estimate of database work for scans only. Your plan's base hosting charge and AI usage are extra — see Settings → Plans &amp; credits.
+          Estimate of database work for scans plus storage for items (one row of ~1 KB and one photo of ~300 KB
+          per item, at an assumed {`£${STORAGE_GBP_PER_GB_MONTH.toFixed(2)}`} per GB per month). Increasing the item
+          count changes the monthly and yearly figures only through storage — scan cost stays the same unless
+          scans per day also rise. Your plan's base hosting charge and AI usage are extra — see Settings → Plans &amp; credits.
         </p>
       </CardContent>
     </Card>
