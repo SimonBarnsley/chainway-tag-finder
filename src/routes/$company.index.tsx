@@ -405,7 +405,7 @@ function ScannerPage() {
             </span>
           </div>
           <p className="text-xs text-muted-foreground">
-            Works with the Chainway C75 built-in reader (keyboard wedge, Enter suffix) and Zebra handhelds.
+            {"\n"}
           </p>
           <div className="flex items-center justify-center gap-4 text-sm">
             <span><span className="font-semibold text-foreground">{tags.size}</span> unique</span>
