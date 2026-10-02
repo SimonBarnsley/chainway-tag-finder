@@ -295,12 +295,29 @@ export async function handleZebraReaderPost(
     }
   }
 
+  // Zebra IoT Connector heartbeats/management events carry no tags — ack quietly.
+  if (tags.length === 0 && /"type"\s*:\s*"heartbeat"/.test(rawBody)) {
+    return respond({ accepted: 0, heartbeat: true }, 200);
+  }
+
   // Only log anomalies (zero-tag payloads). Successful reads are NOT logged
   // to avoid filling zebra_reader_debug_logs (which previously grew to >1GB
   // from a single chatty reader). Tag data is already persisted in rfid_scans.
   if (tags.length === 0) {
     await writeDebug(0, "no tags parsed from payload");
     return respond({ accepted: 0, message: "No valid tags found in payload" }, 200);
+  }
+
+  // Batches often repeat the same EPC; Postgres upsert rejects duplicate
+  // conflict keys in one statement (caused HTTP 500 → reader disconnects).
+  // Keep the strongest read per EPC.
+  {
+    const byEpc = new Map<string, TagRead>();
+    for (const t of tags) {
+      const prev = byEpc.get(t.epc);
+      if (!prev || (t.rssi ?? -999) > (prev.rssi ?? -999)) byEpc.set(t.epc, t);
+    }
+    tags = [...byEpc.values()];
   }
 
   const antennaLocationMap: Record<number, string> = {};
@@ -369,6 +386,7 @@ export async function handleZebraReaderPost(
     .upsert(records, { onConflict: "epc", ignoreDuplicates: false });
 
   if (error) {
+    await writeDebug(tags.length, `database error: ${error.message}`);
     return respond({ error: "Database error", detail: error.message }, 500);
   }
 
