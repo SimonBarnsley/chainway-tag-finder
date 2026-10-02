@@ -136,6 +136,8 @@ function CostDashboard() {
 
             <CostSimulator />
 
+            <MonthlyBillingBreakdown data={data} />
+
             <Card>
               <CardHeader>
                 <CardTitle className="text-sm flex items-center gap-2">
@@ -340,6 +342,100 @@ function CostSimulator() {
         </div>
         <p className="text-xs text-muted-foreground">
           Estimate of database work for scans only. Your plan's base hosting charge and AI usage are extra — see Settings → Plans &amp; credits.
+        </p>
+      </CardContent>
+    </Card>
+  );
+}
+
+// 1-month projection across every Lovable Cloud billing element.
+// Elements we can measure (database work from scan/log volume) use the same
+// unit rates as the live estimate. Elements billed by plan/instance size are
+// shown as plan-based, since Lovable does not publish per-unit rates for them.
+function MonthlyBillingBreakdown({ data }: { data: CostMetrics }) {
+  const scansPerMonth = (data.scansLast7d / 7) * 30;
+  const logsPerMonth = (data.debugLogsLast24h || 0) * 30;
+  const dbWorkGbp = scansPerMonth * SIM_COST_PER_SCAN_GBP + logsPerMonth * SIM_COST_PER_DEBUG_LOG_GBP;
+
+  const scanRows = data.tables.find((t) => t.name === "rfid_scans")?.rows ?? 0;
+  const logRows = data.tables.find((t) => t.name === "zebra_reader_debug_logs")?.rows ?? 0;
+  // ~1 KB per scan row, ~0.5 KB per log row → database storage in MB
+  const dbStorageMb = (scanRows * 1 + logRows * 0.5) / 1024;
+
+  const gbp = (v: number) => (v < 0.01 && v > 0 ? "< £0.01" : `£${v.toFixed(2)}`);
+
+  const rows: { element: string; monthly: string; basis: string }[] = [
+    {
+      element: "Database server (reads & writes)",
+      monthly: gbp(dbWorkGbp),
+      basis: `${Math.round(scansPerMonth).toLocaleString()} scans + ${Math.round(logsPerMonth).toLocaleString()} logs per month, at the page's unit rates`,
+    },
+    {
+      element: "Database storage",
+      monthly: `~${dbStorageMb < 1 ? dbStorageMb.toFixed(2) : dbStorageMb.toFixed(0)} MB stored`,
+      basis: "Included in the smallest database size — no extra charge at this volume",
+    },
+    {
+      element: "Compute (backend functions)",
+      monthly: "Plan-based",
+      basis: "Reader posts, sign-in and page loads — scales with traffic; no per-unit rate published",
+    },
+    {
+      element: "Network / data transfer",
+      monthly: "Plan-based",
+      basis: "Reader HTTP posts and page views — small at RFID volumes",
+    },
+    {
+      element: "File storage (item photos, floor plans)",
+      monthly: "Plan-based",
+      basis: "Charged by GB stored; check Cloud → Usage for your current total",
+    },
+    {
+      element: "AI features",
+      monthly: "£0.00",
+      basis: "This app uses no AI features — nothing consumed",
+    },
+    {
+      element: "App hosting",
+      monthly: "Plan-based",
+      basis: "Included in your plan's monthly Cloud allowance",
+    },
+  ];
+
+  return (
+    <Card>
+      <CardHeader>
+        <CardTitle className="text-sm flex items-center gap-2">
+          <DollarSign className="h-4 w-4" /> 1-month projection — all billing elements
+        </CardTitle>
+      </CardHeader>
+      <CardContent className="space-y-3">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead>
+              <tr className="border-b border-border text-xs text-muted-foreground">
+                <th className="text-left py-2 font-medium">Billing element</th>
+                <th className="text-right py-2 font-medium">1 month</th>
+                <th className="text-left py-2 pl-4 font-medium">Basis</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.map((r) => (
+                <tr key={r.element} className="border-b border-border/40">
+                  <td className="py-2 pr-4">{r.element}</td>
+                  <td className="py-2 text-right tabular-nums whitespace-nowrap">{r.monthly}</td>
+                  <td className="py-2 pl-4 text-xs text-muted-foreground">{r.basis}</td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+        <p className="text-xs text-muted-foreground">
+          Every plan includes 20 free Cloud credits and 4 free AI credits per month, which cover
+          usage before anything is charged. Lovable bills Cloud usage in credits and doesn't publish
+          per-unit rates, so "Plan-based" elements can only be seen exactly in More → Cloud → Usage
+          or Settings → Plans &amp; credits. The database work figure above is this page's own
+          estimate from your scan volume.
         </p>
       </CardContent>
     </Card>
