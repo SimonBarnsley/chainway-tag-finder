@@ -68,7 +68,11 @@ function StockCheck() {
     <HandheldShell title="Stock Check">
       <select
         value={location}
-        onChange={(e) => setLocation(e.target.value)}
+        onChange={(e) => {
+          setLocation(e.target.value);
+          // Hand focus back to the hidden scanner input so reads start right away.
+          e.target.blur();
+        }}
         className="h-12 w-full rounded-md border border-input bg-background px-3 text-base"
       >
         <option value="">Pick a location to count…</option>
