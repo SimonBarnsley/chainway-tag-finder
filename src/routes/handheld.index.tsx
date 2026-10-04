@@ -24,8 +24,24 @@ const actions = [
 ] as const;
 
 function HandheldHome() {
+  const { companyName } = useAuth() as ReturnType<typeof useAuth> & {
+    companyName?: string | null;
+  };
+
   return (
     <HandheldShell title="ScanLoc8" back={false}>
+      <div
+        className="flex items-center gap-3 rounded-xl border border-border bg-muted/40 px-4 py-3"
+        aria-label="Logged in company"
+      >
+        <Building2 className="h-5 w-5 shrink-0 text-primary" />
+        <div className="min-w-0">
+          <p className="text-xs uppercase tracking-wide text-muted-foreground">Logged in for</p>
+          <p className="truncate text-base font-semibold text-foreground">
+            {companyName || "Unknown company"}
+          </p>
+        </div>
+      </div>
       <div className="grid gap-4">
         {actions.map(({ to, label, hint, icon: Icon }) => (
           <Link
