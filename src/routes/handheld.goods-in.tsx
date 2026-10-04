@@ -99,7 +99,12 @@ function GoodsIn() {
         Receiving location
         <select
           value={location}
-          onChange={(e) => setLocation(e.target.value)}
+          onChange={(e) => {
+            setLocation(e.target.value);
+            // Hand focus straight back to the hidden scanner input so tag
+            // reads work immediately without tapping the screen.
+            e.target.blur();
+          }}
           className="mt-1 h-12 w-full rounded-md border border-input bg-background px-3 text-base"
         >
           <option value="">Pick a location…</option>
