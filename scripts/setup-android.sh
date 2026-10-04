@@ -134,7 +134,7 @@ Next steps:
     the trigger and the Geiger search never starts.
 
 The WebView loads the published site defined in capacitor.config.ts
-(currently https://rfid-zeba-android.lovable.app), so web-side changes
+(currently https://www.scanloc8.com/handheld), so web-side changes
 only need a Lovable publish — no APK rebuild.
 EOF
 

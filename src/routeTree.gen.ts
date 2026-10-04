@@ -13,7 +13,11 @@ import { Route as SignupRouteImport } from './routes/signup'
 import { Route as LoginRouteImport } from './routes/login'
 import { Route as CompanyRouteImport } from './routes/$company'
 import { Route as IndexRouteImport } from './routes/index'
+import { Route as HandheldIndexRouteImport } from './routes/handheld.index'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
+import { Route as HandheldStockCheckRouteImport } from './routes/handheld.stock-check'
+import { Route as HandheldInventoryRouteImport } from './routes/handheld.inventory'
+import { Route as HandheldGoodsInRouteImport } from './routes/handheld.goods-in'
 import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
 import { Route as ApiChainwayReaderRouteImport } from './routes/api.chainway-reader'
 import { Route as CompanyUsersRouteImport } from './routes/$company.users'
@@ -60,10 +64,30 @@ const IndexRoute = IndexRouteImport.update({
   path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
+const HandheldIndexRoute = HandheldIndexRouteImport.update({
+  id: '/handheld/',
+  path: '/handheld/',
+  getParentRoute: () => rootRouteImport,
+} as any)
 const CompanyIndexRoute = CompanyIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CompanyRoute,
+} as any)
+const HandheldStockCheckRoute = HandheldStockCheckRouteImport.update({
+  id: '/handheld/stock-check',
+  path: '/handheld/stock-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldInventoryRoute = HandheldInventoryRouteImport.update({
+  id: '/handheld/inventory',
+  path: '/handheld/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldGoodsInRoute = HandheldGoodsInRouteImport.update({
+  id: '/handheld/goods-in',
+  path: '/handheld/goods-in',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
   id: '/api/zebra-reader',
@@ -216,7 +240,11 @@ export interface FileRoutesByFullPath {
   '/$company/users': typeof CompanyUsersRoute
   '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
+  '/handheld/goods-in': typeof HandheldGoodsInRoute
+  '/handheld/inventory': typeof HandheldInventoryRoute
+  '/handheld/stock-check': typeof HandheldStockCheckRoute
   '/$company/': typeof CompanyIndexRoute
+  '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
@@ -247,7 +275,11 @@ export interface FileRoutesByTo {
   '/$company/users': typeof CompanyUsersRoute
   '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
+  '/handheld/goods-in': typeof HandheldGoodsInRoute
+  '/handheld/inventory': typeof HandheldInventoryRoute
+  '/handheld/stock-check': typeof HandheldStockCheckRoute
   '/$company': typeof CompanyIndexRoute
+  '/handheld': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
@@ -280,7 +312,11 @@ export interface FileRoutesById {
   '/$company/users': typeof CompanyUsersRoute
   '/api/chainway-reader': typeof ApiChainwayReaderRouteWithChildren
   '/api/zebra-reader': typeof ApiZebraReaderRouteWithChildren
+  '/handheld/goods-in': typeof HandheldGoodsInRoute
+  '/handheld/inventory': typeof HandheldInventoryRoute
+  '/handheld/stock-check': typeof HandheldStockCheckRoute
   '/$company/': typeof CompanyIndexRoute
+  '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
@@ -314,7 +350,11 @@ export interface FileRouteTypes {
     | '/$company/users'
     | '/api/chainway-reader'
     | '/api/zebra-reader'
+    | '/handheld/goods-in'
+    | '/handheld/inventory'
+    | '/handheld/stock-check'
     | '/$company/'
+    | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps/'
@@ -345,7 +385,11 @@ export interface FileRouteTypes {
     | '/$company/users'
     | '/api/chainway-reader'
     | '/api/zebra-reader'
+    | '/handheld/goods-in'
+    | '/handheld/inventory'
+    | '/handheld/stock-check'
     | '/$company'
+    | '/handheld'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps'
@@ -377,7 +421,11 @@ export interface FileRouteTypes {
     | '/$company/users'
     | '/api/chainway-reader'
     | '/api/zebra-reader'
+    | '/handheld/goods-in'
+    | '/handheld/inventory'
+    | '/handheld/stock-check'
     | '/$company/'
+    | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
     | '/$company/maps/'
@@ -394,6 +442,10 @@ export interface RootRouteChildren {
   SignupRoute: typeof SignupRoute
   ApiChainwayReaderRoute: typeof ApiChainwayReaderRouteWithChildren
   ApiZebraReaderRoute: typeof ApiZebraReaderRouteWithChildren
+  HandheldGoodsInRoute: typeof HandheldGoodsInRoute
+  HandheldInventoryRoute: typeof HandheldInventoryRoute
+  HandheldStockCheckRoute: typeof HandheldStockCheckRoute
+  HandheldIndexRoute: typeof HandheldIndexRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
 }
@@ -428,12 +480,40 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/handheld/': {
+      id: '/handheld/'
+      path: '/handheld'
+      fullPath: '/handheld/'
+      preLoaderRoute: typeof HandheldIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$company/': {
       id: '/$company/'
       path: '/'
       fullPath: '/$company/'
       preLoaderRoute: typeof CompanyIndexRouteImport
       parentRoute: typeof CompanyRoute
+    }
+    '/handheld/stock-check': {
+      id: '/handheld/stock-check'
+      path: '/handheld/stock-check'
+      fullPath: '/handheld/stock-check'
+      preLoaderRoute: typeof HandheldStockCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/inventory': {
+      id: '/handheld/inventory'
+      path: '/handheld/inventory'
+      fullPath: '/handheld/inventory'
+      preLoaderRoute: typeof HandheldInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/goods-in': {
+      id: '/handheld/goods-in'
+      path: '/handheld/goods-in'
+      fullPath: '/handheld/goods-in'
+      preLoaderRoute: typeof HandheldGoodsInRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/api/zebra-reader': {
       id: '/api/zebra-reader'
@@ -692,6 +772,10 @@ const rootRouteChildren: RootRouteChildren = {
   SignupRoute: SignupRoute,
   ApiChainwayReaderRoute: ApiChainwayReaderRouteWithChildren,
   ApiZebraReaderRoute: ApiZebraReaderRouteWithChildren,
+  HandheldGoodsInRoute: HandheldGoodsInRoute,
+  HandheldInventoryRoute: HandheldInventoryRoute,
+  HandheldStockCheckRoute: HandheldStockCheckRoute,
+  HandheldIndexRoute: HandheldIndexRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
 }
