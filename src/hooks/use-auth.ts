@@ -59,12 +59,21 @@ export function useAuth() {
       fetchRole(session.user.id),
       fetchCompanySlug(session.user.id),
     ]);
+    let companyName = profile.companyName;
+    if (!companyName && profile.companySlug) {
+      const { data } = await supabase
+        .from("companies")
+        .select("name")
+        .eq("slug", profile.companySlug)
+        .maybeSingle();
+      companyName = data?.name ?? null;
+    }
     setState({
       user: session.user,
       session,
       role,
       companySlug: profile.companySlug,
-      companyName: profile.companyName,
+      companyName,
       isLoading: false,
       isAuthenticated: true,
       isAdmin: role === "admin" || role === "super_admin",
