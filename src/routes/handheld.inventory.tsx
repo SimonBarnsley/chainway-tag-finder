@@ -37,15 +37,37 @@ function Inventory() {
   useEffect(() => {
     if (!companySlug) return;
     setLoading(true);
-    supabase
-      .from("items")
-      .select("id, name, sku, warehouse_location, image_url")
-      .eq("company_slug", companySlug)
-      .order("name")
-      .then(({ data }) => {
-        setItems((data ?? []) as Row[]);
-        setLoading(false);
-      });
+    (async () => {
+      const [{ data: its }, { data: links }, { data: scans }] = await Promise.all([
+        supabase
+          .from("items")
+          .select("id, name, sku, warehouse_location, image_url")
+          .eq("company_slug", companySlug)
+          .order("name"),
+        supabase.from("tag_items").select("epc, item_id").eq("company_slug", companySlug),
+        supabase
+          .from("rfid_scans")
+          .select("epc, location, last_seen")
+          .eq("company_slug", companySlug)
+          .not("location", "is", null),
+      ]);
+      // Latest scan location per EPC, then latest across each item's tags
+      const scanByEpc = new Map((scans ?? []).map((s) => [s.epc.toUpperCase(), s]));
+      const best = new Map<string, { location: string; at: string }>();
+      for (const l of links ?? []) {
+        const s = scanByEpc.get(l.epc.toUpperCase());
+        if (!s?.location) continue;
+        const cur = best.get(l.item_id);
+        if (!cur || s.last_seen > cur.at) best.set(l.item_id, { location: s.location, at: s.last_seen });
+      }
+      setItems(
+        ((its ?? []) as Row[]).map((i) => ({
+          ...i,
+          warehouse_location: best.get(i.id)?.location ?? i.warehouse_location,
+        })),
+      );
+      setLoading(false);
+    })();
   }, [companySlug]);
 
   const filtered = useMemo(() => {
