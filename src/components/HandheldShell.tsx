@@ -55,6 +55,18 @@ export function HandheldShell({
         {!back && (
           <Button
             variant="ghost"
+            size="sm"
+            onClick={() => {
+              setHandheldMode(false);
+              navigate({ to: "/" });
+            }}
+          >
+            Full app
+          </Button>
+        )}
+        {!back && (
+          <Button
+            variant="ghost"
             size="icon"
             aria-label="Sign out"
             onClick={async () => {
