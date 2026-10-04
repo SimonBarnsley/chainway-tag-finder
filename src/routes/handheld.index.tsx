@@ -1,6 +1,7 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PackagePlus, ClipboardCheck, List } from "lucide-react";
+import { PackagePlus, ClipboardCheck, List, Building2 } from "lucide-react";
 import { HandheldShell } from "@/components/HandheldShell";
+import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/handheld/")({
   component: HandheldHome,
