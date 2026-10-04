@@ -25,16 +25,28 @@ export const Route = createFileRoute("/handheld/goods-in")({
 });
 
 function GoodsIn() {
-  const { companySlug } = useAuth();
+  const { companySlug, isLoading: authLoading } = useAuth();
   const linkFn = useServerFn(linkSavedEpcs);
   const [locations, setLocations] = useState<string[]>([]);
+  const [locStatus, setLocStatus] = useState<"loading" | "ready" | "error">("loading");
+  const [locError, setLocError] = useState("");
   const [location, setLocation] = useState("");
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
   const { tags, clear } = useHandheldScanner(companySlug, true);
 
   useEffect(() => {
-    if (companySlug) loadLocationNames(companySlug).then(setLocations);
+    if (!companySlug) return;
+    setLocStatus("loading");
+    loadLocationNames(companySlug)
+      .then((l) => {
+        setLocations(l);
+        setLocStatus("ready");
+      })
+      .catch((e) => {
+        setLocError(e instanceof Error ? e.message : String(e));
+        setLocStatus("error");
+      });
   }, [companySlug]);
 
   useEffect(() => {
@@ -98,6 +110,18 @@ function GoodsIn() {
           ))}
         </select>
       </label>
+      {!authLoading && !companySlug && (
+        <p className="text-sm text-destructive">Your account has no company assigned, so there are no locations to pick.</p>
+      )}
+      {companySlug && locStatus === "loading" && <p className="text-sm text-muted-foreground">Loading locations…</p>}
+      {companySlug && locStatus === "error" && (
+        <p className="text-sm text-destructive">Couldn't load locations: {locError}</p>
+      )}
+      {companySlug && locStatus === "ready" && locations.length === 0 && (
+        <p className="text-sm text-muted-foreground">
+          No locations found for company "{companySlug}". Add them on the Locations page in the full app.
+        </p>
+      )}
 
       <div className="rounded-lg border border-border bg-card p-4 text-center">
         <p className="text-4xl font-semibold text-foreground">{tags.size}</p>

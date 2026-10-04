@@ -47,13 +47,26 @@ export function useHandheldScanner(companySlug: string | null, enabled = true) {
 }
 
 /** Load locations list (names) for the company. */
+/**
+ * All location names for a company: the Locations list, plus reader antenna
+ * locations and any location tags were already scanned into, so the picker is
+ * never empty just because one list wasn't filled in.
+ */
 export async function loadLocationNames(companySlug: string): Promise<string[]> {
-  const { data } = await supabase
-    .from("locations")
-    .select("name")
-    .eq("company_slug", companySlug)
-    .order("name");
-  return (data ?? []).map((l) => l.name);
+  const [locs, antennas, scans] = await Promise.all([
+    supabase.from("locations").select("name").eq("company_slug", companySlug),
+    supabase.from("reader_antennas").select("location").eq("company_slug", companySlug),
+    supabase.from("rfid_scans").select("location").eq("company_slug", companySlug).not("location", "is", null).limit(1000),
+  ]);
+  for (const r of [locs, antennas, scans]) {
+    if (r.error) console.error("[handheld] location load failed", r.error);
+  }
+  if (locs.error && antennas.error && scans.error) throw new Error(locs.error.message);
+  const names = new Set<string>();
+  for (const l of locs.data ?? []) if (l.name?.trim()) names.add(l.name.trim());
+  for (const a of antennas.data ?? []) if (a.location?.trim()) names.add(a.location.trim());
+  for (const s of scans.data ?? []) if (s.location?.trim()) names.add(s.location.trim());
+  return Array.from(names).sort((a, b) => a.localeCompare(b));
 }
 
 /** EPC -> item name lookup. */
