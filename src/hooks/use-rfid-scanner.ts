@@ -156,7 +156,10 @@ export function useRfidScanner(options: {
       return !!(
         element != null &&
         element !== hiddenInput &&
-        (element.tagName === "INPUT" || element.tagName === "TEXTAREA" || element.isContentEditable)
+        (element.tagName === "INPUT" ||
+          element.tagName === "TEXTAREA" ||
+          element.tagName === "SELECT" ||
+          element.isContentEditable)
       );
     };
 
