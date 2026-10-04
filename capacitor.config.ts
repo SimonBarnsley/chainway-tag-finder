@@ -15,7 +15,7 @@ const config: CapacitorConfig = {
   appName: "ScanLoc8",
   webDir: "dist/client",
   server: {
-    url: "https://rfid-zeba-android.lovable.app",
+    url: "https://www.scanloc8.com/handheld",
     cleartext: false,
   },
   android: {

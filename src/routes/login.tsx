@@ -1,4 +1,5 @@
 import { createFileRoute, Link, useNavigate } from "@tanstack/react-router";
+import { isHandheldMode } from "@/lib/handheld-mode";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Eye, EyeOff } from "lucide-react";
@@ -24,7 +25,9 @@ function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
-    if (!isLoading && isAuthenticated && companySlug) {
+    if (!isLoading && isAuthenticated && isHandheldMode()) {
+      navigate({ to: "/handheld" });
+    } else if (!isLoading && isAuthenticated && companySlug) {
       navigate({ to: "/$company", params: { company: companySlug } });
     } else if (!isLoading && isAuthenticated) {
       navigate({ to: "/$company", params: { company: "default" } });
