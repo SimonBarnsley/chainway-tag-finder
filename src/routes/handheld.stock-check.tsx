@@ -41,6 +41,35 @@ function StockCheck() {
   const { tags, clear } = useHandheldScanner(companySlug, !!location);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
+  // Geiger search for a missing tag: locks the reader to one EPC and shows a
+  // proximity meter so the user can walk the area and find it.
+  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
+  const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
+
+  const handleGeigerTag = useCallback(
+    (tag: RfidTag) => {
+      if (!geigerEpc || tag.epc.toUpperCase() !== geigerEpc.toUpperCase()) return;
+      setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
+    },
+    [geigerEpc]
+  );
+
+  const zebra = useZebraSdk({
+    enabled: !!geigerEpc,
+    onTagScanned: handleGeigerTag,
+    onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
+      setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
+    }, []),
+  });
+
+  useRfidScanner({ enabled: !!geigerEpc && !zebra.isNativeSdkAvailable, onTagScanned: handleGeigerTag });
+
+  useEffect(() => {
+    zebra.setLocateTarget(geigerEpc);
+    if (!geigerEpc) setProximity(null);
+  }, [geigerEpc, zebra.setLocateTarget]);
+
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations);
   }, [companySlug]);
