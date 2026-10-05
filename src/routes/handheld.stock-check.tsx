@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Crosshair } from "lucide-react";
 import { HandheldShell } from "@/components/HandheldShell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/use-handheld-scanner";
+import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
+import { useZebraSdk } from "@/hooks/use-zebra-sdk";
+import { GeigerSearch } from "@/components/GeigerSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
