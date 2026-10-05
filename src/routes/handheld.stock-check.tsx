@@ -1,9 +1,13 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
+import { Crosshair } from "lucide-react";
 import { HandheldShell } from "@/components/HandheldShell";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/use-handheld-scanner";
+import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
+import { useZebraSdk } from "@/hooks/use-zebra-sdk";
+import { GeigerSearch } from "@/components/GeigerSearch";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -36,6 +40,35 @@ function StockCheck() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const { tags, clear } = useHandheldScanner(companySlug, !!location);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
+
+  // Geiger search for a missing tag: locks the reader to one EPC and shows a
+  // proximity meter so the user can walk the area and find it.
+  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
+  const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
+  const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
+
+  const handleGeigerTag = useCallback(
+    (tag: RfidTag) => {
+      if (!geigerEpc || tag.epc.toUpperCase() !== geigerEpc.toUpperCase()) return;
+      setLastScan((prev) => ({ epc: tag.epc, rssi: tag.rssi, seq: (prev?.seq ?? 0) + 1 }));
+    },
+    [geigerEpc]
+  );
+
+  const zebra = useZebraSdk({
+    enabled: !!geigerEpc,
+    onTagScanned: handleGeigerTag,
+    onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
+      setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
+    }, []),
+  });
+
+  useRfidScanner({ enabled: !!geigerEpc && !zebra.isNativeSdkAvailable, onTagScanned: handleGeigerTag });
+
+  useEffect(() => {
+    zebra.setLocateTarget(geigerEpc);
+    if (!geigerEpc) setProximity(null);
+  }, [geigerEpc, zebra.setLocateTarget]);
 
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations);
@@ -148,12 +181,44 @@ function StockCheck() {
           </p>
           <ul className="space-y-1">
             {lists[tab].map((epc) => (
-              <li key={epc} className="rounded-md border border-border bg-card px-3 py-2">
-                <p className="truncate text-sm font-medium text-foreground">{names.get(epc) ?? "Unlinked tag"}</p>
-                <p className="truncate font-mono text-xs text-muted-foreground">{epc}</p>
+              <li key={epc} className="flex items-center rounded-md border border-border bg-card px-3 py-2">
+                <div className="min-w-0 flex-1">
+                  <p className="truncate text-sm font-medium text-foreground">{names.get(epc) ?? "Unlinked tag"}</p>
+                  <p className="truncate font-mono text-xs text-muted-foreground">{epc}</p>
+                </div>
+                {tab === "missing" && (
+                  <button
+                    onClick={() => setGeigerEpc(epc)}
+                    className="ml-2 flex items-center gap-1 rounded-md bg-primary/10 px-3 py-2 text-xs font-medium text-primary"
+                  >
+                    <Crosshair className="h-4 w-4" />
+                    Find
+                  </button>
+                )}
               </li>
             ))}
           </ul>
+          {geigerEpc && (
+            <GeigerSearch
+              targetEpc={geigerEpc}
+              lastScan={lastScan}
+              nativeProximity={proximity}
+              onClose={() => setGeigerEpc(null)}
+              sdk={
+                zebra.isNativeSdkAvailable
+                  ? {
+                      available: true,
+                      isScanning: zebra.isScanning,
+                      startScan: zebra.startScan,
+                      stopScan: zebra.stopScan,
+                      isLocating: zebra.isLocating,
+                      startLocate: () => zebra.startLocate(geigerEpc),
+                      stopLocate: zebra.stopLocate,
+                    }
+                  : undefined
+              }
+            />
+          )}
           {submitted && <p className="text-center text-sm font-medium text-green-600">{submitted}</p>}
           {submitError && <p className="text-center text-sm font-medium text-destructive">{submitError}</p>}
           <Button
