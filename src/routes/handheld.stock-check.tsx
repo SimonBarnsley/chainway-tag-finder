@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/use-handheld-scanner";
 import { supabase } from "@/integrations/supabase/client";
+import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+import { useServerFn } from "@tanstack/react-start";
 
 export const Route = createFileRoute("/handheld/stock-check")({
   component: StockCheck,
@@ -29,7 +31,11 @@ function StockCheck() {
   const [expected, setExpected] = useState<Set<string>>(new Set());
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [tab, setTab] = useState<Tab>("missing");
+  const [submitting, setSubmitting] = useState(false);
+  const [submitted, setSubmitted] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
   const { tags, clear } = useHandheldScanner(companySlug, !!location);
+  const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations);
@@ -37,6 +43,8 @@ function StockCheck() {
 
   useEffect(() => {
     clear();
+    setSubmitted(null);
+    setSubmitError(null);
     if (!companySlug || !location) return setExpected(new Set());
     supabase
       .from("rfid_scans")
@@ -63,6 +71,44 @@ function StockCheck() {
   }, [companySlug, expected, tags]);
 
   const lists: Record<Tab, string[]> = { found, missing, unexpected };
+
+  const submit = async () => {
+    if (!companySlug || !location || tags.size === 0) return;
+    setSubmitting(true);
+    setSubmitted(null);
+    setSubmitError(null);
+    try {
+      const now = new Date().toISOString();
+      const rows = [...tags.entries()].map(([epc, count]) => ({
+        epc,
+        first_seen: now,
+        last_seen: now,
+        scan_count: count,
+        location,
+        company_slug: companySlug,
+      }));
+      const { error } = await supabase
+        .from("rfid_scans")
+        .upsert(rows, { onConflict: "epc", ignoreDuplicates: false });
+      if (error) throw new Error(error.message);
+
+      // Link tags to items and move each linked item to this location.
+      await runLinkSavedEpcs({ data: { epcs: [...tags.keys()] } });
+
+      // Refresh the expected list so the new location's contents are current.
+      const { data } = await supabase
+        .from("rfid_scans")
+        .select("epc")
+        .eq("company_slug", companySlug)
+        .eq("location", location);
+      setExpected(new Set((data ?? []).map((r) => r.epc.toUpperCase())));
+      setSubmitted(`Saved ${tags.size} tag${tags.size === 1 ? "" : "s"} to ${location}`);
+    } catch (e) {
+      setSubmitError(e instanceof Error ? e.message : "Save failed");
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <HandheldShell title="Stock Check">
@@ -108,6 +154,15 @@ function StockCheck() {
               </li>
             ))}
           </ul>
+          {submitted && <p className="text-center text-sm font-medium text-green-600">{submitted}</p>}
+          {submitError && <p className="text-center text-sm font-medium text-destructive">{submitError}</p>}
+          <Button
+            className="h-12 w-full"
+            disabled={submitting || tags.size === 0}
+            onClick={submit}
+          >
+            {submitting ? "Saving…" : `Submit count (${tags.size} tag${tags.size === 1 ? "" : "s"})`}
+          </Button>
           <Button variant="outline" className="h-12 w-full" onClick={clear}>
             Restart count
           </Button>
