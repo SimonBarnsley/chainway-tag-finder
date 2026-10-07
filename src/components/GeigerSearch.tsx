@@ -166,9 +166,8 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     // relativeDistance field and report 0 forever. In that case the meter must
     // fall back to RSSI, otherwise only the hit counter moves.
     const raw = Math.max(0, Math.min(100, nativeProximity.value ?? 0));
-    const hasLocationInfo = nativeProximity.hasLocationInfo === true;
     let target: number;
-    if (hasLocationInfo) {
+    if (raw > 0) {
       setUsingLocationing(true);
       usingRssiRef.current = true;
       // Blend Zebra's distance estimate with live read frequency. Distance is
