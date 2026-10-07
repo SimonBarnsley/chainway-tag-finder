@@ -39,8 +39,22 @@ export function useHandheldScanner(companySlug: string | null, enabled = true) {
     if (navigator.vibrate) navigator.vibrate(30);
   }, []);
 
-  useRfidScanner({ enabled, onTagScanned: onTag });
-  useZebraSdk({ enabled, onTagScanned: onTag, onProximity: useCallback(() => {}, []) });
+  // Inside the TC22R Capacitor APK, the native Zebra SDK owns RFID.
+  // In a normal browser, retain the existing keyboard-wedge/DataWedge path.
+  const isNativeZebra =
+    typeof window !== "undefined" &&
+    window.Capacitor?.isNativePlatform?.() === true;
+
+  useRfidScanner({
+    enabled: enabled && !isNativeZebra,
+    onTagScanned: onTag,
+  });
+
+  useZebraSdk({
+    enabled: enabled && isNativeZebra,
+    onTagScanned: onTag,
+    onProximity: useCallback(() => {}, []),
+  });
 
   const clear = useCallback(() => setTags(new Map()), []);
   return { tags, clear };
@@ -88,3 +102,4 @@ export async function loadItemNames(companySlug: string, epcs: string[]): Promis
   }
   return out;
 }
+

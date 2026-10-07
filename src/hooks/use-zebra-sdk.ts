@@ -45,11 +45,11 @@ interface ZebraRFIDNative {
   startLocate: (opts: { epc: string }) => Promise<void>;
   stopLocate: () => Promise<void>;
   release: () => Promise<void>;
-  addListener: ((event: "tagRead", cb: Listener<NativeTag>) => Promise<RemovableHandle>) &
-    ((event: "triggerPressed", cb: Listener<void>) => Promise<RemovableHandle>) &
-    ((event: "triggerReleased", cb: Listener<void>) => Promise<RemovableHandle>) &
-    ((event: "readerStatus", cb: Listener<ReaderStatus>) => Promise<RemovableHandle>) &
-    ((event: "locateProximity", cb: Listener<LocateProximity>) => Promise<RemovableHandle>);
+  addListener: ((event: "tagRead", cb: Listener<NativeTag>) => RemovableHandle) &
+    ((event: "triggerPressed", cb: Listener<void>) => RemovableHandle) &
+    ((event: "triggerReleased", cb: Listener<void>) => RemovableHandle) &
+    ((event: "readerStatus", cb: Listener<ReaderStatus>) => RemovableHandle) &
+    ((event: "locateProximity", cb: Listener<LocateProximity>) => RemovableHandle);
 }
 
 declare global {
@@ -119,25 +119,25 @@ export function useZebraSdk(options: {
     if (!plugin || status !== "ready") return;
     const handles: RemovableHandle[] = [];
 
-    plugin
+    let h = plugin
       .addListener("tagRead", (tag) => {
         onTagRef.current?.({
           epc: tag.epc.toUpperCase(),
           rssi: tag.rssi,
           timestamp: new Date(),
         });
-      })
-      .then((h) => handles.push(h));
+      });
+    handles.push(h);
 
-    plugin
+    h = plugin
       .addListener("locateProximity", (data) => {
         const target = locateEpcRef.current;
         if (!target || data.epc.toUpperCase() !== target) return;
         onProximityRef.current?.(data);
-      })
-      .then((h) => handles.push(h));
+      });
+    handles.push(h);
 
-    plugin
+    h = plugin
       .addListener("triggerPressed", () => {
         // In Geiger mode the trigger drives Tag Locationing, not inventory.
         const epc = locateEpcRef.current;
@@ -146,20 +146,20 @@ export function useZebraSdk(options: {
           return;
         }
         plugin.startScan().then(() => setIsScanning(true)).catch(() => undefined);
-      })
-      .then((h) => handles.push(h));
+      });
+    handles.push(h);
 
-    plugin
+    h = plugin
       .addListener("triggerReleased", () => {
         if (locateEpcRef.current) {
           plugin.stopLocate().then(() => setIsLocating(false)).catch(() => undefined);
           return;
         }
         plugin.stopScan().then(() => setIsScanning(false)).catch(() => undefined);
-      })
-      .then((h) => handles.push(h));
+      });
+    handles.push(h);
 
-    plugin
+    h = plugin
       .addListener("readerStatus", ({ connected, name }) => {
         if (name) setReaderName(name);
         if (!connected) {
@@ -171,8 +171,8 @@ export function useZebraSdk(options: {
           setStatus("ready");
           setErrorMessage(null);
         }
-      })
-      .then((h) => handles.push(h));
+      });
+    handles.push(h);
 
     return () => {
       handles.forEach((h) => h.remove());
@@ -232,3 +232,6 @@ export function useZebraSdk(options: {
     stopScan,
   };
 }
+
+
+
