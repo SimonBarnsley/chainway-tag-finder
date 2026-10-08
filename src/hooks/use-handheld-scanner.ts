@@ -32,6 +32,7 @@ export function useHandheldScanner(companySlug: string | null, enabled = true) {
 
   const onTag = useCallback((tag: RfidTag) => {
     const epc = tag.epc.toUpperCase();
+    if (!epc.startsWith(HANDHELD_EPC_PREFIX)) return;
     if (prefixRef.current && !epc.startsWith(prefixRef.current)) return;
     setTags((prev) => {
       const next = new Map(prev);
