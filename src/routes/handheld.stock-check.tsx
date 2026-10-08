@@ -31,6 +31,7 @@ type Tab = "found" | "missing" | "unexpected";
 
 function StockCheck() {
   const { companySlug } = useAuth();
+  const navigate = useNavigate();
   const [locations, setLocations] = useState<string[]>([]);
   const [location, setLocation] = useState("");
   const [expected, setExpected] = useState<Set<string>>(new Set());
@@ -148,6 +149,7 @@ function StockCheck() {
         .eq("location", location);
       setExpected(new Set((data ?? []).map((r) => r.epc.toUpperCase())));
       setSubmitted(`Saved ${tags.size} tag${tags.size === 1 ? "" : "s"} to ${location}`);
+      navigate({ to: "/handheld" });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Save failed");
     } finally {
