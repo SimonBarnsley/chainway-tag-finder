@@ -38,12 +38,12 @@ function StockCheck() {
   const [submitting, setSubmitting] = useState(false);
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
-  const { tags, clear } = useHandheldScanner(companySlug, !!location);
+  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
+  const { tags, clear } = useHandheldScanner(companySlug, !!location && !geigerEpc);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
   // Geiger search for a missing tag: locks the reader to one EPC and shows a
   // proximity meter so the user can walk the area and find it.
-  const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   const [lastScan, setLastScan] = useState<{ epc: string; rssi?: number; seq: number } | null>(null);
   const [proximity, setProximity] = useState<{ value: number; rssi?: number; seq: number } | null>(null);
 
@@ -236,3 +236,4 @@ function StockCheck() {
     </HandheldShell>
   );
 }
+
