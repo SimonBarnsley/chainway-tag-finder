@@ -72,6 +72,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
     : allNavItems.filter((item) => !item.perm || has(item.perm) || isSuperAdmin);
 
   const showHandheldItem = handheldDevice && isAuthenticated;
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setOpen(false);
+      }
+    };
+    document.addEventListener("mousedown", handler);
+    return () => document.removeEventListener("mousedown", handler);
+  }, [open]);
 
   useEffect(() => {
     if (!open) return;
