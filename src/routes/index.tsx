@@ -12,7 +12,7 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexRedirect() {
-  const { isAuthenticated, isLoading, companySlug } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, companySlug } = useAuth();
 
   if (isLoading) {
     return (
@@ -26,10 +26,17 @@ function IndexRedirect() {
     return <Navigate to="/login" />;
   }
 
+  // Handheld devices (and the APK) keep their dedicated menu;
+  // desktop browsers go straight to the role-appropriate dashboard.
+  if (isHandheldMode()) {
+    return <Navigate to="/handheld" />;
+  }
+
+  const target = isAdmin ? "admin-dashboard" : "dashboard";
   if (companySlug) {
-    return <Navigate to="/$company" params={{ company: companySlug }} />;
+    return <Navigate to="/$company/$page" params={{ company: companySlug, page: target }} />;
   }
 
   // Fallback for users without a company slug
-  return <Navigate to="/$company" params={{ company: "default" }} />;
+  return <Navigate to="/$company/$page" params={{ company: "default", page: target }} />;
 }
