@@ -1,5 +1,5 @@
 import { createFileRoute } from "@tanstack/react-router";
-import { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { Crosshair } from "lucide-react";
 import { HandheldShell } from "@/components/HandheldShell";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ function StockCheck() {
   const [submitted, setSubmitted] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
+  const geigerPanelRef = useRef<HTMLDivElement>(null);
   const { tags, clear } = useHandheldScanner(companySlug, !!location && !geigerEpc);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
@@ -72,6 +73,14 @@ function StockCheck() {
     zebra.setLocateTarget(geigerEpc);
     if (!geigerEpc) setProximity(null);
   }, [geigerEpc, zebra.setLocateTarget]);
+
+  useEffect(() => {
+    if (!geigerEpc) return;
+    const frame = requestAnimationFrame(() => {
+      geigerPanelRef.current?.scrollIntoView({ block: "start", behavior: "instant" });
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [geigerEpc]);
 
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations);
@@ -169,14 +178,16 @@ function StockCheck() {
         <>
           <div className="grid grid-cols-3 gap-2">
             {(["found", "missing", "unexpected"] as Tab[]).map((k) => (
-              <button
+                   <Button
+                     type="button"
+                     variant="ghost"
                 key={k}
                 onClick={() => setTab(k)}
                 className={`rounded-lg border-2 p-3 text-center ${tab === k ? "border-primary bg-primary/10" : "border-border bg-card"}`}
               >
                 <p className="text-2xl font-semibold text-foreground">{lists[k].length}</p>
                 <p className="text-xs capitalize text-muted-foreground">{k}</p>
-              </button>
+                   </Button>
             ))}
           </div>
           <p className="text-center text-xs text-muted-foreground">
@@ -206,6 +217,7 @@ function StockCheck() {
             ))}
           </ul>
           {geigerEpc && (
+            <div ref={geigerPanelRef} className="scroll-mt-4">
             <GeigerSearch
               key={geigerEpc}
               proximityOnly
@@ -227,6 +239,7 @@ function StockCheck() {
                   : undefined
               }
             />
+            </div>
           )}
           {submitted && <p className="text-center text-sm font-medium text-green-600">{submitted}</p>}
           {submitError && <p className="text-center text-sm font-medium text-destructive">{submitError}</p>}
