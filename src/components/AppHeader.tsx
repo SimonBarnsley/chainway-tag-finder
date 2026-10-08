@@ -59,7 +59,6 @@ export function AppHeader({ actions }: AppHeaderProps) {
     (company === "default" ? "Super Admin" : company);
 
   const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof Radio; perm: PermissionKey | null }[] = [
-    { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
     { label: "Mobile Dashboard", to: "/$company/dashboard", icon: BarChart3, perm: "dashboard.admin" },
     { label: "Items", to: "/$company/items", icon: Package, perm: "items.view" },
     { label: "Map", to: "/$company/maps/view", icon: MapIcon, perm: null },
