@@ -327,7 +327,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
 
       {/* Open in 123RFID Mobile — copies the EPC and launches Zebra's app so the
           user can paste it into Locate Tag for the native Geiger search. */}
-      <div className="flex flex-wrap gap-2">
+      {!proximityOnly && <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           className="flex-1 gap-2"
@@ -349,7 +349,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
           <ExternalLink className="h-4 w-4" />
           Open in 123RFID
         </Button>
-      </div>
+      </div>}
 
       {/* Signal meter */}
       {proximityOnly ? (
