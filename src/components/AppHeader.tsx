@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams, useNavigate } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone } from "lucide-react";
+import { Menu, X, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -58,8 +58,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
     companyName ||
     (company === "default" ? "Super Admin" : company);
 
-  const allNavItems: { label: string; to: "/$company" | "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof Radio; perm: PermissionKey | null }[] = [
-    { label: "Scanner", to: "/$company", icon: Radio, perm: "scanner.use" },
+  const allNavItems: { label: string; to: "/$company/dashboard" | "/$company/items" | "/$company/locations" | "/$company/maps/view" | "/$company/history" | "/$company/decoder" | "/$company/bulk-upload" | "/$company/scan-audit"; icon: typeof BarChart3; perm: PermissionKey | null }[] = [
     { label: "Mobile Dashboard", to: "/$company/dashboard", icon: BarChart3, perm: "dashboard.admin" },
     { label: "Items", to: "/$company/items", icon: Package, perm: "items.view" },
     { label: "Map", to: "/$company/maps/view", icon: MapIcon, perm: null },
