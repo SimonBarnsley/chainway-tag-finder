@@ -38,14 +38,6 @@ function LoginPage() {
     e.preventDefault();
     setLoading(true);
 
-    // Request fullscreen immediately on user gesture (before any async work)
-    // so the browser doesn't block it
-    try {
-      document.documentElement.requestFullscreen();
-    } catch {
-      // Fullscreen may not be supported or allowed
-    }
-
     try {
       await signIn(email, password);
       toast.success("Logged in successfully");
