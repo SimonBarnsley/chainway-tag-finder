@@ -1,5 +1,12 @@
-import { useEffect, useState, useCallback, useRef } from "react";
+import { useEffect, useState, useCallback, useRef, useSyncExternalStore } from "react";
 import type { RfidTag } from "@/hooks/use-rfid-scanner";
+import {
+  getReaderConnection,
+  getServerReaderConnection,
+  subscribeReaderConnection,
+  updateReaderConnection,
+  type ReaderConnection,
+} from "@/lib/reader-connection";
 
 /**
  * Bridge to the native Zebra RFID SDK plugin (Android only).
@@ -60,33 +67,43 @@ declare global {
 
 export type ZebraSdkStatus = "unavailable" | "initializing" | "ready" | "error";
 
-export type ReaderConnection = "connected" | "disconnected" | "unknown";
+export type { ReaderConnection } from "@/lib/reader-connection";
 
 /**
  * Lightweight reader-connection indicator for headers/menus. Listens to the
- * native plugin's readerStatus events without initializing or owning the
+ * shared SDK connection snapshot and readerStatus events without initializing or owning the
  * reader — safe to mount alongside useZebraSdk. In a plain browser (no native
  * plugin) it reports "unknown".
  */
 export function useReaderConnection(): ReaderConnection {
-  const [connection, setConnection] = useState<ReaderConnection>("unknown");
+  const connection = useSyncExternalStore(
+    subscribeReaderConnection,
+    getReaderConnection,
+    getServerReaderConnection,
+  );
   const isNative = typeof window !== "undefined" && window.Capacitor?.isNativePlatform() === true;
   const plugin = isNative ? window.Capacitor?.Plugins?.ZebraRFID : undefined;
 
   useEffect(() => {
     if (!plugin) {
-      setConnection("unknown");
       return;
     }
-    const handle = plugin.addListener("readerStatus", ({ connected }) => {
-      setConnection(connected ? "connected" : "disconnected");
-    });
+    // Capacitor listener registration may resolve asynchronously.
+    let disposed = false;
+    let handle: RemovableHandle | undefined;
+    Promise.resolve(plugin.addListener("readerStatus", ({ connected }) => {
+      updateReaderConnection(connected ? "connected" : "disconnected");
+    })).then((registered) => {
+      if (disposed) registered.remove();
+      else handle = registered;
+    }).catch(() => undefined);
     return () => {
-      handle.remove();
+      disposed = true;
+      handle?.remove();
     };
   }, [plugin]);
 
-  return connection;
+  return plugin ? connection : "unknown";
 }
 
 export function useZebraSdk(options: {
@@ -124,22 +141,26 @@ export function useZebraSdk(options: {
       .then((res) => {
         if (cancelled) return;
         if (res.success) {
+          updateReaderConnection("connected");
           setStatus("ready");
           setErrorMessage(null);
           if (res.readerName) setReaderName(res.readerName);
           if (res.deviceType) setDeviceType(res.deviceType);
         } else {
+          updateReaderConnection("disconnected");
           setStatus("error");
           setErrorMessage(res.error ?? "SDK init failed");
         }
       })
       .catch((err: unknown) => {
         if (cancelled) return;
+        updateReaderConnection("disconnected");
         setStatus("error");
         setErrorMessage(err instanceof Error ? err.message : "SDK init threw");
       });
     return () => {
       cancelled = true;
+      updateReaderConnection("unknown");
       plugin.release().catch(() => undefined);
     };
   }, [plugin, options.enabled]);
@@ -193,6 +214,7 @@ export function useZebraSdk(options: {
 
     h = plugin
       .addListener("readerStatus", ({ connected, name }) => {
+        updateReaderConnection(connected ? "connected" : "disconnected");
         if (name) setReaderName(name);
         if (!connected) {
           setStatus("error");
