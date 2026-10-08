@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, RadioTower } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useReaderConnection } from "@/hooks/use-zebra-sdk";
 import { setHandheldMode } from "@/lib/handheld-mode";
+import { cn } from "@/lib/utils";
 
 /** Minimal full-screen frame for the handheld app: sign-in gate, title, back button. */
 export function HandheldShell({
@@ -19,6 +21,7 @@ export function HandheldShell({
     companyName?: string | null;
   };
   const navigate = useNavigate();
+  const readerConnection = useReaderConnection();
 
   useEffect(() => {
     setHandheldMode(true);
@@ -51,6 +54,42 @@ export function HandheldShell({
         <div className="min-w-0 flex-1">
           <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
           {companyName && <p className="truncate text-xs text-muted-foreground">{companyName}</p>}
+        </div>
+        <div
+          className="flex items-center gap-1"
+          title={
+            readerConnection === "connected"
+              ? "RFID reader connected"
+              : readerConnection === "disconnected"
+                ? "RFID reader disconnected"
+                : "RFID reader status unknown"
+          }
+          aria-label={
+            readerConnection === "connected"
+              ? "RFID reader connected"
+              : readerConnection === "disconnected"
+                ? "RFID reader disconnected"
+                : "RFID reader status unknown"
+          }
+        >
+          <RadioTower
+            className={cn(
+              "h-5 w-5",
+              readerConnection === "connected" && "text-green-500",
+              readerConnection === "disconnected" && "text-destructive",
+              readerConnection === "unknown" && "text-muted-foreground/40",
+            )}
+          />
+          <span
+            className={cn(
+              "text-[10px] font-medium leading-none",
+              readerConnection === "connected" && "text-green-500",
+              readerConnection === "disconnected" && "text-destructive",
+              readerConnection === "unknown" && "text-muted-foreground/40",
+            )}
+          >
+            {readerConnection === "connected" ? "RFID" : readerConnection === "disconnected" ? "No RFID" : "—"}
+          </span>
         </div>
         {!back && (
           <Button

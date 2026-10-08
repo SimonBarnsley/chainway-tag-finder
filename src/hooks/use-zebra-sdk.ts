@@ -60,6 +60,35 @@ declare global {
 
 export type ZebraSdkStatus = "unavailable" | "initializing" | "ready" | "error";
 
+export type ReaderConnection = "connected" | "disconnected" | "unknown";
+
+/**
+ * Lightweight reader-connection indicator for headers/menus. Listens to the
+ * native plugin's readerStatus events without initializing or owning the
+ * reader — safe to mount alongside useZebraSdk. In a plain browser (no native
+ * plugin) it reports "unknown".
+ */
+export function useReaderConnection(): ReaderConnection {
+  const [connection, setConnection] = useState<ReaderConnection>("unknown");
+  const isNative = typeof window !== "undefined" && window.Capacitor?.isNativePlatform() === true;
+  const plugin = isNative ? window.Capacitor?.Plugins?.ZebraRFID : undefined;
+
+  useEffect(() => {
+    if (!plugin) {
+      setConnection("unknown");
+      return;
+    }
+    const handle = plugin.addListener("readerStatus", ({ connected }) => {
+      setConnection(connected ? "connected" : "disconnected");
+    });
+    return () => {
+      handle.remove();
+    };
+  }, [plugin]);
+
+  return connection;
+}
+
 export function useZebraSdk(options: {
   enabled: boolean;
   onTagScanned?: (tag: RfidTag) => void;
