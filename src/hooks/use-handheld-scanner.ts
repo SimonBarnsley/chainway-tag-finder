@@ -5,9 +5,11 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 
 /**
  * Shared tag capture for the handheld screens: native Zebra SDK when inside the
- * APK, keyboard wedge (DataWedge / Chainway) otherwise. Applies the company EPC
- * prefix filter and de-dupes into a Map of EPC -> read count.
+ * APK, keyboard wedge (DataWedge / Chainway) otherwise. Only EPCs with the
+ * handheld prefix "3039" pass, along with any company EPC prefix, and reads
+ * de-dupe into a Map of EPC -> read count.
  */
+const HANDHELD_EPC_PREFIX = "3039";
 export function useHandheldScanner(companySlug: string | null, enabled = true) {
   const [tags, setTags] = useState<Map<string, number>>(new Map());
   const prefixRef = useRef("");
@@ -30,6 +32,7 @@ export function useHandheldScanner(companySlug: string | null, enabled = true) {
 
   const onTag = useCallback((tag: RfidTag) => {
     const epc = tag.epc.toUpperCase();
+    if (!epc.startsWith(HANDHELD_EPC_PREFIX)) return;
     if (prefixRef.current && !epc.startsWith(prefixRef.current)) return;
     setTags((prev) => {
       const next = new Map(prev);
