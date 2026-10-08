@@ -1,9 +1,11 @@
 import { Link, useNavigate } from "@tanstack/react-router";
-import { ArrowLeft, LogOut } from "lucide-react";
+import { ArrowLeft, LogOut, RadioTower } from "lucide-react";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
+import { useReaderConnection } from "@/hooks/use-zebra-sdk";
 import { setHandheldMode } from "@/lib/handheld-mode";
+import { cn } from "@/lib/utils";
 
 /** Minimal full-screen frame for the handheld app: sign-in gate, title, back button. */
 export function HandheldShell({
