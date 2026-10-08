@@ -1,4 +1,4 @@
-import { createFileRoute } from "@tanstack/react-router";
+import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useServerFn } from "@tanstack/react-start";
 import { useEffect, useState } from "react";
 import { toast } from "sonner";
@@ -26,6 +26,7 @@ export const Route = createFileRoute("/handheld/goods-in")({
 
 function GoodsIn() {
   const { companySlug, isLoading: authLoading } = useAuth();
+  const navigate = useNavigate();
   const linkFn = useServerFn(linkSavedEpcs);
   const [locations, setLocations] = useState<string[]>([]);
   const [locStatus, setLocStatus] = useState<"loading" | "ready" | "error">("loading");
@@ -86,6 +87,7 @@ function GoodsIn() {
       toast.success(`${epcs.length} tag${epcs.length === 1 ? "" : "s"} booked into ${location}`);
       clear();
       setNames(new Map());
+      navigate({ to: "/handheld" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Save failed");
     } finally {
