@@ -1,11 +1,12 @@
 import { useState, useRef, useEffect } from "react";
-import { Link, useParams } from "@tanstack/react-router";
-import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity } from "lucide-react";
+import { Link, useParams, useNavigate } from "@tanstack/react-router";
+import { Menu, X, Radio, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
 import { CompanySwitcher } from "@/components/CompanySwitcher";
+import { isHandheldDevice, setHandheldMode } from "@/lib/handheld-mode";
 
 interface AppHeaderProps {
   actions?: React.ReactNode;
@@ -19,6 +20,17 @@ export function AppHeader({ actions }: AppHeaderProps) {
   const { has, loading: permLoading } = usePermissions();
   const params = useParams({ strict: false }) as { company?: string };
   const company = params.company || companySlug || "default";
+  const navigate = useNavigate();
+  const [handheldDevice, setHandheldDevice] = useState(false);
+  useEffect(() => {
+    setHandheldDevice(isHandheldDevice());
+  }, []);
+
+  const openHandheldApp = () => {
+    setOpen(false);
+    setHandheldMode(true);
+    navigate({ to: "/handheld" });
+  };
 
   // When a super admin is viewing another company, look up that company's name.
   const [viewCompanyName, setViewCompanyName] = useState<string | null>(null);
@@ -59,6 +71,7 @@ export function AppHeader({ actions }: AppHeaderProps) {
     ? allNavItems
     : allNavItems.filter((item) => !item.perm || has(item.perm) || isSuperAdmin);
 
+  const showHandheldItem = handheldDevice && isAuthenticated;
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
@@ -116,6 +129,18 @@ export function AppHeader({ actions }: AppHeaderProps) {
                       {item.label}
                     </Link>
                   ))}
+                  {showHandheldItem && (
+                    <>
+                      <div className="border-t border-border my-1" />
+                      <button
+                        onClick={openHandheldApp}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <Smartphone className="h-4 w-4" />
+                        Handheld App
+                      </button>
+                    </>
+                  )}
                   {isAdmin && (
                     <>
                       <div className="border-t border-border my-1" />
