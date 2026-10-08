@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { isHandheldMode } from "@/lib/handheld-mode";
 
 export const Route = createFileRoute("/")({
   component: IndexRedirect,
@@ -32,11 +33,11 @@ function IndexRedirect() {
     return <Navigate to="/handheld" />;
   }
 
-  const target = isAdmin ? "admin-dashboard" : "dashboard";
+  const target = isAdmin ? "/$company/admin-dashboard" : "/$company/dashboard";
   if (companySlug) {
-    return <Navigate to="/$company/$page" params={{ company: companySlug, page: target }} />;
+    return <Navigate to={target} params={{ company: companySlug }} />;
   }
 
   // Fallback for users without a company slug
-  return <Navigate to="/$company/$page" params={{ company: "default", page: target }} />;
+  return <Navigate to={target} params={{ company: "default" }} />;
 }
