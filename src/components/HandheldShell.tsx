@@ -75,7 +75,7 @@ export function HandheldShell({
           <RadioTower
             className={cn(
               "h-5 w-5",
-              readerConnection === "connected" && "text-green-500",
+              readerConnection === "connected" && "text-success",
               readerConnection === "disconnected" && "text-destructive",
               readerConnection === "unknown" && "text-muted-foreground/40",
             )}
@@ -83,7 +83,7 @@ export function HandheldShell({
           <span
             className={cn(
               "text-[10px] font-medium leading-none",
-              readerConnection === "connected" && "text-green-500",
+              readerConnection === "connected" && "text-success",
               readerConnection === "disconnected" && "text-destructive",
               readerConnection === "unknown" && "text-muted-foreground/40",
             )}
