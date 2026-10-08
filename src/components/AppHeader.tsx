@@ -129,6 +129,18 @@ export function AppHeader({ actions }: AppHeaderProps) {
                       {item.label}
                     </Link>
                   ))}
+                  {showHandheldItem && (
+                    <>
+                      <div className="border-t border-border my-1" />
+                      <button
+                        onClick={openHandheldApp}
+                        className="flex w-full items-center gap-2.5 px-4 py-2.5 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                      >
+                        <Smartphone className="h-4 w-4" />
+                        Handheld App
+                      </button>
+                    </>
+                  )}
                   {isAdmin && (
                     <>
                       <div className="border-t border-border my-1" />
