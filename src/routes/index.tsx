@@ -1,5 +1,6 @@
 import { createFileRoute, Navigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
+import { isHandheldMode } from "@/lib/handheld-mode";
 
 export const Route = createFileRoute("/")({
   component: IndexRedirect,
@@ -12,7 +13,7 @@ export const Route = createFileRoute("/")({
 });
 
 function IndexRedirect() {
-  const { isAuthenticated, isLoading, companySlug } = useAuth();
+  const { isAuthenticated, isLoading, isAdmin, companySlug } = useAuth();
 
   if (isLoading) {
     return (
@@ -26,10 +27,17 @@ function IndexRedirect() {
     return <Navigate to="/login" />;
   }
 
+  // Handheld devices (and the APK) keep their dedicated menu;
+  // desktop browsers go straight to the role-appropriate dashboard.
+  if (isHandheldMode()) {
+    return <Navigate to="/handheld" />;
+  }
+
+  const target = isAdmin ? "/$company/admin-dashboard" : "/$company/dashboard";
   if (companySlug) {
-    return <Navigate to="/$company" params={{ company: companySlug }} />;
+    return <Navigate to={target} params={{ company: companySlug }} />;
   }
 
   // Fallback for users without a company slug
-  return <Navigate to="/$company" params={{ company: "default" }} />;
+  return <Navigate to={target} params={{ company: "default" }} />;
 }
