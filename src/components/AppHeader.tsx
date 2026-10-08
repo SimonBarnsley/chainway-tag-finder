@@ -20,6 +20,17 @@ export function AppHeader({ actions }: AppHeaderProps) {
   const { has, loading: permLoading } = usePermissions();
   const params = useParams({ strict: false }) as { company?: string };
   const company = params.company || companySlug || "default";
+  const navigate = useNavigate();
+  const [handheldDevice, setHandheldDevice] = useState(false);
+  useEffect(() => {
+    setHandheldDevice(isHandheldDevice());
+  }, []);
+
+  const openHandheldApp = () => {
+    setOpen(false);
+    setHandheldMode(true);
+    navigate({ to: "/handheld" });
+  };
 
   // When a super admin is viewing another company, look up that company's name.
   const [viewCompanyName, setViewCompanyName] = useState<string | null>(null);
