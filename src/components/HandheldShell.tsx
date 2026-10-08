@@ -21,6 +21,7 @@ export function HandheldShell({
     companyName?: string | null;
   };
   const navigate = useNavigate();
+  const readerConnection = useReaderConnection();
 
   useEffect(() => {
     setHandheldMode(true);
