@@ -55,6 +55,42 @@ export function HandheldShell({
           <h1 className="truncate text-lg font-semibold text-foreground">{title}</h1>
           {companyName && <p className="truncate text-xs text-muted-foreground">{companyName}</p>}
         </div>
+        <div
+          className="flex items-center gap-1"
+          title={
+            readerConnection === "connected"
+              ? "RFID reader connected"
+              : readerConnection === "disconnected"
+                ? "RFID reader disconnected"
+                : "RFID reader status unknown"
+          }
+          aria-label={
+            readerConnection === "connected"
+              ? "RFID reader connected"
+              : readerConnection === "disconnected"
+                ? "RFID reader disconnected"
+                : "RFID reader status unknown"
+          }
+        >
+          <RadioTower
+            className={cn(
+              "h-5 w-5",
+              readerConnection === "connected" && "text-green-500",
+              readerConnection === "disconnected" && "text-destructive",
+              readerConnection === "unknown" && "text-muted-foreground/40",
+            )}
+          />
+          <span
+            className={cn(
+              "text-[10px] font-medium leading-none",
+              readerConnection === "connected" && "text-green-500",
+              readerConnection === "disconnected" && "text-destructive",
+              readerConnection === "unknown" && "text-muted-foreground/40",
+            )}
+          >
+            {readerConnection === "connected" ? "RFID" : readerConnection === "disconnected" ? "No RFID" : "—"}
+          </span>
+        </div>
         {!back && (
           <Button
             variant="ghost"
