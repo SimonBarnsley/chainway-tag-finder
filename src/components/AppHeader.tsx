@@ -83,17 +83,6 @@ export function AppHeader({ actions }: AppHeaderProps) {
     return () => document.removeEventListener("mousedown", handler);
   }, [open]);
 
-  useEffect(() => {
-    if (!open) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
-      }
-    };
-    document.addEventListener("mousedown", handler);
-    return () => document.removeEventListener("mousedown", handler);
-  }, [open]);
-
   return (
     <header className="sticky top-0 z-10 border-b border-border bg-card/95 backdrop-blur-sm">
       <div className="mx-auto max-w-7xl px-4 py-2.5 sm:px-6">
