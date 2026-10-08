@@ -112,3 +112,14 @@
     font-family: var(--font-display);
   }
 }
+
+.tag-proximity-meter {
+  appearance: none;
+  background: var(--muted);
+  border: 1px solid var(--border);
+  color: var(--primary);
+}
+.tag-proximity-meter::-webkit-progress-bar { background: var(--muted); }
+.tag-proximity-meter::-webkit-progress-value { background: var(--primary); }
+.tag-proximity-meter::-moz-progress-bar { background: var(--primary); }
+.tag-proximity-meter:indeterminate::-moz-progress-bar { background: transparent; }
