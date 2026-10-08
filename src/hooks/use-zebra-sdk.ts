@@ -66,6 +66,7 @@ export function useZebraSdk(options: {
   /** Called with a 0-100 proximity value while Tag Locationing (Geiger) runs */
   onProximity?: (data: { epc: string; proximity: number; rssi?: number }) => void;
 }) {
+  const instanceIdRef = useRef(Math.random().toString(36).slice(2, 8));
   const [status, setStatus] = useState<ZebraSdkStatus>("unavailable");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [isScanning, setIsScanning] = useState(false);
@@ -141,6 +142,7 @@ export function useZebraSdk(options: {
       .addListener("triggerPressed", () => {
         // In Geiger mode the trigger drives Tag Locationing, not inventory.
         const epc = locateEpcRef.current;
+        console.log(`[ZEBRA-DIAG ${instanceIdRef.current}] triggerPressed epc=${epc ?? "NONE"}`);
         if (epc) {
           plugin.startLocate({ epc }).then(() => setIsLocating(true)).catch(() => undefined);
           return;
@@ -151,6 +153,7 @@ export function useZebraSdk(options: {
 
     h = plugin
       .addListener("triggerReleased", () => {
+        console.log(`[ZEBRA-DIAG ${instanceIdRef.current}] triggerReleased epc=${locateEpcRef.current ?? "NONE"}`);
         if (locateEpcRef.current) {
           plugin.stopLocate().then(() => setIsLocating(false)).catch(() => undefined);
           return;
@@ -232,6 +235,9 @@ export function useZebraSdk(options: {
     stopScan,
   };
 }
+
+
+
 
 
 
