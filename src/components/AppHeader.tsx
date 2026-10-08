@@ -71,6 +71,8 @@ export function AppHeader({ actions }: AppHeaderProps) {
     ? allNavItems
     : allNavItems.filter((item) => !item.perm || has(item.perm) || isSuperAdmin);
 
+  const showHandheldItem = handheldDevice && isAuthenticated;
+
   useEffect(() => {
     if (!open) return;
     const handler = (e: MouseEvent) => {
