@@ -2,6 +2,7 @@ import { useState, useEffect, useRef, useCallback } from "react";
 import { Crosshair, X, Volume2, VolumeX, Play, Square, ExternalLink, ClipboardCopy, Check } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
+import { TagProximityMeter, validLocateProximity } from "@/components/TagProximityMeter";
 
 interface LastScan {
   epc: string;
@@ -11,6 +12,8 @@ interface LastScan {
 
 interface GeigerSearchProps {
   targetEpc: string;
+  /** Handheld locating uses only real Zebra proximity, never RSSI/read-rate estimates. */
+  proximityOnly?: boolean;
   /**
    * Most recent scan from the parent. Carries a monotonic `seq` so the effect
    * fires even when the SAME EPC is read repeatedly (the normal Geiger case).
@@ -48,7 +51,7 @@ function rssiToPercent(rssi: number): number {
   return Math.round(((clamped - RSSI_FAR) / (RSSI_NEAR - RSSI_FAR)) * 100);
 }
 
-export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximity }: GeigerSearchProps) {
+export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximity, proximityOnly = false }: GeigerSearchProps) {
   const [hitCount, setHitCount] = useState(0);
   const [signal, setSignal] = useState(0); // 0-100 (smoothed)
   const [lastRssi, setLastRssi] = useState<number | null>(null);
@@ -117,6 +120,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   const MAX_READS_PER_SEC = 4; // ~full bar
 
   useEffect(() => {
+    if (proximityOnly) return;
     decayRef.current = setInterval(() => {
       const now = Date.now();
       hitTimesRef.current = hitTimesRef.current.filter((t) => now - t < RATE_WINDOW_MS);
@@ -127,7 +131,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
       setSignal((prev) => Math.round(prev * 0.5 + target * 0.5));
     }, 200);
     return () => { if (decayRef.current) clearInterval(decayRef.current); };
-  }, []);
+  }, [proximityOnly]);
 
 
 
@@ -154,6 +158,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   // Native Zebra Tag Locationing — the SDK's own proximity metric (0-100).
   // This is the most accurate signal available and takes priority over RSSI.
   useEffect(() => {
+    if (proximityOnly) return;
     if (!nativeProximity) return;
     if (nativeProximity.seq === lastProxSeqRef.current) return;
     lastProxSeqRef.current = nativeProximity.seq;
@@ -199,7 +204,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     if (navigator.vibrate) {
       navigator.vibrate(target > 70 ? [80] : target > 40 ? [50] : [25]);
     }
-  }, [nativeProximity]);
+  }, [nativeProximity, proximityOnly]);
 
   // React to scans — this fires reliably because `seq` is monotonic
   useEffect(() => {
@@ -216,6 +221,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
 
     setHitCount((c) => c + 1);
 
+    if (proximityOnly) return;
     if (typeof lastScan.rssi === "number") {
       // Show signal strength when the reader supplies it, but let the read-rate
       // ticker drive the bar so it climbs the closer (and faster-reading) you get.
@@ -225,7 +231,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
     usingRssiRef.current = false;
     if (navigator.vibrate) navigator.vibrate([25]);
 
-  }, [lastScan, targetEpc, usingLocationing]);
+  }, [lastScan, targetEpc, usingLocationing, proximityOnly]);
 
 
   // Continuous beeping at a rate proportional to signal strength.
@@ -233,6 +239,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
   // get closer. Without this, the only audio feedback came on each tag read,
   // which on the TC22R happens at a fairly steady rate regardless of distance.
   useEffect(() => {
+    if (proximityOnly) return;
     if (!soundEnabled || signal < 5) {
       if (beepLoopRef.current) {
         clearInterval(beepLoopRef.current);
@@ -252,7 +259,20 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
         beepLoopRef.current = null;
       }
     };
-  }, [signal, soundEnabled, playBeep]);
+  }, [signal, soundEnabled, playBeep, proximityOnly]);
+
+  // Handheld beeps have a fixed cadence, pitch and duration, independent of proximity.
+  // The existing trigger listener owns start/stop; a retained reading never keeps audio running.
+  const locatingActive = sdk?.isLocating === true;
+  useEffect(() => {
+    if (!proximityOnly || !soundEnabled || !locatingActive) return;
+    const timer = setInterval(() => playBeep(50), 400);
+    return () => clearInterval(timer);
+  }, [proximityOnly, soundEnabled, locatingActive, playBeep]);
+
+  useEffect(() => () => {
+    audioCtxRef.current?.close().catch(() => undefined);
+  }, []);
 
   // Signal level for visual bars
   const barCount = 20;
@@ -307,7 +327,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
 
       {/* Open in 123RFID Mobile — copies the EPC and launches Zebra's app so the
           user can paste it into Locate Tag for the native Geiger search. */}
-      <div className="flex gap-2">
+      <div className="flex flex-wrap gap-2">
         <Button
           variant="outline"
           className="flex-1 gap-2"
@@ -332,7 +352,9 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
       </div>
 
       {/* Signal meter */}
-      <div className="space-y-2">
+      {proximityOnly ? (
+        <TagProximityMeter value={validLocateProximity(nativeProximity?.value)} />
+      ) : <div className="space-y-2">
         <div className="flex items-end gap-[3px] h-16 justify-center">
           {Array.from({ length: barCount }).map((_, i) => (
             <div
@@ -368,7 +390,7 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
             </span>
           </div>
         </div>
-      </div>
+      </div>}
 
       {/* Manual scan control — bypasses the hardware trigger so you can verify
           the reader responds even if the hardware trigger key isn't being
@@ -396,6 +418,8 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
             </>
           )}
         </Button>
+      ) : proximityOnly ? (
+        <p className="text-center text-xs text-muted-foreground">Zebra proximity unavailable in this browser</p>
       ) : (
         <div className="rounded-lg border border-border bg-muted/40 p-2 text-center">
           <p className="text-[11px] font-semibold text-foreground">Trigger scanning mode</p>
@@ -405,13 +429,13 @@ export function GeigerSearch({ targetEpc, lastScan, onClose, sdk, nativeProximit
         </div>
       )}
 
-      <p className="text-[10px] text-muted-foreground text-center">
+      {!proximityOnly && <p className="text-[10px] text-muted-foreground text-center">
         {sdk?.available
           ? sdk.isLocating || sdk.isScanning
             ? "Sweep the reader around — beeps speed up as you get closer"
             : "Pull the TC22R trigger OR tap Start locating above"
           : "Beeps speed up the more often the tag is read. Keep this screen open while scanning."}
-      </p>
+      </p>}
     </div>
   );
 }

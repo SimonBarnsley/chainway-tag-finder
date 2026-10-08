@@ -8,6 +8,7 @@ import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/us
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
 import { GeigerSearch } from "@/components/GeigerSearch";
+import { validLocateProximity } from "@/components/TagProximityMeter";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
@@ -59,7 +60,9 @@ function StockCheck() {
     enabled: !!geigerEpc,
     onTagScanned: handleGeigerTag,
     onProximity: useCallback((data: { proximity: number; rssi?: number }) => {
-      setProximity((prev) => ({ value: data.proximity, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
+      const value = validLocateProximity(data.proximity);
+      if (value === null) return;
+      setProximity((prev) => ({ value, rssi: data.rssi, seq: (prev?.seq ?? 0) + 1 }));
     }, []),
   });
 
@@ -188,7 +191,11 @@ function StockCheck() {
                 </div>
                 {tab === "missing" && (
                   <button
-                    onClick={() => setGeigerEpc(epc)}
+                    onClick={() => {
+                      setProximity(null);
+                      setLastScan(null);
+                      setGeigerEpc(epc);
+                    }}
                     className="ml-2 flex items-center gap-1 rounded-md bg-primary/10 px-3 py-2 text-xs font-medium text-primary"
                   >
                     <Crosshair className="h-4 w-4" />
@@ -200,6 +207,8 @@ function StockCheck() {
           </ul>
           {geigerEpc && (
             <GeigerSearch
+              key={geigerEpc}
+              proximityOnly
               targetEpc={geigerEpc}
               lastScan={lastScan}
               nativeProximity={proximity}
