@@ -113,6 +113,10 @@
   }
 }
 
+@utility font-heading {
+  font-family: var(--font-display);
+}
+
 .tag-proximity-meter {
   appearance: none;
   background: var(--muted);
