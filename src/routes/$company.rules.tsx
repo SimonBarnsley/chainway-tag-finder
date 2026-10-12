@@ -239,7 +239,10 @@ function RulesPage() {
                 ))}
               </div>
             </div>
-            <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Create rule"}</Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={save} disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Create rule"}</Button>
+              {editingId && <Button variant="ghost" onClick={resetForm}>Cancel</Button>}
+            </div>
           </CardContent>
         </Card>
 
