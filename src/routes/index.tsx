@@ -106,7 +106,7 @@ function LandingPage() {
             <img
               src={scanLoc8Logo.url}
               alt="ScanLoc8"
-              className="h-12 w-auto rounded md:h-16"
+              className="h-20 w-auto rounded md:h-28"
             />
             <div className="hidden items-center gap-3 sm:flex">
               <span className="h-9 w-px bg-border/70" aria-hidden />
