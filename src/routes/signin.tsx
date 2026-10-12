@@ -6,6 +6,7 @@ import { Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useAuth } from "@/hooks/use-auth";
+import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
@@ -34,8 +35,12 @@ function SignInPage() {
   const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [companyName, setCompanyName] = useState("");
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  // True while a sign-in submission is validating the entered company, so the
+  // auto-redirect effect waits until we know the user belongs to that company.
+  const [checkingCompany, setCheckingCompany] = useState(false);
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && isHandheldMode()) {
