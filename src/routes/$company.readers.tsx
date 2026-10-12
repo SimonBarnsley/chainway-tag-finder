@@ -477,6 +477,7 @@ function ReaderCard({
               )}
             </div>
             <p className="text-xs text-muted-foreground font-mono truncate">{reader.hostname}</p>
+            <ReaderConnectionBadge lastSeenAt={reader.last_seen_at} />
             <p className="text-xs text-muted-foreground mt-0.5">
               {configuredCount}/{reader.antenna_count} antennas mapped
             </p>
