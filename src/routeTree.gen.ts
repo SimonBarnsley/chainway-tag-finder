@@ -42,8 +42,10 @@ import { Route as CompanyAlertsRouteImport } from './routes/$company.alerts'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
+import { Route as ApiPublicDispatchAlertEmailsRouteImport } from './routes/api/public/dispatch-alert-emails'
 import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
@@ -214,6 +216,12 @@ const CompanyMapsIndexRoute = CompanyMapsIndexRouteImport.update({
   path: '/maps/',
   getParentRoute: () => CompanyRoute,
 } as any)
+const ApiPublicDispatchAlertEmailsRoute =
+  ApiPublicDispatchAlertEmailsRouteImport.update({
+    id: '/api/public/dispatch-alert-emails',
+    path: '/api/public/dispatch-alert-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CompanyMapsViewRoute = CompanyMapsViewRouteImport.update({
   id: '/maps/view',
   path: '/maps/view',
@@ -224,6 +232,12 @@ const CompanyMapsEditRoute = CompanyMapsEditRouteImport.update({
   path: '/maps/edit',
   getParentRoute: () => CompanyRoute,
 } as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
   id: '/lovable/email/auth/webhook',
   path: '/lovable/email/auth/webhook',
@@ -282,11 +296,13 @@ export interface FileRoutesByFullPath {
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -322,11 +338,13 @@ export interface FileRoutesByTo {
   '/handheld': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -364,11 +382,13 @@ export interface FileRoutesById {
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
+  '/lovable/email/transactional/preview': typeof LovableEmailTransactionalPreviewRoute
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -407,11 +427,13 @@ export interface FileRouteTypes {
     | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -447,11 +469,13 @@ export interface FileRouteTypes {
     | '/handheld'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
   id:
     | '__root__'
     | '/'
@@ -488,11 +512,13 @@ export interface FileRouteTypes {
     | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
+    | '/lovable/email/transactional/preview'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -509,8 +535,10 @@ export interface RootRouteChildren {
   HandheldInventoryRoute: typeof HandheldInventoryRoute
   HandheldStockCheckRoute: typeof HandheldStockCheckRoute
   HandheldIndexRoute: typeof HandheldIndexRoute
+  ApiPublicDispatchAlertEmailsRoute: typeof ApiPublicDispatchAlertEmailsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
+  LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
 }
 
 declare module '@tanstack/react-router' {
@@ -746,6 +774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyMapsIndexRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/api/public/dispatch-alert-emails': {
+      id: '/api/public/dispatch-alert-emails'
+      path: '/api/public/dispatch-alert-emails'
+      fullPath: '/api/public/dispatch-alert-emails'
+      preLoaderRoute: typeof ApiPublicDispatchAlertEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$company/maps/view': {
       id: '/$company/maps/view'
       path: '/maps/view'
@@ -759,6 +794,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$company/maps/edit'
       preLoaderRoute: typeof CompanyMapsEditRouteImport
       parentRoute: typeof CompanyRoute
+    }
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
       id: '/lovable/email/auth/webhook'
@@ -881,8 +923,10 @@ const rootRouteChildren: RootRouteChildren = {
   HandheldInventoryRoute: HandheldInventoryRoute,
   HandheldStockCheckRoute: HandheldStockCheckRoute,
   HandheldIndexRoute: HandheldIndexRoute,
+  ApiPublicDispatchAlertEmailsRoute: ApiPublicDispatchAlertEmailsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
+  LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
