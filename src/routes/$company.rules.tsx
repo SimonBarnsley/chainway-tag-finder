@@ -170,7 +170,7 @@ function RulesPage() {
 
         <Card>
           <CardContent className="space-y-4 p-5">
-            <h3 className="font-semibold text-foreground">New rule</h3>
+            <h3 className="font-semibold text-foreground">{editingId ? "Edit rule" : "New rule"}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Rule name</Label>
