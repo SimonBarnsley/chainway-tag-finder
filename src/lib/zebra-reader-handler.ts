@@ -168,6 +168,40 @@ function extractTagsFromXml(xml: string): TagRead[] {
   return tags;
 }
 
+/**
+ * Record the last time a reader contacted the server, so the Readers page can
+ * show whether each fixed reader is still connected. Covers tag batches,
+ * heartbeats and status posts. Matching falls back to the company's single
+ * active reader when the payload carries no hostname.
+ */
+async function touchReader(companySlug: string, readerHostname: string | null) {
+  const now = new Date().toISOString();
+  try {
+    if (readerHostname) {
+      await supabaseAdmin
+        .from("fixed_readers")
+        .update({ last_seen_at: now })
+        .eq("hostname", readerHostname.toLowerCase())
+        .eq("company_slug", companySlug);
+    } else {
+      const { data } = await supabaseAdmin
+        .from("fixed_readers")
+        .select("id")
+        .eq("company_slug", companySlug)
+        .eq("is_active", true);
+      const rows = (data ?? []) as { id: string }[];
+      if (rows.length === 1) {
+        await supabaseAdmin
+          .from("fixed_readers")
+          .update({ last_seen_at: now })
+          .eq("id", rows[0].id);
+      }
+    }
+  } catch (e) {
+    console.error("touch reader failed:", e);
+  }
+}
+
 export interface ZebraOverrides {
   companySlug?: string | null;
   apiKey?: string | null;
@@ -297,6 +331,7 @@ export async function handleZebraReaderPost(
 
   // Zebra IoT Connector heartbeats/management events carry no tags — ack quietly.
   if (tags.length === 0 && /"type"\s*:\s*"heartbeat"/.test(rawBody)) {
+    await touchReader(companySlug, readerHostname);
     return respond({ accepted: 0, heartbeat: true }, 200);
   }
 
@@ -304,6 +339,7 @@ export async function handleZebraReaderPost(
   // to avoid filling zebra_reader_debug_logs (which previously grew to >1GB
   // from a single chatty reader). Tag data is already persisted in rfid_scans.
   if (tags.length === 0) {
+    await touchReader(companySlug, readerHostname);
     await writeDebug(0, "no tags parsed from payload");
     return respond({ accepted: 0, message: "No valid tags found in payload" }, 200);
   }
@@ -346,6 +382,14 @@ export async function handleZebraReaderPost(
     if (companyReaders && companyReaders.length === 1) {
       resolvedReader = companyReaders[0];
     }
+  }
+
+  // Tag batch received — mark the reader as seen.
+  if (resolvedReader) {
+    await supabaseAdmin
+      .from("fixed_readers")
+      .update({ last_seen_at: new Date().toISOString() })
+      .eq("id", resolvedReader.id);
   }
 
   if (resolvedReader && !resolvedReader.is_active) {
