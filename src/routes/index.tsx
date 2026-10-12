@@ -3,6 +3,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isHandheldMode } from "@/lib/handheld-mode";
 import { Button } from "@/components/ui/button";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
+import levataLogo from "@/assets/levata-logo-white.svg";
 import {
   PackageCheck,
   ClipboardList,
@@ -104,7 +105,7 @@ function LandingPage() {
             <img
               src={scanLoc8Logo.url}
               alt="ScanLoc8"
-              className="h-9 w-auto rounded"
+              className="h-12 w-auto rounded md:h-16"
             />
           </div>
           <div className="flex items-center gap-3">
@@ -171,6 +172,16 @@ function LandingPage() {
             Works with Chainway C75 handhelds, UA4E fixed readers, and Zebra
             TC22R handhelds and FX fixed readers.
           </p>
+          <div className="mt-8 flex items-center justify-center gap-3">
+            <span className="text-[0.7rem] font-semibold uppercase tracking-[0.22em] text-muted-foreground">
+              Powered by
+            </span>
+            <img
+              src={levataLogo}
+              alt="Levata"
+              className="h-5 w-auto opacity-90"
+            />
+          </div>
         </div>
       </section>
 
@@ -235,6 +246,43 @@ function LandingPage() {
         </div>
       </section>
 
+      {/* Powered by Levata */}
+      <section className="border-t border-border/60 bg-card/30">
+        <div className="mx-auto max-w-6xl px-4 py-14 md:py-16">
+          <div className="flex flex-col items-center gap-8 text-center md:flex-row md:justify-between md:text-left">
+            <div className="max-w-2xl">
+              <p className="text-xs font-semibold uppercase tracking-[0.25em] text-primary">
+                Powered by Levata
+              </p>
+              <h2 className="mt-3 font-heading text-2xl font-bold md:text-3xl">
+                Built on Levata's RFID and mobility expertise
+              </h2>
+              <p className="mt-4 text-sm leading-relaxed text-muted-foreground md:text-base">
+                ScanLoc8 is powered by Levata — formerly Barcodes Group — a
+                global technology solutions provider delivering RFID, mobile
+                computing, printing and managed services to more than 100,000
+                customers worldwide. From readers and tags to configuration,
+                deployment and support, Levata supplies the technology layer
+                ScanLoc8 runs on.
+              </p>
+              <a
+                href="https://www.levata.com"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="mt-5 inline-flex items-center gap-2 text-sm font-medium text-primary hover:underline"
+              >
+                Visit levata.com <ArrowRight className="h-4 w-4" />
+              </a>
+            </div>
+            <img
+              src={levataLogo}
+              alt="Levata"
+              className="h-14 w-auto shrink-0 md:h-20"
+            />
+          </div>
+        </div>
+      </section>
+
       {/* CTA */}
       <section className="border-t border-border/60 bg-primary/5">
         <div className="mx-auto max-w-6xl px-4 py-16 text-center">
@@ -266,9 +314,20 @@ function LandingPage() {
 
       {/* Footer */}
       <footer className="border-t border-border/60">
-        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-3 px-4 py-8 text-sm text-muted-foreground sm:flex-row">
+        <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-4 px-4 py-8 text-sm text-muted-foreground sm:flex-row">
           <span>ScanLoc8 — UHF RFID tag scanning & tracking</span>
-          <div className="flex items-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-4">
+            <a
+              href="https://www.levata.com"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex items-center gap-2 transition-opacity hover:opacity-80"
+            >
+              <span className="text-[0.7rem] uppercase tracking-[0.2em]">
+                Powered by
+              </span>
+              <img src={levataLogo} alt="Levata" className="h-4 w-auto" />
+            </a>
             <Link to="/signin" className="hover:text-foreground">
               Sign in
             </Link>
