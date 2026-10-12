@@ -7,7 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
-import { Workflow, Trash2 } from "lucide-react";
+import { Workflow, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -62,6 +62,7 @@ function RulesPage() {
     cooldown_minutes: 60,
   });
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [r, l, a, i, u] = await Promise.all([
@@ -84,29 +85,63 @@ function RulesPage() {
     load();
   }, [load]);
 
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ name: "", location: "", target_type: "item", item_id: "", epc: "", recipients: [], notify_email: true, cooldown_minutes: 60 });
+  };
+
+  const startEdit = (rule: Rule) => {
+    setEditingId(rule.id);
+    setForm({
+      name: rule.name,
+      location: rule.location,
+      target_type: rule.target_type,
+      item_id: rule.item_id ?? "",
+      epc: rule.epc ?? "",
+      recipients: [...rule.recipient_user_ids],
+      notify_email: rule.notify_email,
+      cooldown_minutes: rule.cooldown_minutes,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const save = async () => {
     if (!form.name.trim() || !form.location) return toast.error("Give the rule a name and pick a location.");
     if (form.target_type === "item" && !form.item_id) return toast.error("Pick an item.");
     if (form.target_type === "epc" && !form.epc.trim()) return toast.error("Enter a tag number.");
     if (form.recipients.length === 0) return toast.error("Pick at least one user to alert.");
     setSaving(true);
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await db.from("alert_rules").insert({
-      company_slug: company,
-      name: form.name.trim(),
-      location: form.location,
-      target_type: form.target_type,
-      item_id: form.target_type === "item" ? form.item_id : null,
-      epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
-      recipient_user_ids: form.recipients,
-      notify_email: form.notify_email,
-      cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
-      created_by: u.user?.id,
-    });
+    let error;
+    if (editingId) {
+      ({ error } = await db.from("alert_rules").update({
+        name: form.name.trim(),
+        location: form.location,
+        target_type: form.target_type,
+        item_id: form.target_type === "item" ? form.item_id : null,
+        epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
+        recipient_user_ids: form.recipients,
+        notify_email: form.notify_email,
+        cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
+      }).eq("id", editingId));
+    } else {
+      const { data: u } = await supabase.auth.getUser();
+      ({ error } = await db.from("alert_rules").insert({
+        company_slug: company,
+        name: form.name.trim(),
+        location: form.location,
+        target_type: form.target_type,
+        item_id: form.target_type === "item" ? form.item_id : null,
+        epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
+        recipient_user_ids: form.recipients,
+        notify_email: form.notify_email,
+        cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
+        created_by: u.user?.id,
+      }));
+    }
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Rule created");
-    setForm({ ...form, name: "", epc: "", item_id: "", recipients: [] });
+    toast.success(editingId ? "Rule updated" : "Rule created");
+    resetForm();
     load();
   };
 
@@ -135,7 +170,7 @@ function RulesPage() {
 
         <Card>
           <CardContent className="space-y-4 p-5">
-            <h3 className="font-semibold text-foreground">New rule</h3>
+            <h3 className="font-semibold text-foreground">{editingId ? "Edit rule" : "New rule"}</h3>
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <Label>Rule name</Label>
@@ -204,7 +239,10 @@ function RulesPage() {
                 ))}
               </div>
             </div>
-            <Button onClick={save} disabled={saving}>{saving ? "Saving…" : "Create rule"}</Button>
+            <div className="flex items-center gap-2">
+              <Button onClick={save} disabled={saving}>{saving ? "Saving…" : editingId ? "Save changes" : "Create rule"}</Button>
+              {editingId && <Button variant="ghost" onClick={resetForm}>Cancel</Button>}
+            </div>
           </CardContent>
         </Card>
 
@@ -225,6 +263,9 @@ function RulesPage() {
                 </div>
                 <div className="flex items-center gap-2">
                   <Switch checked={r.enabled} onCheckedChange={() => toggle(r)} />
+                  <Button variant="ghost" size="icon" onClick={() => startEdit(r)} aria-label="Edit rule">
+                    <Pencil className="h-4 w-4 text-muted-foreground" />
+                  </Button>
                   <Button variant="ghost" size="icon" onClick={() => remove(r)} aria-label="Delete rule">
                     <Trash2 className="h-4 w-4 text-destructive" />
                   </Button>
