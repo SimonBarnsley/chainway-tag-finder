@@ -241,6 +241,7 @@ export type Database = {
           hostname: string
           id: string
           is_active: boolean
+          last_seen_at: string | null
           model: string | null
           name: string
           updated_at: string
@@ -252,6 +253,7 @@ export type Database = {
           hostname: string
           id?: string
           is_active?: boolean
+          last_seen_at?: string | null
           model?: string | null
           name: string
           updated_at?: string
@@ -263,6 +265,7 @@ export type Database = {
           hostname?: string
           id?: string
           is_active?: boolean
+          last_seen_at?: string | null
           model?: string | null
           name?: string
           updated_at?: string
