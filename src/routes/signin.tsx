@@ -43,6 +43,7 @@ function SignInPage() {
   const [checkingCompany, setCheckingCompany] = useState(false);
 
   useEffect(() => {
+    if (checkingCompany) return; // wait until the company check completes
     if (!isLoading && isAuthenticated && isHandheldMode()) {
       navigate({ to: "/handheld" });
     } else if (!isLoading && isAuthenticated) {
@@ -50,21 +51,62 @@ function SignInPage() {
       const target = isAdmin ? "/$company/admin-dashboard" : "/$company/dashboard";
       navigate({ to: target, params: { company: companySlug ?? "default" } });
     }
-  }, [isAuthenticated, isLoading, isAdmin, companySlug, navigate]);
+  }, [isAuthenticated, isLoading, isAdmin, companySlug, checkingCompany, navigate]);
+
+  const normalize = (s: string | null | undefined) => (s ?? "").trim().toLowerCase();
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    const company = companyName.trim();
+    if (!company) {
+      toast.error("Please enter your company name");
+      return;
+    }
     setLoading(true);
+    setCheckingCompany(true);
 
     try {
       await signIn(email, password);
+
+      const { data: { user } } = await supabase.auth.getUser();
+      const { data: profile } = await supabase
+        .from("profiles")
+        .select("company_slug, company_name")
+        .eq("user_id", user?.id ?? "")
+        .single();
+
+      if (!profile || normalize(profile.company_name) !== normalize(company)) {
+        // Not registered under the entered company — reject and sign back out.
+        await supabase.auth.signOut();
+        toast.error(
+          `You are not registered under "${company}". Check the spelling or contact your administrator.`
+        );
+        return;
+      }
+
+      const { data: roles } = await supabase
+        .from("user_roles")
+        .select("role")
+        .eq("user_id", user!.id);
+      const roleSet = new Set((roles ?? []).map((r) => r.role as string));
+      const admin = roleSet.has("admin") || roleSet.has("super_admin");
+
       toast.success("Logged in successfully");
-      // Redirect happens via useEffect when auth state updates
+      if (isHandheldMode()) {
+        navigate({ to: "/handheld" });
+      } else {
+        const target = admin ? "/$company/admin-dashboard" : "/$company/dashboard";
+        navigate({
+          to: target,
+          params: { company: profile.company_slug ?? "default" },
+        });
+      }
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Login failed";
       toast.error(msg);
     } finally {
       setLoading(false);
+      setCheckingCompany(false);
     }
   };
 
