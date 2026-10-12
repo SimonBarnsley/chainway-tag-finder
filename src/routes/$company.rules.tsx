@@ -62,6 +62,7 @@ function RulesPage() {
     cooldown_minutes: 60,
   });
   const [saving, setSaving] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
 
   const load = useCallback(async () => {
     const [r, l, a, i, u] = await Promise.all([
