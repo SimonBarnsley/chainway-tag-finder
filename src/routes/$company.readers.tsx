@@ -21,6 +21,7 @@ import {
   Copy,
   Link as LinkIcon,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 
@@ -50,7 +51,70 @@ interface FixedReader {
   is_active: boolean;
   company_slug: string;
   created_at: string;
+  last_seen_at: string | null;
   antennas: ReaderAntenna[];
+}
+
+function formatLastSeen(iso: string, now: number): string {
+  const s = Math.max(0, Math.floor((now - new Date(iso).getTime()) / 1000));
+  if (s < 10) return "just now";
+  if (s < 60) return `${s}s ago`;
+  const m = Math.floor(s / 60);
+  if (m < 60) return `${m} min ago`;
+  const h = Math.floor(m / 60);
+  if (h < 48) return `${h}h ${m % 60}m ago`;
+  return `${Math.floor(h / 24)}d ago`;
+}
+
+function readerConnection(lastSeen: string | null, now: number) {
+  if (!lastSeen) {
+    return {
+      label: "Never seen",
+      detail: "No posts received yet",
+      dot: "bg-muted-foreground/40",
+      text: "text-muted-foreground",
+    };
+  }
+  const age = now - new Date(lastSeen).getTime();
+  if (age < 2 * 60_000) {
+    return {
+      label: "Connected",
+      detail: `Last post ${formatLastSeen(lastSeen, now)}`,
+      dot: "bg-success",
+      text: "text-success",
+    };
+  }
+  if (age < 5 * 60_000) {
+    return {
+      label: "Idle",
+      detail: `Last post ${formatLastSeen(lastSeen, now)}`,
+      dot: "bg-warning",
+      text: "text-warning",
+    };
+  }
+  return {
+    label: "Lost connection",
+    detail: `Last post ${formatLastSeen(lastSeen, now)}`,
+    dot: "bg-destructive",
+    text: "text-destructive",
+  };
+}
+
+function ReaderConnectionBadge({ lastSeenAt }: { lastSeenAt: string | null }) {
+  const status = readerConnection(lastSeenAt, Date.now());
+  return (
+    <div className="mt-1.5 flex items-center gap-1.5" aria-label={`Reader status: ${status.label}`}>
+      <span
+        className={cn(
+          "h-2 w-2 rounded-full shrink-0",
+          status.dot,
+          status.label === "Connected" && "animate-pulse",
+        )}
+      />
+      <span className={cn("text-[11px] font-medium leading-none", status.text)}>{status.label}</span>
+      <span className="text-[11px] text-muted-foreground leading-none">{status.detail}</span>
+    </div>
+  );
 }
 
 function ReadersPage() {
@@ -114,6 +178,7 @@ function ReadersContent() {
         is_active: r.is_active,
         company_slug: r.company_slug,
         created_at: r.created_at,
+        last_seen_at: r.last_seen_at ?? null,
         antennas: antennasByReader.get(r.id) ?? [],
       }));
 
@@ -128,6 +193,32 @@ function ReadersContent() {
   useEffect(() => {
     fetchReaders();
   }, [fetchReaders]);
+
+  // Keep reader connection status fresh (every 30s, without the loading flash).
+  useEffect(() => {
+    const iv = setInterval(async () => {
+      const { data } = await supabase
+        .from("fixed_readers")
+        .select("id, last_seen_at")
+        .eq("company_slug", company);
+      if (data) {
+        setReaders((prev) =>
+          prev.map((r) => {
+            const row = data.find((d) => d.id === r.id);
+            return row ? { ...r, last_seen_at: row.last_seen_at ?? null } : r;
+          })
+        );
+      }
+    }, 30000);
+    return () => clearInterval(iv);
+  }, [company]);
+
+  // Re-render relative "last post" times every 15s.
+  const [, setTimeTick] = useState(0);
+  useEffect(() => {
+    const iv = setInterval(() => setTimeTick((n) => n + 1), 15000);
+    return () => clearInterval(iv);
+  }, []);
 
   const handleAddReader = async (e: React.FormEvent) => {
     e.preventDefault();
