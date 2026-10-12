@@ -85,29 +85,63 @@ function RulesPage() {
     load();
   }, [load]);
 
+  const resetForm = () => {
+    setEditingId(null);
+    setForm({ name: "", location: "", target_type: "item", item_id: "", epc: "", recipients: [], notify_email: true, cooldown_minutes: 60 });
+  };
+
+  const startEdit = (rule: Rule) => {
+    setEditingId(rule.id);
+    setForm({
+      name: rule.name,
+      location: rule.location,
+      target_type: rule.target_type,
+      item_id: rule.item_id ?? "",
+      epc: rule.epc ?? "",
+      recipients: [...rule.recipient_user_ids],
+      notify_email: rule.notify_email,
+      cooldown_minutes: rule.cooldown_minutes,
+    });
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
+
   const save = async () => {
     if (!form.name.trim() || !form.location) return toast.error("Give the rule a name and pick a location.");
     if (form.target_type === "item" && !form.item_id) return toast.error("Pick an item.");
     if (form.target_type === "epc" && !form.epc.trim()) return toast.error("Enter a tag number.");
     if (form.recipients.length === 0) return toast.error("Pick at least one user to alert.");
     setSaving(true);
-    const { data: u } = await supabase.auth.getUser();
-    const { error } = await db.from("alert_rules").insert({
-      company_slug: company,
-      name: form.name.trim(),
-      location: form.location,
-      target_type: form.target_type,
-      item_id: form.target_type === "item" ? form.item_id : null,
-      epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
-      recipient_user_ids: form.recipients,
-      notify_email: form.notify_email,
-      cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
-      created_by: u.user?.id,
-    });
+    let error;
+    if (editingId) {
+      ({ error } = await db.from("alert_rules").update({
+        name: form.name.trim(),
+        location: form.location,
+        target_type: form.target_type,
+        item_id: form.target_type === "item" ? form.item_id : null,
+        epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
+        recipient_user_ids: form.recipients,
+        notify_email: form.notify_email,
+        cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
+      }).eq("id", editingId));
+    } else {
+      const { data: u } = await supabase.auth.getUser();
+      ({ error } = await db.from("alert_rules").insert({
+        company_slug: company,
+        name: form.name.trim(),
+        location: form.location,
+        target_type: form.target_type,
+        item_id: form.target_type === "item" ? form.item_id : null,
+        epc: form.target_type === "epc" ? form.epc.trim().toUpperCase() : null,
+        recipient_user_ids: form.recipients,
+        notify_email: form.notify_email,
+        cooldown_minutes: Math.max(0, Number(form.cooldown_minutes) || 0),
+        created_by: u.user?.id,
+      }));
+    }
     setSaving(false);
     if (error) return toast.error(error.message);
-    toast.success("Rule created");
-    setForm({ ...form, name: "", epc: "", item_id: "", recipients: [] });
+    toast.success(editingId ? "Rule updated" : "Rule created");
+    resetForm();
     load();
   };
 
