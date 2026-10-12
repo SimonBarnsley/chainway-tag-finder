@@ -121,11 +121,23 @@ function SignInPage() {
           />
           <h1 className="font-heading text-2xl font-bold text-foreground">Sign In</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            Enter your credentials to access the system
+            Enter your company and credentials to access the system
           </p>
         </div>
 
         <form onSubmit={handleSubmit} className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="company">Company</Label>
+            <Input
+              id="company"
+              type="text"
+              value={companyName}
+              onChange={(e) => setCompanyName(e.target.value)}
+              placeholder="Your company name"
+              autoComplete="organization"
+              required
+            />
+          </div>
           <div className="space-y-2">
             <Label htmlFor="email">Email</Label>
             <Input
