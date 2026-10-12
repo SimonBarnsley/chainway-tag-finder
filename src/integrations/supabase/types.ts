@@ -14,6 +14,118 @@ export type Database = {
   }
   public: {
     Tables: {
+      alert_rules: {
+        Row: {
+          company_slug: string
+          condition_type: string
+          cooldown_minutes: number
+          created_at: string
+          created_by: string | null
+          enabled: boolean
+          epc: string | null
+          id: string
+          item_id: string | null
+          location: string
+          name: string
+          notify_email: boolean
+          recipient_user_ids: string[]
+          target_type: string
+          updated_at: string
+        }
+        Insert: {
+          company_slug: string
+          condition_type?: string
+          cooldown_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          epc?: string | null
+          id?: string
+          item_id?: string | null
+          location: string
+          name: string
+          notify_email?: boolean
+          recipient_user_ids?: string[]
+          target_type?: string
+          updated_at?: string
+        }
+        Update: {
+          company_slug?: string
+          condition_type?: string
+          cooldown_minutes?: number
+          created_at?: string
+          created_by?: string | null
+          enabled?: boolean
+          epc?: string | null
+          id?: string
+          item_id?: string | null
+          location?: string
+          name?: string
+          notify_email?: boolean
+          recipient_user_ids?: string[]
+          target_type?: string
+          updated_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alert_rules_item_id_fkey"
+            columns: ["item_id"]
+            isOneToOne: false
+            referencedRelation: "items"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
+      alerts: {
+        Row: {
+          company_slug: string
+          created_at: string
+          emailed_at: string | null
+          epc: string | null
+          id: string
+          location: string | null
+          message: string
+          notify_email: boolean
+          read_at: string | null
+          recipient_user_id: string
+          rule_id: string | null
+        }
+        Insert: {
+          company_slug: string
+          created_at?: string
+          emailed_at?: string | null
+          epc?: string | null
+          id?: string
+          location?: string | null
+          message: string
+          notify_email?: boolean
+          read_at?: string | null
+          recipient_user_id: string
+          rule_id?: string | null
+        }
+        Update: {
+          company_slug?: string
+          created_at?: string
+          emailed_at?: string | null
+          epc?: string | null
+          id?: string
+          location?: string | null
+          message?: string
+          notify_email?: boolean
+          read_at?: string | null
+          recipient_user_id?: string
+          rule_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: "alerts_rule_id_fkey"
+            columns: ["rule_id"]
+            isOneToOne: false
+            referencedRelation: "alert_rules"
+            referencedColumns: ["id"]
+          },
+        ]
+      }
       antenna_zones: {
         Row: {
           antenna_port: number | null
