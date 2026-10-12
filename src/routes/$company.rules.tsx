@@ -37,7 +37,7 @@ interface Rule {
   name: string;
   enabled: boolean;
   location: string;
-  target_type: "item" | "epc";
+  target_type: "item" | "epc" | "all";
   item_id: string | null;
   epc: string | null;
   recipient_user_ids: string[];
@@ -54,7 +54,7 @@ function RulesPage() {
   const [form, setForm] = useState({
     name: "",
     location: "",
-    target_type: "item" as "item" | "epc",
+    target_type: "item" as "item" | "epc" | "all",
     item_id: "",
     epc: "",
     recipients: [] as string[],
@@ -150,13 +150,16 @@ function RulesPage() {
               </div>
               <div className="space-y-1.5">
                 <Label>Watch</Label>
-                <select className={sel} value={form.target_type} onChange={(e) => setForm({ ...form, target_type: e.target.value as "item" | "epc" })}>
+                <select className={sel} value={form.target_type} onChange={(e) => setForm({ ...form, target_type: e.target.value as "item" | "epc" | "all" })}>
+                  <option value="all">ALL — any tag</option>
                   <option value="item">An item (any of its tags)</option>
                   <option value="epc">A specific tag</option>
                 </select>
               </div>
               <div className="space-y-1.5">
-                {form.target_type === "item" ? (
+                {form.target_type === "all" ? (
+                  <p className="text-sm text-muted-foreground pt-6">This rule fires for every tag read at the chosen location.</p>
+                ) : form.target_type === "item" ? (
                   <>
                     <Label>Item</Label>
                     <select className={sel} value={form.item_id} onChange={(e) => setForm({ ...form, item_id: e.target.value })}>
@@ -214,7 +217,7 @@ function RulesPage() {
                 <div className="min-w-0 space-y-1">
                   <p className="font-medium text-foreground">{r.name}</p>
                   <p className="text-sm text-muted-foreground">
-                    When {r.target_type === "item" ? <b>{itemName(r.item_id)}</b> : <span className="font-mono">{r.epc}</span>} is seen at <b>{r.location}</b>
+                    When {r.target_type === "all" ? <b>any tag (ALL)</b> : r.target_type === "item" ? <b>{itemName(r.item_id)}</b> : <span className="font-mono">{r.epc}</span>} is seen at <b>{r.location}</b>
                   </p>
                   <p className="text-xs text-muted-foreground">
                     Alert: {r.recipient_user_ids.map(userName).join(", ")} {r.notify_email ? "· in-app + email" : "· in-app"} · repeat after {r.cooldown_minutes} min
