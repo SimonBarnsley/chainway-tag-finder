@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams, useNavigate } from "@tanstack/react-router";
-import { Menu, X, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone } from "lucide-react";
+import { Menu, X, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone, Bell, Workflow } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -25,6 +25,26 @@ export function AppHeader({ actions }: AppHeaderProps) {
   useEffect(() => {
     setHandheldDevice(isHandheldDevice());
   }, []);
+
+  const [unread, setUnread] = useState(0);
+  useEffect(() => {
+    if (!isAuthenticated) return;
+    const db = supabase as unknown as { from: (t: string) => any };
+    const refresh = () =>
+      db
+        .from("alerts")
+        .select("id", { count: "exact", head: true })
+        .is("read_at", null)
+        .then(({ count }: { count: number | null }) => setUnread(count ?? 0));
+    refresh();
+    const t = setInterval(refresh, 30000);
+    window.addEventListener("alerts-changed", refresh);
+    return () => {
+      clearInterval(t);
+      window.removeEventListener("alerts-changed", refresh);
+    };
+  }, [isAuthenticated]);
+
 
   const openHandheldApp = () => {
     setOpen(false);
@@ -103,6 +123,21 @@ export function AppHeader({ actions }: AppHeaderProps) {
           <div className="flex items-center gap-2">
             {isSuperAdmin && <CompanySwitcher />}
             {actions}
+            {isAuthenticated && (
+              <Link
+                to="/$company/alerts"
+                params={{ company }}
+                className="relative rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                aria-label="Alerts"
+              >
+                <Bell className="h-5 w-5" />
+                {unread > 0 && (
+                  <span className="absolute -right-0.5 -top-0.5 min-w-4 rounded-full bg-destructive px-1 text-center text-[10px] font-bold leading-4 text-destructive-foreground">
+                    {unread > 99 ? "99+" : unread}
+                  </span>
+                )}
+              </Link>
+            )}
 
             <div ref={menuRef} className="relative">
               <button
@@ -254,6 +289,16 @@ export function AppHeader({ actions }: AppHeaderProps) {
                           >
                             <MapIcon className="h-4 w-4" />
                             Floor Plan Maps
+                          </Link>
+                          <Link
+                            to="/$company/rules"
+                            params={{ company }}
+                            onClick={() => setOpen(false)}
+                            className="flex items-center gap-2.5 pl-9 pr-4 py-2 text-sm text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                            activeProps={{ className: "text-primary bg-primary/5 font-medium" }}
+                          >
+                            <Workflow className="h-4 w-4" />
+                            Rules
                           </Link>
                           <Link
                             to="/$company/signup-debug"

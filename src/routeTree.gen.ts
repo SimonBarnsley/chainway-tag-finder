@@ -26,6 +26,7 @@ import { Route as ApiChainwayReaderRouteImport } from './routes/api.chainway-rea
 import { Route as CompanyUsersRouteImport } from './routes/$company.users'
 import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
 import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-audit'
+import { Route as CompanyRulesRouteImport } from './routes/$company.rules'
 import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
 import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
 import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
@@ -37,6 +38,7 @@ import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
 import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboard'
 import { Route as CompanyCostDashboardRouteImport } from './routes/$company.cost-dashboard'
 import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
+import { Route as CompanyAlertsRouteImport } from './routes/$company.alerts'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
@@ -132,6 +134,11 @@ const CompanyScanAuditRoute = CompanyScanAuditRouteImport.update({
   path: '/scan-audit',
   getParentRoute: () => CompanyRoute,
 } as any)
+const CompanyRulesRoute = CompanyRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => CompanyRoute,
+} as any)
 const CompanyRolesRoute = CompanyRolesRouteImport.update({
   id: '/roles',
   path: '/roles',
@@ -185,6 +192,11 @@ const CompanyCostDashboardRoute = CompanyCostDashboardRouteImport.update({
 const CompanyBulkUploadRoute = CompanyBulkUploadRouteImport.update({
   id: '/bulk-upload',
   path: '/bulk-upload',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyAlertsRoute = CompanyAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyAdminDashboardRoute = CompanyAdminDashboardRouteImport.update({
@@ -245,6 +257,7 @@ export interface FileRoutesByFullPath {
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
+  '/$company/alerts': typeof CompanyAlertsRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
@@ -256,6 +269,7 @@ export interface FileRoutesByFullPath {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/rules': typeof CompanyRulesRoute
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
@@ -283,6 +297,7 @@ export interface FileRoutesByTo {
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
+  '/$company/alerts': typeof CompanyAlertsRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
@@ -294,6 +309,7 @@ export interface FileRoutesByTo {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/rules': typeof CompanyRulesRoute
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
@@ -323,6 +339,7 @@ export interface FileRoutesById {
   '/signup': typeof SignupRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
+  '/$company/alerts': typeof CompanyAlertsRoute
   '/$company/bulk-upload': typeof CompanyBulkUploadRoute
   '/$company/cost-dashboard': typeof CompanyCostDashboardRoute
   '/$company/dashboard': typeof CompanyDashboardRoute
@@ -334,6 +351,7 @@ export interface FileRoutesById {
   '/$company/reader-debug': typeof CompanyReaderDebugRoute
   '/$company/readers': typeof CompanyReadersRoute
   '/$company/roles': typeof CompanyRolesRoute
+  '/$company/rules': typeof CompanyRulesRoute
   '/$company/scan-audit': typeof CompanyScanAuditRoute
   '/$company/signup-debug': typeof CompanySignupDebugRoute
   '/$company/users': typeof CompanyUsersRoute
@@ -364,6 +382,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/$company/admin'
     | '/$company/admin-dashboard'
+    | '/$company/alerts'
     | '/$company/bulk-upload'
     | '/$company/cost-dashboard'
     | '/$company/dashboard'
@@ -375,6 +394,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/rules'
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
@@ -402,6 +422,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/$company/admin'
     | '/$company/admin-dashboard'
+    | '/$company/alerts'
     | '/$company/bulk-upload'
     | '/$company/cost-dashboard'
     | '/$company/dashboard'
@@ -413,6 +434,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/rules'
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
@@ -441,6 +463,7 @@ export interface FileRouteTypes {
     | '/signup'
     | '/$company/admin'
     | '/$company/admin-dashboard'
+    | '/$company/alerts'
     | '/$company/bulk-upload'
     | '/$company/cost-dashboard'
     | '/$company/dashboard'
@@ -452,6 +475,7 @@ export interface FileRouteTypes {
     | '/$company/reader-debug'
     | '/$company/readers'
     | '/$company/roles'
+    | '/$company/rules'
     | '/$company/scan-audit'
     | '/$company/signup-debug'
     | '/$company/users'
@@ -610,6 +634,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyScanAuditRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/rules': {
+      id: '/$company/rules'
+      path: '/rules'
+      fullPath: '/$company/rules'
+      preLoaderRoute: typeof CompanyRulesRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/roles': {
       id: '/$company/roles'
       path: '/roles'
@@ -687,6 +718,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyBulkUploadRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/$company/alerts': {
+      id: '/$company/alerts'
+      path: '/alerts'
+      fullPath: '/$company/alerts'
+      preLoaderRoute: typeof CompanyAlertsRouteImport
+      parentRoute: typeof CompanyRoute
+    }
     '/$company/admin-dashboard': {
       id: '/$company/admin-dashboard'
       path: '/admin-dashboard'
@@ -756,6 +794,7 @@ declare module '@tanstack/react-router' {
 interface CompanyRouteChildren {
   CompanyAdminRoute: typeof CompanyAdminRoute
   CompanyAdminDashboardRoute: typeof CompanyAdminDashboardRoute
+  CompanyAlertsRoute: typeof CompanyAlertsRoute
   CompanyBulkUploadRoute: typeof CompanyBulkUploadRoute
   CompanyCostDashboardRoute: typeof CompanyCostDashboardRoute
   CompanyDashboardRoute: typeof CompanyDashboardRoute
@@ -767,6 +806,7 @@ interface CompanyRouteChildren {
   CompanyReaderDebugRoute: typeof CompanyReaderDebugRoute
   CompanyReadersRoute: typeof CompanyReadersRoute
   CompanyRolesRoute: typeof CompanyRolesRoute
+  CompanyRulesRoute: typeof CompanyRulesRoute
   CompanyScanAuditRoute: typeof CompanyScanAuditRoute
   CompanySignupDebugRoute: typeof CompanySignupDebugRoute
   CompanyUsersRoute: typeof CompanyUsersRoute
@@ -779,6 +819,7 @@ interface CompanyRouteChildren {
 const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyAdminRoute: CompanyAdminRoute,
   CompanyAdminDashboardRoute: CompanyAdminDashboardRoute,
+  CompanyAlertsRoute: CompanyAlertsRoute,
   CompanyBulkUploadRoute: CompanyBulkUploadRoute,
   CompanyCostDashboardRoute: CompanyCostDashboardRoute,
   CompanyDashboardRoute: CompanyDashboardRoute,
@@ -790,6 +831,7 @@ const CompanyRouteChildren: CompanyRouteChildren = {
   CompanyReaderDebugRoute: CompanyReaderDebugRoute,
   CompanyReadersRoute: CompanyReadersRoute,
   CompanyRolesRoute: CompanyRolesRoute,
+  CompanyRulesRoute: CompanyRulesRoute,
   CompanyScanAuditRoute: CompanyScanAuditRoute,
   CompanySignupDebugRoute: CompanySignupDebugRoute,
   CompanyUsersRoute: CompanyUsersRoute,
