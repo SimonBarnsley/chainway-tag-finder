@@ -42,6 +42,7 @@ import { Route as CompanyAlertsRouteImport } from './routes/$company.alerts'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
+import { Route as ApiPublicDispatchAlertEmailsRouteImport } from './routes/api/public/dispatch-alert-emails'
 import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit'
 import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
@@ -215,6 +216,12 @@ const CompanyMapsIndexRoute = CompanyMapsIndexRouteImport.update({
   path: '/maps/',
   getParentRoute: () => CompanyRoute,
 } as any)
+const ApiPublicDispatchAlertEmailsRoute =
+  ApiPublicDispatchAlertEmailsRouteImport.update({
+    id: '/api/public/dispatch-alert-emails',
+    path: '/api/public/dispatch-alert-emails',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const CompanyMapsViewRoute = CompanyMapsViewRouteImport.update({
   id: '/maps/view',
   path: '/maps/view',
@@ -289,6 +296,7 @@ export interface FileRoutesByFullPath {
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -330,6 +338,7 @@ export interface FileRoutesByTo {
   '/handheld': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -373,6 +382,7 @@ export interface FileRoutesById {
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
   '/$company/maps/view': typeof CompanyMapsViewRoute
+  '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
@@ -417,6 +427,7 @@ export interface FileRouteTypes {
     | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
@@ -458,6 +469,7 @@ export interface FileRouteTypes {
     | '/handheld'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
@@ -500,6 +512,7 @@ export interface FileRouteTypes {
     | '/handheld/'
     | '/$company/maps/edit'
     | '/$company/maps/view'
+    | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
     | '/api/zebra-reader/$company/$key'
@@ -522,6 +535,7 @@ export interface RootRouteChildren {
   HandheldInventoryRoute: typeof HandheldInventoryRoute
   HandheldStockCheckRoute: typeof HandheldStockCheckRoute
   HandheldIndexRoute: typeof HandheldIndexRoute
+  ApiPublicDispatchAlertEmailsRoute: typeof ApiPublicDispatchAlertEmailsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -760,6 +774,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyMapsIndexRouteImport
       parentRoute: typeof CompanyRoute
     }
+    '/api/public/dispatch-alert-emails': {
+      id: '/api/public/dispatch-alert-emails'
+      path: '/api/public/dispatch-alert-emails'
+      fullPath: '/api/public/dispatch-alert-emails'
+      preLoaderRoute: typeof ApiPublicDispatchAlertEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/$company/maps/view': {
       id: '/$company/maps/view'
       path: '/maps/view'
@@ -902,6 +923,7 @@ const rootRouteChildren: RootRouteChildren = {
   HandheldInventoryRoute: HandheldInventoryRoute,
   HandheldStockCheckRoute: HandheldStockCheckRoute,
   HandheldIndexRoute: HandheldIndexRoute,
+  ApiPublicDispatchAlertEmailsRoute: ApiPublicDispatchAlertEmailsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
