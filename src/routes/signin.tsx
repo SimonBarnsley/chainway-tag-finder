@@ -31,6 +31,7 @@ export const Route = createFileRoute("/signin")({
 
 function SignInPage() {
   const { signIn, isAuthenticated, isAdmin, companySlug, isLoading } = useAuth();
+  const navigate = useNavigate();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [loading, setLoading] = useState(false);
@@ -38,16 +39,13 @@ function SignInPage() {
 
   useEffect(() => {
     if (!isLoading && isAuthenticated && isHandheldMode()) {
-      window.location.replace("/handheld");
+      navigate({ to: "/handheld" });
     } else if (!isLoading && isAuthenticated) {
       // Desktop browsers land on the role-appropriate dashboard.
       const target = isAdmin ? "/$company/admin-dashboard" : "/$company/dashboard";
-      const params = { company: companySlug ?? "default" };
-      window.location.replace(
-        target.replace("$company", params.company)
-      );
+      navigate({ to: target, params: { company: companySlug ?? "default" } });
     }
-  }, [isAuthenticated, isLoading, isAdmin, companySlug]);
+  }, [isAuthenticated, isLoading, isAdmin, companySlug, navigate]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
