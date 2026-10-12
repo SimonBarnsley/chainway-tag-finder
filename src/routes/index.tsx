@@ -4,6 +4,7 @@ import { isHandheldMode } from "@/lib/handheld-mode";
 import { Button } from "@/components/ui/button";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import levataLogo from "@/assets/levata-logo-white.svg";
+import levataColorLogo from "@/assets/levata-logo-transparent.png.asset.json";
 import {
   PackageCheck,
   ClipboardList,
@@ -101,12 +102,25 @@ function LandingPage() {
       {/* Header */}
       <header className="sticky top-0 z-10 border-b border-border/60 bg-background/90 backdrop-blur">
         <div className="mx-auto flex max-w-6xl items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-3">
             <img
               src={scanLoc8Logo.url}
               alt="ScanLoc8"
               className="h-12 w-auto rounded md:h-16"
             />
+            <div className="hidden items-center gap-3 sm:flex">
+              <span className="h-9 w-px bg-border/70" aria-hidden />
+              <span className="inline-flex items-center gap-2 rounded-xl bg-white px-3 py-2">
+                <span className="text-[0.6rem] font-semibold uppercase tracking-[0.18em] text-neutral-500">
+                  Powered by
+                </span>
+                <img
+                  src={levataColorLogo.url}
+                  alt="Levata"
+                  className="h-4 w-auto"
+                />
+              </span>
+            </div>
           </div>
           <div className="flex items-center gap-3">
             {signedIn ? (
