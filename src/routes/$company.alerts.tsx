@@ -68,7 +68,10 @@ function AlertsPage() {
             <Bell className="h-6 w-6 text-primary" />
             <h2 className="text-2xl font-bold text-foreground">My Alerts</h2>
           </div>
-          <Button variant="outline" size="sm" onClick={markAllRead}>Mark all read</Button>
+          <div className="flex gap-2">
+            <Button variant="outline" size="sm" onClick={markAllRead}>Mark all read</Button>
+            <Button variant="outline" size="sm" className="text-destructive hover:text-destructive" onClick={clearAll}>Clear all</Button>
+          </div>
         </div>
         {alerts.length === 0 && <p className="text-sm text-muted-foreground">No alerts yet.</p>}
         {alerts.map((a) => (
