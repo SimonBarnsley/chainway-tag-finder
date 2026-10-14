@@ -18,6 +18,7 @@ import { Route as CompanyRouteImport } from './routes/$company'
 import { Route as IndexRouteImport } from './routes/index'
 import { Route as HandheldIndexRouteImport } from './routes/handheld.index'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
+import { Route as HandheldStockMovementRouteImport } from './routes/handheld.stock-movement'
 import { Route as HandheldStockCheckRouteImport } from './routes/handheld.stock-check'
 import { Route as HandheldInventoryRouteImport } from './routes/handheld.inventory'
 import { Route as HandheldGoodsInRouteImport } from './routes/handheld.goods-in'
@@ -95,6 +96,11 @@ const CompanyIndexRoute = CompanyIndexRouteImport.update({
   id: '/',
   path: '/',
   getParentRoute: () => CompanyRoute,
+} as any)
+const HandheldStockMovementRoute = HandheldStockMovementRouteImport.update({
+  id: '/handheld/stock-movement',
+  path: '/handheld/stock-movement',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const HandheldStockCheckRoute = HandheldStockCheckRouteImport.update({
   id: '/handheld/stock-check',
@@ -292,6 +298,7 @@ export interface FileRoutesByFullPath {
   '/handheld/goods-in': typeof HandheldGoodsInRoute
   '/handheld/inventory': typeof HandheldInventoryRoute
   '/handheld/stock-check': typeof HandheldStockCheckRoute
+  '/handheld/stock-movement': typeof HandheldStockMovementRoute
   '/$company/': typeof CompanyIndexRoute
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
@@ -334,6 +341,7 @@ export interface FileRoutesByTo {
   '/handheld/goods-in': typeof HandheldGoodsInRoute
   '/handheld/inventory': typeof HandheldInventoryRoute
   '/handheld/stock-check': typeof HandheldStockCheckRoute
+  '/handheld/stock-movement': typeof HandheldStockMovementRoute
   '/$company': typeof CompanyIndexRoute
   '/handheld': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
@@ -378,6 +386,7 @@ export interface FileRoutesById {
   '/handheld/goods-in': typeof HandheldGoodsInRoute
   '/handheld/inventory': typeof HandheldInventoryRoute
   '/handheld/stock-check': typeof HandheldStockCheckRoute
+  '/handheld/stock-movement': typeof HandheldStockMovementRoute
   '/$company/': typeof CompanyIndexRoute
   '/handheld/': typeof HandheldIndexRoute
   '/$company/maps/edit': typeof CompanyMapsEditRoute
@@ -423,6 +432,7 @@ export interface FileRouteTypes {
     | '/handheld/goods-in'
     | '/handheld/inventory'
     | '/handheld/stock-check'
+    | '/handheld/stock-movement'
     | '/$company/'
     | '/handheld/'
     | '/$company/maps/edit'
@@ -465,6 +475,7 @@ export interface FileRouteTypes {
     | '/handheld/goods-in'
     | '/handheld/inventory'
     | '/handheld/stock-check'
+    | '/handheld/stock-movement'
     | '/$company'
     | '/handheld'
     | '/$company/maps/edit'
@@ -508,6 +519,7 @@ export interface FileRouteTypes {
     | '/handheld/goods-in'
     | '/handheld/inventory'
     | '/handheld/stock-check'
+    | '/handheld/stock-movement'
     | '/$company/'
     | '/handheld/'
     | '/$company/maps/edit'
@@ -534,6 +546,7 @@ export interface RootRouteChildren {
   HandheldGoodsInRoute: typeof HandheldGoodsInRoute
   HandheldInventoryRoute: typeof HandheldInventoryRoute
   HandheldStockCheckRoute: typeof HandheldStockCheckRoute
+  HandheldStockMovementRoute: typeof HandheldStockMovementRoute
   HandheldIndexRoute: typeof HandheldIndexRoute
   ApiPublicDispatchAlertEmailsRoute: typeof ApiPublicDispatchAlertEmailsRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
@@ -605,6 +618,13 @@ declare module '@tanstack/react-router' {
       fullPath: '/$company/'
       preLoaderRoute: typeof CompanyIndexRouteImport
       parentRoute: typeof CompanyRoute
+    }
+    '/handheld/stock-movement': {
+      id: '/handheld/stock-movement'
+      path: '/handheld/stock-movement'
+      fullPath: '/handheld/stock-movement'
+      preLoaderRoute: typeof HandheldStockMovementRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/handheld/stock-check': {
       id: '/handheld/stock-check'
@@ -922,6 +942,7 @@ const rootRouteChildren: RootRouteChildren = {
   HandheldGoodsInRoute: HandheldGoodsInRoute,
   HandheldInventoryRoute: HandheldInventoryRoute,
   HandheldStockCheckRoute: HandheldStockCheckRoute,
+  HandheldStockMovementRoute: HandheldStockMovementRoute,
   HandheldIndexRoute: HandheldIndexRoute,
   ApiPublicDispatchAlertEmailsRoute: ApiPublicDispatchAlertEmailsRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
