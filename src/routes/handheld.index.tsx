@@ -1,5 +1,5 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { PackagePlus, ClipboardCheck, List, Building2 } from "lucide-react";
+import { PackagePlus, ClipboardCheck, List, Building2, ArrowLeftRight } from "lucide-react";
 import { HandheldShell } from "@/components/HandheldShell";
 import { useAuth } from "@/hooks/use-auth";
 
@@ -20,6 +20,7 @@ export const Route = createFileRoute("/handheld/")({
 const actions = [
   { to: "/handheld/goods-in", label: "Goods In", hint: "Scan arriving stock into a location", icon: PackagePlus },
   { to: "/handheld/stock-check", label: "Stock Check", hint: "Count a location: found, missing, unexpected", icon: ClipboardCheck },
+  { to: "/handheld/stock-movement", label: "Stock Movement", hint: "Move stock from one location to another", icon: ArrowLeftRight },
   { to: "/handheld/inventory", label: "Inventory", hint: "Every item and where it is", icon: List },
 ] as const;
 
