@@ -52,6 +52,13 @@ function AlertsPage() {
     load();
   };
 
+  const clearAll = async () => {
+    if (!window.confirm("Delete all alerts, including unread ones? This cannot be undone.")) return;
+    await db.from("alerts").delete().neq("id", "00000000-0000-0000-0000-000000000000");
+    window.dispatchEvent(new Event("alerts-changed"));
+    load();
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <AppHeader />
