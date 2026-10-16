@@ -9,72 +9,52 @@
 // Additionally, you should also exclude this file from your linter and/or formatter to prevent it from being checked or modified.
 
 import { Route as rootRouteImport } from './routes/__root'
-import { Route as SignupRouteImport } from './routes/signup'
-import { Route as SigninRouteImport } from './routes/signin'
-import { Route as ResetPasswordRouteImport } from './routes/reset-password'
-import { Route as LoginRouteImport } from './routes/login'
-import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
-import { Route as CompanyRouteImport } from './routes/$company'
 import { Route as IndexRouteImport } from './routes/index'
-import { Route as HandheldIndexRouteImport } from './routes/handheld.index'
+import { Route as CompanyRouteImport } from './routes/$company'
+import { Route as ForgotPasswordRouteImport } from './routes/forgot-password'
+import { Route as LoginRouteImport } from './routes/login'
+import { Route as ResetPasswordRouteImport } from './routes/reset-password'
+import { Route as SigninRouteImport } from './routes/signin'
+import { Route as SignupRouteImport } from './routes/signup'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
-import { Route as HandheldStockMovementRouteImport } from './routes/handheld.stock-movement'
-import { Route as HandheldStockCheckRouteImport } from './routes/handheld.stock-check'
-import { Route as HandheldInventoryRouteImport } from './routes/handheld.inventory'
-import { Route as HandheldGoodsInRouteImport } from './routes/handheld.goods-in'
-import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
-import { Route as ApiChainwayReaderRouteImport } from './routes/api.chainway-reader'
-import { Route as CompanyUsersRouteImport } from './routes/$company.users'
-import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
-import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-audit'
-import { Route as CompanyRulesRouteImport } from './routes/$company.rules'
-import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
-import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
-import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
-import { Route as CompanyLogDoctorRouteImport } from './routes/$company.log-doctor'
-import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
-import { Route as CompanyItemsRouteImport } from './routes/$company.items'
-import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
-import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
-import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboard'
-import { Route as CompanyCostDashboardRouteImport } from './routes/$company.cost-dashboard'
-import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
-import { Route as CompanyAlertsRouteImport } from './routes/$company.alerts'
-import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
+import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
+import { Route as CompanyAlertsRouteImport } from './routes/$company.alerts'
+import { Route as CompanyBulkUploadRouteImport } from './routes/$company.bulk-upload'
+import { Route as CompanyCostDashboardRouteImport } from './routes/$company.cost-dashboard'
+import { Route as CompanyDashboardRouteImport } from './routes/$company.dashboard'
+import { Route as CompanyDecoderRouteImport } from './routes/$company.decoder'
+import { Route as CompanyHistoryRouteImport } from './routes/$company.history'
+import { Route as CompanyItemsRouteImport } from './routes/$company.items'
+import { Route as CompanyLocationsRouteImport } from './routes/$company.locations'
+import { Route as CompanyLogDoctorRouteImport } from './routes/$company.log-doctor'
+import { Route as CompanyReaderDebugRouteImport } from './routes/$company.reader-debug'
+import { Route as CompanyReadersRouteImport } from './routes/$company.readers'
+import { Route as CompanyRolesRouteImport } from './routes/$company.roles'
+import { Route as CompanyRulesRouteImport } from './routes/$company.rules'
+import { Route as CompanyScanAuditRouteImport } from './routes/$company.scan-audit'
+import { Route as CompanySignupDebugRouteImport } from './routes/$company.signup-debug'
+import { Route as CompanyUsersRouteImport } from './routes/$company.users'
+import { Route as ApiChainwayReaderRouteImport } from './routes/api.chainway-reader'
+import { Route as ApiZebraReaderRouteImport } from './routes/api.zebra-reader'
+import { Route as HandheldIndexRouteImport } from './routes/handheld.index'
+import { Route as HandheldGoodsInRouteImport } from './routes/handheld.goods-in'
+import { Route as HandheldInventoryRouteImport } from './routes/handheld.inventory'
+import { Route as HandheldStockCheckRouteImport } from './routes/handheld.stock-check'
+import { Route as HandheldStockMovementRouteImport } from './routes/handheld.stock-movement'
 import { Route as CompanyMapsIndexRouteImport } from './routes/$company.maps.index'
-import { Route as ApiPublicDispatchAlertEmailsRouteImport } from './routes/api/public/dispatch-alert-emails'
-import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit'
-import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
-import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
-import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
-import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
+import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
+import { Route as ApiPublicDispatchAlertEmailsRouteImport } from './routes/api/public/dispatch-alert-emails'
 import { Route as ApiChainwayReaderCompanyKeyRouteImport } from './routes/api.chainway-reader.$company.$key'
+import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
+import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
+import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
+import { Route as LovableEmailTransactionalPreviewRouteImport } from './routes/lovable/email/transactional/preview'
 
-const SignupRoute = SignupRouteImport.update({
-  id: '/signup',
-  path: '/signup',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const SigninRoute = SigninRouteImport.update({
-  id: '/signin',
-  path: '/signin',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ResetPasswordRoute = ResetPasswordRouteImport.update({
-  id: '/reset-password',
-  path: '/reset-password',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LoginRoute = LoginRouteImport.update({
-  id: '/login',
-  path: '/login',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
-  id: '/forgot-password',
-  path: '/forgot-password',
+const IndexRoute = IndexRouteImport.update({
+  id: '/',
+  path: '/',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyRoute = CompanyRouteImport.update({
@@ -82,14 +62,29 @@ const CompanyRoute = CompanyRouteImport.update({
   path: '/$company',
   getParentRoute: () => rootRouteImport,
 } as any)
-const IndexRoute = IndexRouteImport.update({
-  id: '/',
-  path: '/',
+const ForgotPasswordRoute = ForgotPasswordRouteImport.update({
+  id: '/forgot-password',
+  path: '/forgot-password',
   getParentRoute: () => rootRouteImport,
 } as any)
-const HandheldIndexRoute = HandheldIndexRouteImport.update({
-  id: '/handheld/',
-  path: '/handheld/',
+const LoginRoute = LoginRouteImport.update({
+  id: '/login',
+  path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ResetPasswordRoute = ResetPasswordRouteImport.update({
+  id: '/reset-password',
+  path: '/reset-password',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SigninRoute = SigninRouteImport.update({
+  id: '/signin',
+  path: '/signin',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const SignupRoute = SignupRouteImport.update({
+  id: '/signup',
+  path: '/signup',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyIndexRoute = CompanyIndexRouteImport.update({
@@ -97,114 +92,9 @@ const CompanyIndexRoute = CompanyIndexRouteImport.update({
   path: '/',
   getParentRoute: () => CompanyRoute,
 } as any)
-const HandheldStockMovementRoute = HandheldStockMovementRouteImport.update({
-  id: '/handheld/stock-movement',
-  path: '/handheld/stock-movement',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HandheldStockCheckRoute = HandheldStockCheckRouteImport.update({
-  id: '/handheld/stock-check',
-  path: '/handheld/stock-check',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HandheldInventoryRoute = HandheldInventoryRouteImport.update({
-  id: '/handheld/inventory',
-  path: '/handheld/inventory',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const HandheldGoodsInRoute = HandheldGoodsInRouteImport.update({
-  id: '/handheld/goods-in',
-  path: '/handheld/goods-in',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
-  id: '/api/zebra-reader',
-  path: '/api/zebra-reader',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const ApiChainwayReaderRoute = ApiChainwayReaderRouteImport.update({
-  id: '/api/chainway-reader',
-  path: '/api/chainway-reader',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const CompanyUsersRoute = CompanyUsersRouteImport.update({
-  id: '/users',
-  path: '/users',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanySignupDebugRoute = CompanySignupDebugRouteImport.update({
-  id: '/signup-debug',
-  path: '/signup-debug',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyScanAuditRoute = CompanyScanAuditRouteImport.update({
-  id: '/scan-audit',
-  path: '/scan-audit',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyRulesRoute = CompanyRulesRouteImport.update({
-  id: '/rules',
-  path: '/rules',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyRolesRoute = CompanyRolesRouteImport.update({
-  id: '/roles',
-  path: '/roles',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyReadersRoute = CompanyReadersRouteImport.update({
-  id: '/readers',
-  path: '/readers',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
-  id: '/reader-debug',
-  path: '/reader-debug',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyLogDoctorRoute = CompanyLogDoctorRouteImport.update({
-  id: '/log-doctor',
-  path: '/log-doctor',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
-  id: '/locations',
-  path: '/locations',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyItemsRoute = CompanyItemsRouteImport.update({
-  id: '/items',
-  path: '/items',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyHistoryRoute = CompanyHistoryRouteImport.update({
-  id: '/history',
-  path: '/history',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyDecoderRoute = CompanyDecoderRouteImport.update({
-  id: '/decoder',
-  path: '/decoder',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyDashboardRoute = CompanyDashboardRouteImport.update({
-  id: '/dashboard',
-  path: '/dashboard',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyCostDashboardRoute = CompanyCostDashboardRouteImport.update({
-  id: '/cost-dashboard',
-  path: '/cost-dashboard',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyBulkUploadRoute = CompanyBulkUploadRouteImport.update({
-  id: '/bulk-upload',
-  path: '/bulk-upload',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyAlertsRoute = CompanyAlertsRouteImport.update({
-  id: '/alerts',
-  path: '/alerts',
+const CompanyAdminRoute = CompanyAdminRouteImport.update({
+  id: '/admin',
+  path: '/admin',
   getParentRoute: () => CompanyRoute,
 } as any)
 const CompanyAdminDashboardRoute = CompanyAdminDashboardRouteImport.update({
@@ -212,14 +102,134 @@ const CompanyAdminDashboardRoute = CompanyAdminDashboardRouteImport.update({
   path: '/admin-dashboard',
   getParentRoute: () => CompanyRoute,
 } as any)
-const CompanyAdminRoute = CompanyAdminRouteImport.update({
-  id: '/admin',
-  path: '/admin',
+const CompanyAlertsRoute = CompanyAlertsRouteImport.update({
+  id: '/alerts',
+  path: '/alerts',
   getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyBulkUploadRoute = CompanyBulkUploadRouteImport.update({
+  id: '/bulk-upload',
+  path: '/bulk-upload',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyCostDashboardRoute = CompanyCostDashboardRouteImport.update({
+  id: '/cost-dashboard',
+  path: '/cost-dashboard',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyDashboardRoute = CompanyDashboardRouteImport.update({
+  id: '/dashboard',
+  path: '/dashboard',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyDecoderRoute = CompanyDecoderRouteImport.update({
+  id: '/decoder',
+  path: '/decoder',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyHistoryRoute = CompanyHistoryRouteImport.update({
+  id: '/history',
+  path: '/history',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyItemsRoute = CompanyItemsRouteImport.update({
+  id: '/items',
+  path: '/items',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyLocationsRoute = CompanyLocationsRouteImport.update({
+  id: '/locations',
+  path: '/locations',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyLogDoctorRoute = CompanyLogDoctorRouteImport.update({
+  id: '/log-doctor',
+  path: '/log-doctor',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyReaderDebugRoute = CompanyReaderDebugRouteImport.update({
+  id: '/reader-debug',
+  path: '/reader-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyReadersRoute = CompanyReadersRouteImport.update({
+  id: '/readers',
+  path: '/readers',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyRolesRoute = CompanyRolesRouteImport.update({
+  id: '/roles',
+  path: '/roles',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyRulesRoute = CompanyRulesRouteImport.update({
+  id: '/rules',
+  path: '/rules',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyScanAuditRoute = CompanyScanAuditRouteImport.update({
+  id: '/scan-audit',
+  path: '/scan-audit',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanySignupDebugRoute = CompanySignupDebugRouteImport.update({
+  id: '/signup-debug',
+  path: '/signup-debug',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyUsersRoute = CompanyUsersRouteImport.update({
+  id: '/users',
+  path: '/users',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const ApiChainwayReaderRoute = ApiChainwayReaderRouteImport.update({
+  id: '/api/chainway-reader',
+  path: '/api/chainway-reader',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const ApiZebraReaderRoute = ApiZebraReaderRouteImport.update({
+  id: '/api/zebra-reader',
+  path: '/api/zebra-reader',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldIndexRoute = HandheldIndexRouteImport.update({
+  id: '/handheld/',
+  path: '/handheld/',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldGoodsInRoute = HandheldGoodsInRouteImport.update({
+  id: '/handheld/goods-in',
+  path: '/handheld/goods-in',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldInventoryRoute = HandheldInventoryRouteImport.update({
+  id: '/handheld/inventory',
+  path: '/handheld/inventory',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldStockCheckRoute = HandheldStockCheckRouteImport.update({
+  id: '/handheld/stock-check',
+  path: '/handheld/stock-check',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const HandheldStockMovementRoute = HandheldStockMovementRouteImport.update({
+  id: '/handheld/stock-movement',
+  path: '/handheld/stock-movement',
+  getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyMapsIndexRoute = CompanyMapsIndexRouteImport.update({
   id: '/maps/',
   path: '/maps/',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyMapsEditRoute = CompanyMapsEditRouteImport.update({
+  id: '/maps/edit',
+  path: '/maps/edit',
+  getParentRoute: () => CompanyRoute,
+} as any)
+const CompanyMapsViewRoute = CompanyMapsViewRouteImport.update({
+  id: '/maps/view',
+  path: '/maps/view',
   getParentRoute: () => CompanyRoute,
 } as any)
 const ApiPublicDispatchAlertEmailsRoute =
@@ -228,43 +238,33 @@ const ApiPublicDispatchAlertEmailsRoute =
     path: '/api/public/dispatch-alert-emails',
     getParentRoute: () => rootRouteImport,
   } as any)
-const CompanyMapsViewRoute = CompanyMapsViewRouteImport.update({
-  id: '/maps/view',
-  path: '/maps/view',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const CompanyMapsEditRoute = CompanyMapsEditRouteImport.update({
-  id: '/maps/edit',
-  path: '/maps/edit',
-  getParentRoute: () => CompanyRoute,
-} as any)
-const LovableEmailTransactionalPreviewRoute =
-  LovableEmailTransactionalPreviewRouteImport.update({
-    id: '/lovable/email/transactional/preview',
-    path: '/lovable/email/transactional/preview',
-    getParentRoute: () => rootRouteImport,
+const ApiChainwayReaderCompanyKeyRoute =
+  ApiChainwayReaderCompanyKeyRouteImport.update({
+    id: '/$company/$key',
+    path: '/$company/$key',
+    getParentRoute: () => ApiChainwayReaderRoute,
   } as any)
-const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
-  id: '/lovable/email/auth/webhook',
-  path: '/lovable/email/auth/webhook',
-  getParentRoute: () => rootRouteImport,
-} as any)
-const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
-  id: '/lovable/email/auth/preview',
-  path: '/lovable/email/auth/preview',
-  getParentRoute: () => rootRouteImport,
-} as any)
 const ApiZebraReaderCompanyKeyRoute =
   ApiZebraReaderCompanyKeyRouteImport.update({
     id: '/$company/$key',
     path: '/$company/$key',
     getParentRoute: () => ApiZebraReaderRoute,
   } as any)
-const ApiChainwayReaderCompanyKeyRoute =
-  ApiChainwayReaderCompanyKeyRouteImport.update({
-    id: '/$company/$key',
-    path: '/$company/$key',
-    getParentRoute: () => ApiChainwayReaderRoute,
+const LovableEmailAuthPreviewRoute = LovableEmailAuthPreviewRouteImport.update({
+  id: '/lovable/email/auth/preview',
+  path: '/lovable/email/auth/preview',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailAuthWebhookRoute = LovableEmailAuthWebhookRouteImport.update({
+  id: '/lovable/email/auth/webhook',
+  path: '/lovable/email/auth/webhook',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const LovableEmailTransactionalPreviewRoute =
+  LovableEmailTransactionalPreviewRouteImport.update({
+    id: '/lovable/email/transactional/preview',
+    path: '/lovable/email/transactional/preview',
+    getParentRoute: () => rootRouteImport,
   } as any)
 
 export interface FileRoutesByFullPath {
@@ -556,39 +556,11 @@ export interface RootRouteChildren {
 
 declare module '@tanstack/react-router' {
   interface FileRoutesByPath {
-    '/signup': {
-      id: '/signup'
-      path: '/signup'
-      fullPath: '/signup'
-      preLoaderRoute: typeof SignupRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/signin': {
-      id: '/signin'
-      path: '/signin'
-      fullPath: '/signin'
-      preLoaderRoute: typeof SigninRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/reset-password': {
-      id: '/reset-password'
-      path: '/reset-password'
-      fullPath: '/reset-password'
-      preLoaderRoute: typeof ResetPasswordRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/login': {
-      id: '/login'
-      path: '/login'
-      fullPath: '/login'
-      preLoaderRoute: typeof LoginRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/forgot-password': {
-      id: '/forgot-password'
-      path: '/forgot-password'
-      fullPath: '/forgot-password'
-      preLoaderRoute: typeof ForgotPasswordRouteImport
+    '/': {
+      id: '/'
+      path: '/'
+      fullPath: '/'
+      preLoaderRoute: typeof IndexRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$company': {
@@ -598,18 +570,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/': {
-      id: '/'
-      path: '/'
-      fullPath: '/'
-      preLoaderRoute: typeof IndexRouteImport
+    '/forgot-password': {
+      id: '/forgot-password'
+      path: '/forgot-password'
+      fullPath: '/forgot-password'
+      preLoaderRoute: typeof ForgotPasswordRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/handheld/': {
-      id: '/handheld/'
-      path: '/handheld'
-      fullPath: '/handheld/'
-      preLoaderRoute: typeof HandheldIndexRouteImport
+    '/login': {
+      id: '/login'
+      path: '/login'
+      fullPath: '/login'
+      preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/reset-password': {
+      id: '/reset-password'
+      path: '/reset-password'
+      fullPath: '/reset-password'
+      preLoaderRoute: typeof ResetPasswordRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signin': {
+      id: '/signin'
+      path: '/signin'
+      fullPath: '/signin'
+      preLoaderRoute: typeof SigninRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/signup': {
+      id: '/signup'
+      path: '/signup'
+      fullPath: '/signup'
+      preLoaderRoute: typeof SignupRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$company/': {
@@ -619,158 +612,11 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyIndexRouteImport
       parentRoute: typeof CompanyRoute
     }
-    '/handheld/stock-movement': {
-      id: '/handheld/stock-movement'
-      path: '/handheld/stock-movement'
-      fullPath: '/handheld/stock-movement'
-      preLoaderRoute: typeof HandheldStockMovementRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/handheld/stock-check': {
-      id: '/handheld/stock-check'
-      path: '/handheld/stock-check'
-      fullPath: '/handheld/stock-check'
-      preLoaderRoute: typeof HandheldStockCheckRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/handheld/inventory': {
-      id: '/handheld/inventory'
-      path: '/handheld/inventory'
-      fullPath: '/handheld/inventory'
-      preLoaderRoute: typeof HandheldInventoryRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/handheld/goods-in': {
-      id: '/handheld/goods-in'
-      path: '/handheld/goods-in'
-      fullPath: '/handheld/goods-in'
-      preLoaderRoute: typeof HandheldGoodsInRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/zebra-reader': {
-      id: '/api/zebra-reader'
-      path: '/api/zebra-reader'
-      fullPath: '/api/zebra-reader'
-      preLoaderRoute: typeof ApiZebraReaderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/api/chainway-reader': {
-      id: '/api/chainway-reader'
-      path: '/api/chainway-reader'
-      fullPath: '/api/chainway-reader'
-      preLoaderRoute: typeof ApiChainwayReaderRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$company/users': {
-      id: '/$company/users'
-      path: '/users'
-      fullPath: '/$company/users'
-      preLoaderRoute: typeof CompanyUsersRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/signup-debug': {
-      id: '/$company/signup-debug'
-      path: '/signup-debug'
-      fullPath: '/$company/signup-debug'
-      preLoaderRoute: typeof CompanySignupDebugRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/scan-audit': {
-      id: '/$company/scan-audit'
-      path: '/scan-audit'
-      fullPath: '/$company/scan-audit'
-      preLoaderRoute: typeof CompanyScanAuditRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/rules': {
-      id: '/$company/rules'
-      path: '/rules'
-      fullPath: '/$company/rules'
-      preLoaderRoute: typeof CompanyRulesRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/roles': {
-      id: '/$company/roles'
-      path: '/roles'
-      fullPath: '/$company/roles'
-      preLoaderRoute: typeof CompanyRolesRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/readers': {
-      id: '/$company/readers'
-      path: '/readers'
-      fullPath: '/$company/readers'
-      preLoaderRoute: typeof CompanyReadersRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/reader-debug': {
-      id: '/$company/reader-debug'
-      path: '/reader-debug'
-      fullPath: '/$company/reader-debug'
-      preLoaderRoute: typeof CompanyReaderDebugRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/log-doctor': {
-      id: '/$company/log-doctor'
-      path: '/log-doctor'
-      fullPath: '/$company/log-doctor'
-      preLoaderRoute: typeof CompanyLogDoctorRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/locations': {
-      id: '/$company/locations'
-      path: '/locations'
-      fullPath: '/$company/locations'
-      preLoaderRoute: typeof CompanyLocationsRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/items': {
-      id: '/$company/items'
-      path: '/items'
-      fullPath: '/$company/items'
-      preLoaderRoute: typeof CompanyItemsRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/history': {
-      id: '/$company/history'
-      path: '/history'
-      fullPath: '/$company/history'
-      preLoaderRoute: typeof CompanyHistoryRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/decoder': {
-      id: '/$company/decoder'
-      path: '/decoder'
-      fullPath: '/$company/decoder'
-      preLoaderRoute: typeof CompanyDecoderRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/dashboard': {
-      id: '/$company/dashboard'
-      path: '/dashboard'
-      fullPath: '/$company/dashboard'
-      preLoaderRoute: typeof CompanyDashboardRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/cost-dashboard': {
-      id: '/$company/cost-dashboard'
-      path: '/cost-dashboard'
-      fullPath: '/$company/cost-dashboard'
-      preLoaderRoute: typeof CompanyCostDashboardRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/bulk-upload': {
-      id: '/$company/bulk-upload'
-      path: '/bulk-upload'
-      fullPath: '/$company/bulk-upload'
-      preLoaderRoute: typeof CompanyBulkUploadRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/$company/alerts': {
-      id: '/$company/alerts'
-      path: '/alerts'
-      fullPath: '/$company/alerts'
-      preLoaderRoute: typeof CompanyAlertsRouteImport
+    '/$company/admin': {
+      id: '/$company/admin'
+      path: '/admin'
+      fullPath: '/$company/admin'
+      preLoaderRoute: typeof CompanyAdminRouteImport
       parentRoute: typeof CompanyRoute
     }
     '/$company/admin-dashboard': {
@@ -780,32 +626,172 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyAdminDashboardRouteImport
       parentRoute: typeof CompanyRoute
     }
-    '/$company/admin': {
-      id: '/$company/admin'
-      path: '/admin'
-      fullPath: '/$company/admin'
-      preLoaderRoute: typeof CompanyAdminRouteImport
+    '/$company/alerts': {
+      id: '/$company/alerts'
+      path: '/alerts'
+      fullPath: '/$company/alerts'
+      preLoaderRoute: typeof CompanyAlertsRouteImport
       parentRoute: typeof CompanyRoute
+    }
+    '/$company/bulk-upload': {
+      id: '/$company/bulk-upload'
+      path: '/bulk-upload'
+      fullPath: '/$company/bulk-upload'
+      preLoaderRoute: typeof CompanyBulkUploadRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/cost-dashboard': {
+      id: '/$company/cost-dashboard'
+      path: '/cost-dashboard'
+      fullPath: '/$company/cost-dashboard'
+      preLoaderRoute: typeof CompanyCostDashboardRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/dashboard': {
+      id: '/$company/dashboard'
+      path: '/dashboard'
+      fullPath: '/$company/dashboard'
+      preLoaderRoute: typeof CompanyDashboardRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/decoder': {
+      id: '/$company/decoder'
+      path: '/decoder'
+      fullPath: '/$company/decoder'
+      preLoaderRoute: typeof CompanyDecoderRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/history': {
+      id: '/$company/history'
+      path: '/history'
+      fullPath: '/$company/history'
+      preLoaderRoute: typeof CompanyHistoryRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/items': {
+      id: '/$company/items'
+      path: '/items'
+      fullPath: '/$company/items'
+      preLoaderRoute: typeof CompanyItemsRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/locations': {
+      id: '/$company/locations'
+      path: '/locations'
+      fullPath: '/$company/locations'
+      preLoaderRoute: typeof CompanyLocationsRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/log-doctor': {
+      id: '/$company/log-doctor'
+      path: '/log-doctor'
+      fullPath: '/$company/log-doctor'
+      preLoaderRoute: typeof CompanyLogDoctorRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/reader-debug': {
+      id: '/$company/reader-debug'
+      path: '/reader-debug'
+      fullPath: '/$company/reader-debug'
+      preLoaderRoute: typeof CompanyReaderDebugRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/readers': {
+      id: '/$company/readers'
+      path: '/readers'
+      fullPath: '/$company/readers'
+      preLoaderRoute: typeof CompanyReadersRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/roles': {
+      id: '/$company/roles'
+      path: '/roles'
+      fullPath: '/$company/roles'
+      preLoaderRoute: typeof CompanyRolesRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/rules': {
+      id: '/$company/rules'
+      path: '/rules'
+      fullPath: '/$company/rules'
+      preLoaderRoute: typeof CompanyRulesRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/scan-audit': {
+      id: '/$company/scan-audit'
+      path: '/scan-audit'
+      fullPath: '/$company/scan-audit'
+      preLoaderRoute: typeof CompanyScanAuditRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/signup-debug': {
+      id: '/$company/signup-debug'
+      path: '/signup-debug'
+      fullPath: '/$company/signup-debug'
+      preLoaderRoute: typeof CompanySignupDebugRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/$company/users': {
+      id: '/$company/users'
+      path: '/users'
+      fullPath: '/$company/users'
+      preLoaderRoute: typeof CompanyUsersRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/api/chainway-reader': {
+      id: '/api/chainway-reader'
+      path: '/api/chainway-reader'
+      fullPath: '/api/chainway-reader'
+      preLoaderRoute: typeof ApiChainwayReaderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/zebra-reader': {
+      id: '/api/zebra-reader'
+      path: '/api/zebra-reader'
+      fullPath: '/api/zebra-reader'
+      preLoaderRoute: typeof ApiZebraReaderRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/': {
+      id: '/handheld/'
+      path: '/handheld'
+      fullPath: '/handheld/'
+      preLoaderRoute: typeof HandheldIndexRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/goods-in': {
+      id: '/handheld/goods-in'
+      path: '/handheld/goods-in'
+      fullPath: '/handheld/goods-in'
+      preLoaderRoute: typeof HandheldGoodsInRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/inventory': {
+      id: '/handheld/inventory'
+      path: '/handheld/inventory'
+      fullPath: '/handheld/inventory'
+      preLoaderRoute: typeof HandheldInventoryRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/stock-check': {
+      id: '/handheld/stock-check'
+      path: '/handheld/stock-check'
+      fullPath: '/handheld/stock-check'
+      preLoaderRoute: typeof HandheldStockCheckRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/handheld/stock-movement': {
+      id: '/handheld/stock-movement'
+      path: '/handheld/stock-movement'
+      fullPath: '/handheld/stock-movement'
+      preLoaderRoute: typeof HandheldStockMovementRouteImport
+      parentRoute: typeof rootRouteImport
     }
     '/$company/maps/': {
       id: '/$company/maps/'
       path: '/maps'
       fullPath: '/$company/maps/'
       preLoaderRoute: typeof CompanyMapsIndexRouteImport
-      parentRoute: typeof CompanyRoute
-    }
-    '/api/public/dispatch-alert-emails': {
-      id: '/api/public/dispatch-alert-emails'
-      path: '/api/public/dispatch-alert-emails'
-      fullPath: '/api/public/dispatch-alert-emails'
-      preLoaderRoute: typeof ApiPublicDispatchAlertEmailsRouteImport
-      parentRoute: typeof rootRouteImport
-    }
-    '/$company/maps/view': {
-      id: '/$company/maps/view'
-      path: '/maps/view'
-      fullPath: '/$company/maps/view'
-      preLoaderRoute: typeof CompanyMapsViewRouteImport
       parentRoute: typeof CompanyRoute
     }
     '/$company/maps/edit': {
@@ -815,11 +801,39 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof CompanyMapsEditRouteImport
       parentRoute: typeof CompanyRoute
     }
-    '/lovable/email/transactional/preview': {
-      id: '/lovable/email/transactional/preview'
-      path: '/lovable/email/transactional/preview'
-      fullPath: '/lovable/email/transactional/preview'
-      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
+    '/$company/maps/view': {
+      id: '/$company/maps/view'
+      path: '/maps/view'
+      fullPath: '/$company/maps/view'
+      preLoaderRoute: typeof CompanyMapsViewRouteImport
+      parentRoute: typeof CompanyRoute
+    }
+    '/api/public/dispatch-alert-emails': {
+      id: '/api/public/dispatch-alert-emails'
+      path: '/api/public/dispatch-alert-emails'
+      fullPath: '/api/public/dispatch-alert-emails'
+      preLoaderRoute: typeof ApiPublicDispatchAlertEmailsRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/api/chainway-reader/$company/$key': {
+      id: '/api/chainway-reader/$company/$key'
+      path: '/$company/$key'
+      fullPath: '/api/chainway-reader/$company/$key'
+      preLoaderRoute: typeof ApiChainwayReaderCompanyKeyRouteImport
+      parentRoute: typeof ApiChainwayReaderRoute
+    }
+    '/api/zebra-reader/$company/$key': {
+      id: '/api/zebra-reader/$company/$key'
+      path: '/$company/$key'
+      fullPath: '/api/zebra-reader/$company/$key'
+      preLoaderRoute: typeof ApiZebraReaderCompanyKeyRouteImport
+      parentRoute: typeof ApiZebraReaderRoute
+    }
+    '/lovable/email/auth/preview': {
+      id: '/lovable/email/auth/preview'
+      path: '/lovable/email/auth/preview'
+      fullPath: '/lovable/email/auth/preview'
+      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/lovable/email/auth/webhook': {
@@ -829,26 +843,12 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof LovableEmailAuthWebhookRouteImport
       parentRoute: typeof rootRouteImport
     }
-    '/lovable/email/auth/preview': {
-      id: '/lovable/email/auth/preview'
-      path: '/lovable/email/auth/preview'
-      fullPath: '/lovable/email/auth/preview'
-      preLoaderRoute: typeof LovableEmailAuthPreviewRouteImport
+    '/lovable/email/transactional/preview': {
+      id: '/lovable/email/transactional/preview'
+      path: '/lovable/email/transactional/preview'
+      fullPath: '/lovable/email/transactional/preview'
+      preLoaderRoute: typeof LovableEmailTransactionalPreviewRouteImport
       parentRoute: typeof rootRouteImport
-    }
-    '/api/zebra-reader/$company/$key': {
-      id: '/api/zebra-reader/$company/$key'
-      path: '/$company/$key'
-      fullPath: '/api/zebra-reader/$company/$key'
-      preLoaderRoute: typeof ApiZebraReaderCompanyKeyRouteImport
-      parentRoute: typeof ApiZebraReaderRoute
-    }
-    '/api/chainway-reader/$company/$key': {
-      id: '/api/chainway-reader/$company/$key'
-      path: '/$company/$key'
-      fullPath: '/api/chainway-reader/$company/$key'
-      preLoaderRoute: typeof ApiChainwayReaderCompanyKeyRouteImport
-      parentRoute: typeof ApiChainwayReaderRoute
     }
   }
 }
