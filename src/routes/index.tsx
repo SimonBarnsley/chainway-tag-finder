@@ -123,6 +123,12 @@ function LandingPage() {
             </div>
           </div>
           <div className="flex items-center gap-3">
+            <Link
+              to="/contact"
+              className="text-sm text-muted-foreground transition-colors hover:text-foreground"
+            >
+              Contact us
+            </Link>
             {signedIn ? (
               <Button asChild>
                 <a href={appHref}>Open app</a>
@@ -342,6 +348,9 @@ function LandingPage() {
               </span>
               <img src={levataLogo} alt="Levata" className="h-4 w-auto" />
             </a>
+            <Link to="/contact" className="hover:text-foreground">
+              Contact us
+            </Link>
             <Link to="/signin" className="hover:text-foreground">
               Sign in
             </Link>
