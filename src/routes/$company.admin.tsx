@@ -136,6 +136,7 @@ function AdminContent() {
           { onConflict: "company_slug" }
         );
       if (error) throw error;
+      audit({ data: { companySlug: company, action: "settings.retention_updated", details: { scan_retention_days: scanDays, alert_retention_days: alertDays } } }).catch(() => {});
       toast.success("Retention settings saved — old data is cleared automatically each night");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
@@ -190,6 +191,7 @@ function AdminContent() {
           { onConflict: "company_slug" }
         );
       if (error) throw error;
+      audit({ data: { companySlug: company, action: "settings.tag_prefix_updated", details: { prefix: value } } }).catch(() => {});
       toast.success(value ? `Tag filter set to "${value}"` : "Tag filter cleared");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
