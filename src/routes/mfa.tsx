@@ -57,35 +57,44 @@ function MfaPage() {
   const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
+  // Re-setup: the old verified factor is kept until the new one is confirmed,
+  // so a failed scan can never lock the user out.
+  const [wantReset, setWantReset] = useState(false);
+  const [oldFactorId, setOldFactorId] = useState("");
+
+  const startEnroll = async () => {
+    const { data: en, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `ScanLoc8 ${Date.now()}` });
+    if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return false; }
+    setFactorId(en.id);
+    setSecret(en.totp.secret);
+    const branded = rebrandTotpUri(en.totp.uri);
+    setUri(branded);
+    // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
+    // on a solid white background scans reliably in any theme.
+    try {
+      setQr(await QRCode.toDataURL(branded, { width: 320, margin: 2, errorCorrectionLevel: "M" }));
+    } catch {
+      setQr(en.totp.qr_code);
+    }
+    setCode("");
+    setMode("enroll");
+    return true;
+  };
 
   useEffect(() => {
     (async () => {
       const { data: { session } } = await supabase.auth.getSession();
       if (!session) { navigate({ to: "/signin" }); return; }
       const { data } = await supabase.auth.mfa.listFactors();
-      const verified = data?.totp?.find((f) => f.status === "verified");
-      if (verified) { setFactorId(verified.id); setMode("verify"); return; }
-      // Clear any half-finished enrolments, then start a fresh one.
+      // Clear any half-finished enrolments.
       for (const f of data?.all ?? []) {
         if (f.status !== "verified") await supabase.auth.mfa.unenroll({ factorId: f.id });
       }
-      const { data: en, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `ScanLoc8 ${Date.now()}` });
-      if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return; }
-      setFactorId(en.id);
-      setSecret(en.totp.secret);
-      const branded = rebrandTotpUri(en.totp.uri);
-      setUri(branded);
-      // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
-      // on a solid white background scans reliably in any theme, unlike the
-      // default SVG which can be transparent-on-dark or malformed as a data URI.
-      try {
-        const png = await QRCode.toDataURL(branded, { width: 320, margin: 2, errorCorrectionLevel: "M" });
-        setQr(png);
-      } catch {
-        setQr(en.totp.qr_code);
-      }
-      setMode("enroll");
+      const verified = data?.totp?.find((f) => f.status === "verified");
+      if (verified) { setFactorId(verified.id); setMode("verify"); return; }
+      await startEnroll();
     })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [navigate]);
 
   const submit = async (e: React.FormEvent) => {
@@ -94,7 +103,18 @@ function MfaPage() {
     try {
       const { error } = await supabase.auth.mfa.challengeAndVerify({ factorId, code: code.trim() });
       if (error) throw error;
-      toast.success("Verified");
+      if (mode === "verify" && wantReset) {
+        setOldFactorId(factorId);
+        if (await startEnroll()) toast.success("Now scan the new ScanLoc8 code");
+        return;
+      }
+      if (oldFactorId) {
+        const { error: unErr } = await supabase.auth.mfa.unenroll({ factorId: oldFactorId });
+        if (unErr) toast.error("New code set up, but the old entry couldn't be removed: " + unErr.message);
+        else toast.success("Two-step set up again — you can delete the old entry from your app");
+      } else {
+        toast.success("Verified");
+      }
       navigate({ to: "/" });
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "Invalid code");
@@ -128,7 +148,16 @@ function MfaPage() {
           </div>
         )}
         {mode === "verify" && (
-          <p className="text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+          <div className="space-y-3">
+            <p className="text-sm text-muted-foreground">Enter the 6-digit code from your authenticator app.</p>
+            <label className="flex items-start gap-2 text-left text-xs text-muted-foreground">
+              <input type="checkbox" className="mt-0.5" checked={wantReset} onChange={(e) => setWantReset(e.target.checked)} />
+              <span>Set up two-step again after this code (shows a new ScanLoc8 QR code; your current entry keeps working until the new one is confirmed).</span>
+            </label>
+          </div>
+        )}
+        {mode === "enroll" && oldFactorId && (
+          <p className="text-xs text-muted-foreground">Your old entry still works until you confirm this new code.</p>
         )}
         {mode !== "loading" && (
           <form onSubmit={submit} className="space-y-4 text-left">
