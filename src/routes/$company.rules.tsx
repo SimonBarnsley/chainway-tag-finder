@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Workflow, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { logAudit } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/$company/rules")({
   component: () => (
