@@ -24,6 +24,30 @@ export const Route = createFileRoute("/mfa")({
 
 type Mode = "loading" | "enroll" | "verify";
 
+// What the authenticator app shows for this account. The backend builds its
+// otpauth URI from the hosting address, so without this the app would list the
+// deployment hostname instead of the product name. Only the label and issuer
+// change — secret, algorithm, digits and period are passed through untouched,
+// so codes still verify.
+const MFA_ISSUER = "ScanLoc8";
+
+const encodeLabel = (value: string) =>
+  value.replace(/[/?#&%=+]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+
+function rebrandTotpUri(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const label = decodeURIComponent(url.pathname.replace(/^\//, ""));
+    const account = label.includes(":") ? label.slice(label.lastIndexOf(":") + 1) : label;
+    const params = new URLSearchParams(url.search);
+    params.set("issuer", MFA_ISSUER);
+    const query = params.toString();
+    return `otpauth://${url.host}/${encodeLabel(MFA_ISSUER)}:${encodeLabel(account)}${query ? `?${query}` : ""}`;
+  } catch {
+    return raw;
+  }
+}
+
 function MfaPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("loading");
@@ -49,12 +73,13 @@ function MfaPage() {
       if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return; }
       setFactorId(en.id);
       setSecret(en.totp.secret);
-      setUri(en.totp.uri);
+      const branded = rebrandTotpUri(en.totp.uri);
+      setUri(branded);
       // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
       // on a solid white background scans reliably in any theme, unlike the
       // default SVG which can be transparent-on-dark or malformed as a data URI.
       try {
-        const png = await QRCode.toDataURL(en.totp.uri, { width: 320, margin: 2, errorCorrectionLevel: "M" });
+        const png = await QRCode.toDataURL(branded, { width: 320, margin: 2, errorCorrectionLevel: "M" });
         setQr(png);
       } catch {
         setQr(en.totp.qr_code);
