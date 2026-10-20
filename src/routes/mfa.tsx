@@ -89,8 +89,17 @@ function MfaPage() {
             <p className="text-sm text-muted-foreground">
               Admin accounts need an authenticator app (Microsoft Authenticator, Google Authenticator, etc.). Scan this code, then enter the 6-digit number it shows.
             </p>
-            {qr && <img src={qr} alt="Authenticator QR code" className="mx-auto h-48 w-48 rounded bg-card p-2" />}
+            {qr && (
+              <div className="mx-auto w-fit rounded-lg p-3" style={{ backgroundColor: "#ffffff" }}>
+                <img src={qr} alt="Authenticator QR code" className="h-56 w-56" style={{ imageRendering: "pixelated" }} />
+              </div>
+            )}
             <p className="break-all font-mono text-xs text-muted-foreground">Or enter key: {secret}</p>
+            {uri && (
+              <p className="break-all font-mono text-[10px] text-muted-foreground/70">
+                If the key fails, paste this whole link into your app: {uri}
+              </p>
+            )}
           </div>
         )}
         {mode === "verify" && (
