@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio, Filter } from "lucide-react";
+import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio, Filter, Download, ScrollText, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { CompaniesManager } from "@/components/CompaniesManager";
 import { DataTransfer } from "@/components/DataTransfer";
+import { exportMyData, deleteMyAccount, listAuditLog, logAudit, type AuditEntry } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/$company/admin")({
   component: AdminPage,
@@ -65,7 +68,18 @@ function AdminContent() {
   const [myDetailsLoaded, setMyDetailsLoaded] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditLoaded, setAuditLoaded] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const runExport = useServerFn(exportMyData);
+  const runDeleteAccount = useServerFn(deleteMyAccount);
+  const fetchAuditLog = useServerFn(listAuditLog);
+  const audit = useServerFn(logAudit);
 
   useEffect(() => {
     let cancelled = false;
