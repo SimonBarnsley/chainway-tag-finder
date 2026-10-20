@@ -236,24 +236,30 @@ export type Database = {
       }
       company_settings: {
         Row: {
+          alert_retention_days: number
           company_slug: string
           created_at: string
           epc_tag_prefix: string | null
           id: string
+          scan_retention_days: number
           updated_at: string
         }
         Insert: {
+          alert_retention_days?: number
           company_slug: string
           created_at?: string
           epc_tag_prefix?: string | null
           id?: string
+          scan_retention_days?: number
           updated_at?: string
         }
         Update: {
+          alert_retention_days?: number
           company_slug?: string
           created_at?: string
           epc_tag_prefix?: string | null
           id?: string
+          scan_retention_days?: number
           updated_at?: string
         }
         Relationships: []

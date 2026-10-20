@@ -56,21 +56,114 @@ function AdminContent() {
   const [tagPrefix, setTagPrefix] = useState("");
   const [tagPrefixLoaded, setTagPrefixLoaded] = useState(false);
   const [savingPrefix, setSavingPrefix] = useState(false);
+  const [scanRetention, setScanRetention] = useState("365");
+  const [alertRetention, setAlertRetention] = useState("90");
+  const [retentionLoaded, setRetentionLoaded] = useState(false);
+  const [savingRetention, setSavingRetention] = useState(false);
+  const [myName, setMyName] = useState("");
+  const [myEmail, setMyEmail] = useState("");
+  const [myDetailsLoaded, setMyDetailsLoaded] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
     (async () => {
       const { data } = await supabase
         .from("company_settings")
-        .select("epc_tag_prefix")
+        .select("epc_tag_prefix, scan_retention_days, alert_retention_days")
         .eq("company_slug", company)
         .maybeSingle();
       if (cancelled) return;
       setTagPrefix((data?.epc_tag_prefix ?? "").toUpperCase());
       setTagPrefixLoaded(true);
+      setScanRetention(String(data?.scan_retention_days ?? 365));
+      setAlertRetention(String(data?.alert_retention_days ?? 90));
+      setRetentionLoaded(true);
     })();
     return () => { cancelled = true; };
   }, [company]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyName(data?.display_name ?? "");
+      setMyEmail(data?.email ?? user.email ?? "");
+      setMyDetailsLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const handleSaveRetention = async () => {
+    const scanDays = parseInt(scanRetention, 10);
+    const alertDays = parseInt(alertRetention, 10);
+    if (!Number.isFinite(scanDays) || scanDays < 1 || scanDays > 3650) {
+      toast.error("Scan history retention must be between 1 and 3650 days");
+      return;
+    }
+    if (!Number.isFinite(alertDays) || alertDays < 1 || alertDays > 3650) {
+      toast.error("Alert retention must be between 1 and 3650 days");
+      return;
+    }
+    setSavingRetention(true);
+    try {
+      const { error } = await supabase
+        .from("company_settings")
+        .upsert(
+          { company_slug: company, scan_retention_days: scanDays, alert_retention_days: alertDays },
+          { onConflict: "company_slug" }
+        );
+      if (error) throw error;
+      toast.success("Retention settings saved — old data is cleared automatically each night");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingRetention(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    setSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: myName.trim() || null })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      toast.success("Name updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update name");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    const email = myEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
+      toast.success("Confirmation sent — check the new address and click the link to finish the change");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to change email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const handleSavePrefix = async () => {
     setSavingPrefix(true);
@@ -281,6 +374,57 @@ function AdminContent() {
                 {savingPrefix ? "Saving..." : "Save"}
               </Button>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* My details — every user can correct their own name and email */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">My Details</h2>
+            <p className="text-xs text-muted-foreground">
+              Correct your own name or email. Changing your email sends a confirmation link to the new address — the change only takes effect once you click it.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="my-name" className="text-xs text-muted-foreground">Display name</Label>
+              <div className="flex gap-2">
+                <Input id="my-name" value={myName} onChange={(e) => setMyName(e.target.value)} maxLength={100} disabled={!myDetailsLoaded} className="flex-1" />
+                <Button size="sm" onClick={handleSaveName} disabled={!myDetailsLoaded || savingName}>
+                  {savingName ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="my-email" className="text-xs text-muted-foreground">Email</Label>
+              <div className="flex gap-2">
+                <Input id="my-email" type="email" value={myEmail} onChange={(e) => setMyEmail(e.target.value)} maxLength={255} disabled={!myDetailsLoaded} className="flex-1" />
+                <Button size="sm" onClick={handleSaveEmail} disabled={!myDetailsLoaded || savingEmail}>
+                  {savingEmail ? "Sending..." : "Change"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data retention — automatic nightly clean-up of old data */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">Data Retention</h2>
+            <p className="text-xs text-muted-foreground">
+              Old data for this company is deleted automatically every night. Contact enquiries are emailed to you and never stored, so there is nothing to clean up there.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="ret-scan" className="text-xs text-muted-foreground">Keep scan history for (days)</Label>
+                <Input id="ret-scan" type="number" min={1} max={3650} value={scanRetention} onChange={(e) => setScanRetention(e.target.value)} disabled={!retentionLoaded} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ret-alert" className="text-xs text-muted-foreground">Keep read alerts for (days)</Label>
+                <Input id="ret-alert" type="number" min={1} max={3650} value={alertRetention} onChange={(e) => setAlertRetention(e.target.value)} disabled={!retentionLoaded} />
+              </div>
+            </div>
+            <Button size="sm" onClick={handleSaveRetention} disabled={!retentionLoaded || savingRetention}>
+              {savingRetention ? "Saving..." : "Save retention settings"}
+            </Button>
           </CardContent>
         </Card>
 

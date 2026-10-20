@@ -15,6 +15,13 @@
       "when": 1790350894794,
       "tag": "0001_companies_registry",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1792498397143,
+      "tag": "0002_add_retention_settings",
+      "breakpoints": true
     }
   ]
 }
