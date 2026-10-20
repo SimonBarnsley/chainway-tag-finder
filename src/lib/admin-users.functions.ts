@@ -11,6 +11,29 @@ export interface PendingUser {
   last_sign_in_at: string | null;
 }
 
+const adminDb = supabaseAdmin as unknown as { from: (t: string) => any };
+
+async function writeAudit(
+  companySlug: string | null | undefined,
+  userId: string,
+  action: string,
+  details?: Record<string, unknown>
+) {
+  if (!companySlug) return;
+  try {
+    const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
+    await adminDb.from("audit_log").insert({
+      company_slug: companySlug,
+      user_id: userId,
+      user_email: u.user?.email ?? null,
+      action,
+      details: details ?? null,
+    });
+  } catch (e) {
+    console.error("audit log write failed:", e);
+  }
+}
+
 async function assertAdmin(userId: string) {
   const { data: roles } = await supabaseAdmin
     .from("user_roles")
