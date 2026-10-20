@@ -22,6 +22,13 @@
       "when": 1792498397143,
       "tag": "0002_add_retention_settings",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1792498598037,
+      "tag": "0003_create_audit_log",
+      "breakpoints": true
     }
   ]
 }

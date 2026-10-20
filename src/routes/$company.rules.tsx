@@ -10,6 +10,8 @@ import { Switch } from "@/components/ui/switch";
 import { Workflow, Trash2, Pencil } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
+import { useServerFn } from "@tanstack/react-start";
+import { logAudit } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/$company/rules")({
   component: () => (
@@ -63,6 +65,7 @@ function RulesPage() {
   });
   const [saving, setSaving] = useState(false);
   const [editingId, setEditingId] = useState<string | null>(null);
+  const audit = useServerFn(logAudit);
 
   const load = useCallback(async () => {
     const [r, l, a, i, u] = await Promise.all([
@@ -140,6 +143,7 @@ function RulesPage() {
     }
     setSaving(false);
     if (error) return toast.error(error.message);
+    audit({ data: { companySlug: company, action: editingId ? "rule.updated" : "rule.created", details: { name: form.name.trim(), location: form.location } } }).catch(() => {});
     toast.success(editingId ? "Rule updated" : "Rule created");
     resetForm();
     load();
@@ -147,11 +151,13 @@ function RulesPage() {
 
   const toggle = async (rule: Rule) => {
     await db.from("alert_rules").update({ enabled: !rule.enabled }).eq("id", rule.id);
+    audit({ data: { companySlug: company, action: rule.enabled ? "rule.disabled" : "rule.enabled", details: { name: rule.name } } }).catch(() => {});
     load();
   };
   const remove = async (rule: Rule) => {
     if (!confirm(`Delete rule "${rule.name}"?`)) return;
     await db.from("alert_rules").delete().eq("id", rule.id);
+    audit({ data: { companySlug: company, action: "rule.deleted", details: { name: rule.name } } }).catch(() => {});
     load();
   };
 

@@ -6,12 +6,15 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent } from "@/components/ui/card";
-import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio, Filter } from "lucide-react";
+import { Shield, UserPlus, Trash2, Search, Plus, Eye, EyeOff, Copy, Check, Radio, Filter, Download, ScrollText, AlertTriangle } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "sonner";
 import { useAuth } from "@/hooks/use-auth";
+import { useServerFn } from "@tanstack/react-start";
+import { useNavigate } from "@tanstack/react-router";
 import { CompaniesManager } from "@/components/CompaniesManager";
 import { DataTransfer } from "@/components/DataTransfer";
+import { exportMyData, deleteMyAccount, listAuditLog, logAudit, type AuditEntry } from "@/lib/account.functions";
 
 export const Route = createFileRoute("/$company/admin")({
   component: AdminPage,
@@ -65,7 +68,18 @@ function AdminContent() {
   const [myDetailsLoaded, setMyDetailsLoaded] = useState(false);
   const [savingName, setSavingName] = useState(false);
   const [savingEmail, setSavingEmail] = useState(false);
+  const [exporting, setExporting] = useState(false);
+  const [deletePassword, setDeletePassword] = useState("");
+  const [deleting, setDeleting] = useState(false);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [auditEntries, setAuditEntries] = useState<AuditEntry[]>([]);
+  const [auditLoaded, setAuditLoaded] = useState(false);
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const runExport = useServerFn(exportMyData);
+  const runDeleteAccount = useServerFn(deleteMyAccount);
+  const fetchAuditLog = useServerFn(listAuditLog);
+  const audit = useServerFn(logAudit);
 
   useEffect(() => {
     let cancelled = false;
@@ -122,6 +136,7 @@ function AdminContent() {
           { onConflict: "company_slug" }
         );
       if (error) throw error;
+      audit({ data: { companySlug: company, action: "settings.retention_updated", details: { scan_retention_days: scanDays, alert_retention_days: alertDays } } }).catch(() => {});
       toast.success("Retention settings saved — old data is cleared automatically each night");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
@@ -165,6 +180,55 @@ function AdminContent() {
     }
   };
 
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const data = await runExport();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `scanloc8-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      audit({ data: { companySlug: company, action: "account.data_exported" } }).catch(() => {});
+      toast.success("Your data has been downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) { toast.error("Enter your password to confirm"); return; }
+    setDeleting(true);
+    try {
+      const result = await runDeleteAccount({ data: { password: deletePassword } });
+      if (!result.ok) { toast.error(result.error ?? "Could not delete account"); return; }
+      await supabase.auth.signOut();
+      toast.success("Your account has been deleted");
+      navigate({ to: "/signin" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete account");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await fetchAuditLog({ data: { companySlug: company } });
+      if (cancelled) return;
+      if (result.ok) setAuditEntries(result.entries);
+      setAuditLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company, fetchAuditLog]);
+
   const handleSavePrefix = async () => {
     setSavingPrefix(true);
     try {
@@ -176,6 +240,7 @@ function AdminContent() {
           { onConflict: "company_slug" }
         );
       if (error) throw error;
+      audit({ data: { companySlug: company, action: "settings.tag_prefix_updated", details: { prefix: value } } }).catch(() => {});
       toast.success(value ? `Tag filter set to "${value}"` : "Tag filter cleared");
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Failed to save");
@@ -402,6 +467,96 @@ function AdminContent() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Download my data — GDPR data portability */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Download My Data</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Download everything the system holds about you — your profile, roles, alerts, rules you created and your activity log — as a single file.
+            </p>
+            <Button size="sm" variant="outline" onClick={handleExportData} disabled={exporting} className="gap-1">
+              <Download className="h-3.5 w-3.5" /> {exporting ? "Preparing..." : "Download my data"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Delete my account — GDPR right to erasure */}
+        <Card className="border-destructive/40">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <h2 className="text-sm font-semibold text-foreground">Delete My Account</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Permanently delete your account and sign you out. This cannot be undone. Super admin accounts cannot be deleted this way.
+            </p>
+            {!confirmDelete ? (
+              <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+                Delete my account
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="delete-password" className="text-xs text-muted-foreground">Enter your password to confirm</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="delete-password"
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your password"
+                    className="flex-1"
+                    autoComplete="current-password"
+                  />
+                  <Button size="sm" variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+                    {deleting ? "Deleting..." : "Confirm delete"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setConfirmDelete(false); setDeletePassword(""); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Audit log — record of admin actions */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Audit Log</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Recent actions in this company — user changes, rule changes, settings updates and account events.
+            </p>
+            {!auditLoaded ? (
+              <p className="text-xs text-muted-foreground">Loading…</p>
+            ) : auditEntries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No activity recorded yet.</p>
+            ) : (
+              <div className="max-h-72 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                {auditEntries.map((e) => (
+                  <div key={e.id} className="px-3 py-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-foreground">{e.action}</span>
+                      <span className="text-muted-foreground whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="text-muted-foreground">
+                      {e.user_email ?? "Unknown user"}
+                      {e.details && Object.keys(e.details).length > 0 && (
+                        <> · {Object.entries(e.details).map(([k, v]) => `${k}: ${String(v)}`).join(", ")}</>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
           </CardContent>
         </Card>
 
