@@ -1,6 +1,7 @@
 import { createFileRoute, useNavigate } from "@tanstack/react-router";
 import { useEffect, useState } from "react";
 import { ShieldCheck } from "lucide-react";
+import QRCode from "qrcode";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +30,7 @@ function MfaPage() {
   const [factorId, setFactorId] = useState("");
   const [qr, setQr] = useState("");
   const [secret, setSecret] = useState("");
+  const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
@@ -46,8 +48,17 @@ function MfaPage() {
       const { data: en, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `ScanLoc8 ${Date.now()}` });
       if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return; }
       setFactorId(en.id);
-      setQr(en.totp.qr_code);
       setSecret(en.totp.secret);
+      setUri(en.totp.uri);
+      // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
+      // on a solid white background scans reliably in any theme, unlike the
+      // default SVG which can be transparent-on-dark or malformed as a data URI.
+      try {
+        const png = await QRCode.toDataURL(en.totp.uri, { width: 320, margin: 2, errorCorrectionLevel: "M" });
+        setQr(png);
+      } catch {
+        setQr(en.totp.qr_code);
+      }
       setMode("enroll");
     })();
   }, [navigate]);
@@ -78,8 +89,17 @@ function MfaPage() {
             <p className="text-sm text-muted-foreground">
               Admin accounts need an authenticator app (Microsoft Authenticator, Google Authenticator, etc.). Scan this code, then enter the 6-digit number it shows.
             </p>
-            {qr && <img src={qr} alt="Authenticator QR code" className="mx-auto h-48 w-48 rounded bg-card p-2" />}
+            {qr && (
+              <div className="mx-auto w-fit rounded-lg p-3" style={{ backgroundColor: "#ffffff" }}>
+                <img src={qr} alt="Authenticator QR code" className="h-56 w-56" style={{ imageRendering: "pixelated" }} />
+              </div>
+            )}
             <p className="break-all font-mono text-xs text-muted-foreground">Or enter key: {secret}</p>
+            {uri && (
+              <p className="break-all font-mono text-[10px] text-muted-foreground/70">
+                If the key fails, paste this whole link into your app: {uri}
+              </p>
+            )}
           </div>
         )}
         {mode === "verify" && (
