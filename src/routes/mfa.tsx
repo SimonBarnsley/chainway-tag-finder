@@ -73,12 +73,13 @@ function MfaPage() {
       if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return; }
       setFactorId(en.id);
       setSecret(en.totp.secret);
-      setUri(en.totp.uri);
+      const branded = rebrandTotpUri(en.totp.uri);
+      setUri(branded);
       // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
       // on a solid white background scans reliably in any theme, unlike the
       // default SVG which can be transparent-on-dark or malformed as a data URI.
       try {
-        const png = await QRCode.toDataURL(en.totp.uri, { width: 320, margin: 2, errorCorrectionLevel: "M" });
+        const png = await QRCode.toDataURL(branded, { width: 320, margin: 2, errorCorrectionLevel: "M" });
         setQr(png);
       } catch {
         setQr(en.totp.qr_code);
