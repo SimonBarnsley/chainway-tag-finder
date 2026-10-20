@@ -48,8 +48,17 @@ function MfaPage() {
       const { data: en, error } = await supabase.auth.mfa.enroll({ factorType: "totp", friendlyName: `ScanLoc8 ${Date.now()}` });
       if (error || !en) { toast.error(error?.message ?? "Could not start set-up"); return; }
       setFactorId(en.id);
-      setQr(en.totp.qr_code);
       setSecret(en.totp.secret);
+      setUri(en.totp.uri);
+      // Render the QR ourselves from the otpauth URI: a standards-compliant PNG
+      // on a solid white background scans reliably in any theme, unlike the
+      // default SVG which can be transparent-on-dark or malformed as a data URI.
+      try {
+        const png = await QRCode.toDataURL(en.totp.uri, { width: 320, margin: 2, errorCorrectionLevel: "M" });
+        setQr(png);
+      } catch {
+        setQr(en.totp.qr_code);
+      }
       setMode("enroll");
     })();
   }, [navigate]);
