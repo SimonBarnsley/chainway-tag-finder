@@ -56,6 +56,16 @@ function AdminContent() {
   const [tagPrefix, setTagPrefix] = useState("");
   const [tagPrefixLoaded, setTagPrefixLoaded] = useState(false);
   const [savingPrefix, setSavingPrefix] = useState(false);
+  const [scanRetention, setScanRetention] = useState("365");
+  const [alertRetention, setAlertRetention] = useState("90");
+  const [retentionLoaded, setRetentionLoaded] = useState(false);
+  const [savingRetention, setSavingRetention] = useState(false);
+  const [myName, setMyName] = useState("");
+  const [myEmail, setMyEmail] = useState("");
+  const [myDetailsLoaded, setMyDetailsLoaded] = useState(false);
+  const [savingName, setSavingName] = useState(false);
+  const [savingEmail, setSavingEmail] = useState(false);
+  const { user } = useAuth();
 
   useEffect(() => {
     let cancelled = false;
