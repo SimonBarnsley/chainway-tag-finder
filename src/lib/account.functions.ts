@@ -18,7 +18,7 @@ async function getCallerEmail(userId: string): Promise<string | null> {
 export const logAudit = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .inputValidator(
-    (input: { companySlug: string; action: string; details?: Record<string, unknown> }) => {
+    (input: { companySlug: string; action: string; details?: Record<string, string | number | boolean | null> }) => {
       if (!input?.companySlug || typeof input.companySlug !== "string") {
         throw new Response("companySlug required", { status: 400 });
       }
@@ -53,7 +53,7 @@ export interface AuditEntry {
   id: string;
   user_email: string | null;
   action: string;
-  details: Record<string, unknown> | null;
+  details: Record<string, string | number | boolean | null> | null;
   created_at: string;
 }
 
