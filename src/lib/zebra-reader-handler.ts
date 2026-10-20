@@ -427,7 +427,7 @@ export async function handleZebraReaderPost(
 
   const { error } = await supabaseAdmin
     .from("rfid_scans")
-    .upsert(records, { onConflict: "epc", ignoreDuplicates: false });
+    .upsert(records, { onConflict: "company_slug,epc", ignoreDuplicates: false });
 
   if (error) {
     await writeDebug(tags.length, `database error: ${error.message}`);

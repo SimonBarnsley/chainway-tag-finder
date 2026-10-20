@@ -84,7 +84,7 @@ export const processScan = createServerFn({ method: "POST" })
           company_slug: companySlug,
         },
       ],
-      { onConflict: "epc", ignoreDuplicates: false }
+      { onConflict: "company_slug,epc", ignoreDuplicates: false }
     );
     if (scanErr) {
       console.error("[processScan] rfid_scans upsert error:", scanErr.message);

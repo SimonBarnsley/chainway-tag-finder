@@ -77,7 +77,7 @@ function GoodsIn() {
         scan_count: (ex.get(epc)?.scan_count ?? 0) + (tags.get(epc) ?? 1),
         location,
       }));
-      const { error } = await supabase.from("rfid_scans").upsert(rows, { onConflict: "epc" });
+      const { error } = await supabase.from("rfid_scans").upsert(rows, { onConflict: "company_slug,epc" });
       if (error) throw new Error(error.message);
       try {
         await linkFn({ data: { epcs } });

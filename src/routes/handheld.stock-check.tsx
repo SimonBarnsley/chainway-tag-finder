@@ -135,7 +135,7 @@ function StockCheck() {
       }));
       const { error } = await supabase
         .from("rfid_scans")
-        .upsert(rows, { onConflict: "epc", ignoreDuplicates: false });
+        .upsert(rows, { onConflict: "company_slug,epc", ignoreDuplicates: false });
       if (error) throw new Error(error.message);
 
       // Link tags to items and move each linked item to this location.
