@@ -470,6 +470,96 @@ function AdminContent() {
           </CardContent>
         </Card>
 
+        {/* Download my data — GDPR data portability */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <Download className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Download My Data</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Download everything the system holds about you — your profile, roles, alerts, rules you created and your activity log — as a single file.
+            </p>
+            <Button size="sm" variant="outline" onClick={handleExportData} disabled={exporting} className="gap-1">
+              <Download className="h-3.5 w-3.5" /> {exporting ? "Preparing..." : "Download my data"}
+            </Button>
+          </CardContent>
+        </Card>
+
+        {/* Delete my account — GDPR right to erasure */}
+        <Card className="border-destructive/40">
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <AlertTriangle className="h-4 w-4 text-destructive" />
+              <h2 className="text-sm font-semibold text-foreground">Delete My Account</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Permanently delete your account and sign you out. This cannot be undone. Super admin accounts cannot be deleted this way.
+            </p>
+            {!confirmDelete ? (
+              <Button size="sm" variant="destructive" onClick={() => setConfirmDelete(true)}>
+                Delete my account
+              </Button>
+            ) : (
+              <div className="space-y-2">
+                <Label htmlFor="delete-password" className="text-xs text-muted-foreground">Enter your password to confirm</Label>
+                <div className="flex gap-2">
+                  <Input
+                    id="delete-password"
+                    type="password"
+                    value={deletePassword}
+                    onChange={(e) => setDeletePassword(e.target.value)}
+                    placeholder="Your password"
+                    className="flex-1"
+                    autoComplete="current-password"
+                  />
+                  <Button size="sm" variant="destructive" onClick={handleDeleteAccount} disabled={deleting}>
+                    {deleting ? "Deleting..." : "Confirm delete"}
+                  </Button>
+                  <Button size="sm" variant="ghost" onClick={() => { setConfirmDelete(false); setDeletePassword(""); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Audit log — record of admin actions */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <div className="flex items-center gap-2">
+              <ScrollText className="h-4 w-4 text-primary" />
+              <h2 className="text-sm font-semibold text-foreground">Audit Log</h2>
+            </div>
+            <p className="text-xs text-muted-foreground">
+              Recent actions in this company — user changes, rule changes, settings updates and account events.
+            </p>
+            {!auditLoaded ? (
+              <p className="text-xs text-muted-foreground">Loading…</p>
+            ) : auditEntries.length === 0 ? (
+              <p className="text-xs text-muted-foreground">No activity recorded yet.</p>
+            ) : (
+              <div className="max-h-72 overflow-y-auto rounded-md border border-border divide-y divide-border">
+                {auditEntries.map((e) => (
+                  <div key={e.id} className="px-3 py-2 text-xs">
+                    <div className="flex items-center justify-between gap-2">
+                      <span className="font-medium text-foreground">{e.action}</span>
+                      <span className="text-muted-foreground whitespace-nowrap">{new Date(e.created_at).toLocaleString()}</span>
+                    </div>
+                    <p className="text-muted-foreground">
+                      {e.user_email ?? "Unknown user"}
+                      {e.details && Object.keys(e.details).length > 0 && (
+                        <> · {Object.entries(e.details).map(([k, v]) => `${k}: ${String(v)}`).join(", ")}</>
+                      )}
+                    </p>
+                  </div>
+                ))}
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
         {/* Data retention — automatic nightly clean-up of old data */}
         <Card>
           <CardContent className="p-4 space-y-3">
