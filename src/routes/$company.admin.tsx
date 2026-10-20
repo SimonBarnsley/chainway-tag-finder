@@ -180,6 +180,55 @@ function AdminContent() {
     }
   };
 
+  const handleExportData = async () => {
+    setExporting(true);
+    try {
+      const data = await runExport();
+      const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json" });
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement("a");
+      a.href = url;
+      a.download = `scanloc8-my-data-${new Date().toISOString().slice(0, 10)}.json`;
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+      setTimeout(() => URL.revokeObjectURL(url), 30_000);
+      audit({ data: { companySlug: company, action: "account.data_exported" } }).catch(() => {});
+      toast.success("Your data has been downloaded");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Export failed");
+    } finally {
+      setExporting(false);
+    }
+  };
+
+  const handleDeleteAccount = async () => {
+    if (!deletePassword) { toast.error("Enter your password to confirm"); return; }
+    setDeleting(true);
+    try {
+      const result = await runDeleteAccount({ data: { password: deletePassword } });
+      if (!result.ok) { toast.error(result.error ?? "Could not delete account"); return; }
+      await supabase.auth.signOut();
+      toast.success("Your account has been deleted");
+      navigate({ to: "/signin" });
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Could not delete account");
+    } finally {
+      setDeleting(false);
+    }
+  };
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      const result = await fetchAuditLog({ data: { companySlug: company } });
+      if (cancelled) return;
+      if (result.ok) setAuditEntries(result.entries);
+      setAuditLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [company, fetchAuditLog]);
+
   const handleSavePrefix = async () => {
     setSavingPrefix(true);
     try {
