@@ -72,15 +72,98 @@ function AdminContent() {
     (async () => {
       const { data } = await supabase
         .from("company_settings")
-        .select("epc_tag_prefix")
+        .select("epc_tag_prefix, scan_retention_days, alert_retention_days")
         .eq("company_slug", company)
         .maybeSingle();
       if (cancelled) return;
       setTagPrefix((data?.epc_tag_prefix ?? "").toUpperCase());
       setTagPrefixLoaded(true);
+      setScanRetention(String(data?.scan_retention_days ?? 365));
+      setAlertRetention(String(data?.alert_retention_days ?? 90));
+      setRetentionLoaded(true);
     })();
     return () => { cancelled = true; };
   }, [company]);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      if (!user) return;
+      const { data } = await supabase
+        .from("profiles")
+        .select("display_name, email")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (cancelled) return;
+      setMyName(data?.display_name ?? "");
+      setMyEmail(data?.email ?? user.email ?? "");
+      setMyDetailsLoaded(true);
+    })();
+    return () => { cancelled = true; };
+  }, [user]);
+
+  const handleSaveRetention = async () => {
+    const scanDays = parseInt(scanRetention, 10);
+    const alertDays = parseInt(alertRetention, 10);
+    if (!Number.isFinite(scanDays) || scanDays < 1 || scanDays > 3650) {
+      toast.error("Scan history retention must be between 1 and 3650 days");
+      return;
+    }
+    if (!Number.isFinite(alertDays) || alertDays < 1 || alertDays > 3650) {
+      toast.error("Alert retention must be between 1 and 3650 days");
+      return;
+    }
+    setSavingRetention(true);
+    try {
+      const { error } = await supabase
+        .from("company_settings")
+        .upsert(
+          { company_slug: company, scan_retention_days: scanDays, alert_retention_days: alertDays },
+          { onConflict: "company_slug" }
+        );
+      if (error) throw error;
+      toast.success("Retention settings saved — old data is cleared automatically each night");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to save");
+    } finally {
+      setSavingRetention(false);
+    }
+  };
+
+  const handleSaveName = async () => {
+    if (!user) return;
+    setSavingName(true);
+    try {
+      const { error } = await supabase
+        .from("profiles")
+        .update({ display_name: myName.trim() || null })
+        .eq("user_id", user.id);
+      if (error) throw error;
+      toast.success("Name updated");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to update name");
+    } finally {
+      setSavingName(false);
+    }
+  };
+
+  const handleSaveEmail = async () => {
+    const email = myEmail.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      toast.error("Enter a valid email address");
+      return;
+    }
+    setSavingEmail(true);
+    try {
+      const { error } = await supabase.auth.updateUser({ email });
+      if (error) throw error;
+      toast.success("Confirmation sent — check the new address and click the link to finish the change");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "Failed to change email");
+    } finally {
+      setSavingEmail(false);
+    }
+  };
 
   const handleSavePrefix = async () => {
     setSavingPrefix(true);
