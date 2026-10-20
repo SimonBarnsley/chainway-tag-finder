@@ -24,6 +24,30 @@ export const Route = createFileRoute("/mfa")({
 
 type Mode = "loading" | "enroll" | "verify";
 
+// What the authenticator app shows for this account. The backend builds its
+// otpauth URI from the hosting address, so without this the app would list the
+// deployment hostname instead of the product name. Only the label and issuer
+// change — secret, algorithm, digits and period are passed through untouched,
+// so codes still verify.
+const MFA_ISSUER = "ScanLoc8";
+
+const encodeLabel = (value: string) =>
+  value.replace(/[/?#&%=+]/g, (c) => `%${c.charCodeAt(0).toString(16).toUpperCase()}`);
+
+function rebrandTotpUri(raw: string): string {
+  try {
+    const url = new URL(raw);
+    const label = decodeURIComponent(url.pathname.replace(/^\//, ""));
+    const account = label.includes(":") ? label.slice(label.lastIndexOf(":") + 1) : label;
+    const params = new URLSearchParams(url.search);
+    params.set("issuer", MFA_ISSUER);
+    const query = params.toString();
+    return `otpauth://${url.host}/${encodeLabel(MFA_ISSUER)}:${encodeLabel(account)}${query ? `?${query}` : ""}`;
+  } catch {
+    return raw;
+  }
+}
+
 function MfaPage() {
   const navigate = useNavigate();
   const [mode, setMode] = useState<Mode>("loading");
