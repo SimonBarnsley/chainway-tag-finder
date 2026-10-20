@@ -30,6 +30,7 @@ function MfaPage() {
   const [factorId, setFactorId] = useState("");
   const [qr, setQr] = useState("");
   const [secret, setSecret] = useState("");
+  const [uri, setUri] = useState("");
   const [code, setCode] = useState("");
   const [busy, setBusy] = useState(false);
 
