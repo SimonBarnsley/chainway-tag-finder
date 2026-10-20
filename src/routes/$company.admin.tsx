@@ -377,6 +377,57 @@ function AdminContent() {
           </CardContent>
         </Card>
 
+        {/* My details — every user can correct their own name and email */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">My Details</h2>
+            <p className="text-xs text-muted-foreground">
+              Correct your own name or email. Changing your email sends a confirmation link to the new address — the change only takes effect once you click it.
+            </p>
+            <div className="space-y-1.5">
+              <Label htmlFor="my-name" className="text-xs text-muted-foreground">Display name</Label>
+              <div className="flex gap-2">
+                <Input id="my-name" value={myName} onChange={(e) => setMyName(e.target.value)} maxLength={100} disabled={!myDetailsLoaded} className="flex-1" />
+                <Button size="sm" onClick={handleSaveName} disabled={!myDetailsLoaded || savingName}>
+                  {savingName ? "Saving..." : "Save"}
+                </Button>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <Label htmlFor="my-email" className="text-xs text-muted-foreground">Email</Label>
+              <div className="flex gap-2">
+                <Input id="my-email" type="email" value={myEmail} onChange={(e) => setMyEmail(e.target.value)} maxLength={255} disabled={!myDetailsLoaded} className="flex-1" />
+                <Button size="sm" onClick={handleSaveEmail} disabled={!myDetailsLoaded || savingEmail}>
+                  {savingEmail ? "Sending..." : "Change"}
+                </Button>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+
+        {/* Data retention — automatic nightly clean-up of old data */}
+        <Card>
+          <CardContent className="p-4 space-y-3">
+            <h2 className="text-sm font-semibold text-foreground">Data Retention</h2>
+            <p className="text-xs text-muted-foreground">
+              Old data for this company is deleted automatically every night. Contact enquiries are emailed to you and never stored, so there is nothing to clean up there.
+            </p>
+            <div className="grid gap-3 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <Label htmlFor="ret-scan" className="text-xs text-muted-foreground">Keep scan history for (days)</Label>
+                <Input id="ret-scan" type="number" min={1} max={3650} value={scanRetention} onChange={(e) => setScanRetention(e.target.value)} disabled={!retentionLoaded} />
+              </div>
+              <div className="space-y-1.5">
+                <Label htmlFor="ret-alert" className="text-xs text-muted-foreground">Keep read alerts for (days)</Label>
+                <Input id="ret-alert" type="number" min={1} max={3650} value={alertRetention} onChange={(e) => setAlertRetention(e.target.value)} disabled={!retentionLoaded} />
+              </div>
+            </div>
+            <Button size="sm" onClick={handleSaveRetention} disabled={!retentionLoaded || savingRetention}>
+              {savingRetention ? "Saving..." : "Save retention settings"}
+            </Button>
+          </CardContent>
+        </Card>
+
         {showCreateForm && (
           <Card>
             <CardContent className="p-4">
