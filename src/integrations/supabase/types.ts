@@ -589,7 +589,7 @@ export type Database = {
       }
       rfid_scans: {
         Row: {
-          company_slug: string | null
+          company_slug: string
           device_name: string | null
           epc: string
           first_seen: string
@@ -602,7 +602,7 @@ export type Database = {
           tid: string | null
         }
         Insert: {
-          company_slug?: string | null
+          company_slug: string
           device_name?: string | null
           epc: string
           first_seen?: string
@@ -615,7 +615,7 @@ export type Database = {
           tid?: string | null
         }
         Update: {
-          company_slug?: string | null
+          company_slug?: string
           device_name?: string | null
           epc?: string
           first_seen?: string
