@@ -19,6 +19,7 @@ import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as ResetPasswordRouteImport } from './routes/reset-password'
 import { Route as SigninRouteImport } from './routes/signin'
 import { Route as SignupRouteImport } from './routes/signup'
+import { Route as TermsRouteImport } from './routes/terms'
 import { Route as CompanyIndexRouteImport } from './routes/$company.index'
 import { Route as CompanyAdminRouteImport } from './routes/$company.admin'
 import { Route as CompanyAdminDashboardRouteImport } from './routes/$company.admin-dashboard'
@@ -50,6 +51,7 @@ import { Route as CompanyMapsEditRouteImport } from './routes/$company.maps.edit
 import { Route as CompanyMapsViewRouteImport } from './routes/$company.maps.view'
 import { Route as ApiPublicDispatchAlertEmailsRouteImport } from './routes/api/public/dispatch-alert-emails'
 import { Route as ApiChainwayReaderCompanyKeyRouteImport } from './routes/api.chainway-reader.$company.$key'
+import { Route as ApiPublicJobsRetentionCleanupRouteImport } from './routes/api/public/jobs/retention-cleanup'
 import { Route as ApiZebraReaderCompanyKeyRouteImport } from './routes/api.zebra-reader.$company.$key'
 import { Route as LovableEmailAuthPreviewRouteImport } from './routes/lovable/email/auth/preview'
 import { Route as LovableEmailAuthWebhookRouteImport } from './routes/lovable/email/auth/webhook'
@@ -103,6 +105,11 @@ const SigninRoute = SigninRouteImport.update({
 const SignupRoute = SignupRouteImport.update({
   id: '/signup',
   path: '/signup',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const TermsRoute = TermsRouteImport.update({
+  id: '/terms',
+  path: '/terms',
   getParentRoute: () => rootRouteImport,
 } as any)
 const CompanyIndexRoute = CompanyIndexRouteImport.update({
@@ -262,6 +269,12 @@ const ApiChainwayReaderCompanyKeyRoute =
     path: '/$company/$key',
     getParentRoute: () => ApiChainwayReaderRoute,
   } as any)
+const ApiPublicJobsRetentionCleanupRoute =
+  ApiPublicJobsRetentionCleanupRouteImport.update({
+    id: '/api/public/jobs/retention-cleanup',
+    path: '/api/public/jobs/retention-cleanup',
+    getParentRoute: () => rootRouteImport,
+  } as any)
 const ApiZebraReaderCompanyKeyRoute =
   ApiZebraReaderCompanyKeyRouteImport.update({
     id: '/$company/$key',
@@ -296,6 +309,7 @@ export interface FileRoutesByFullPath {
   '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/alerts': typeof CompanyAlertsRoute
@@ -327,6 +341,7 @@ export interface FileRoutesByFullPath {
   '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
+  '/api/public/jobs/retention-cleanup': typeof ApiPublicJobsRetentionCleanupRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -342,6 +357,7 @@ export interface FileRoutesByTo {
   '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/alerts': typeof CompanyAlertsRoute
@@ -373,6 +389,7 @@ export interface FileRoutesByTo {
   '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
+  '/api/public/jobs/retention-cleanup': typeof ApiPublicJobsRetentionCleanupRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -390,6 +407,7 @@ export interface FileRoutesById {
   '/reset-password': typeof ResetPasswordRoute
   '/signin': typeof SigninRoute
   '/signup': typeof SignupRoute
+  '/terms': typeof TermsRoute
   '/$company/admin': typeof CompanyAdminRoute
   '/$company/admin-dashboard': typeof CompanyAdminDashboardRoute
   '/$company/alerts': typeof CompanyAlertsRoute
@@ -421,6 +439,7 @@ export interface FileRoutesById {
   '/api/public/dispatch-alert-emails': typeof ApiPublicDispatchAlertEmailsRoute
   '/$company/maps/': typeof CompanyMapsIndexRoute
   '/api/chainway-reader/$company/$key': typeof ApiChainwayReaderCompanyKeyRoute
+  '/api/public/jobs/retention-cleanup': typeof ApiPublicJobsRetentionCleanupRoute
   '/api/zebra-reader/$company/$key': typeof ApiZebraReaderCompanyKeyRoute
   '/lovable/email/auth/preview': typeof LovableEmailAuthPreviewRoute
   '/lovable/email/auth/webhook': typeof LovableEmailAuthWebhookRoute
@@ -439,6 +458,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signin'
     | '/signup'
+    | '/terms'
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/alerts'
@@ -470,6 +490,7 @@ export interface FileRouteTypes {
     | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
+    | '/api/public/jobs/retention-cleanup'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -485,6 +506,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signin'
     | '/signup'
+    | '/terms'
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/alerts'
@@ -516,6 +538,7 @@ export interface FileRouteTypes {
     | '/api/public/dispatch-alert-emails'
     | '/$company/maps'
     | '/api/chainway-reader/$company/$key'
+    | '/api/public/jobs/retention-cleanup'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -532,6 +555,7 @@ export interface FileRouteTypes {
     | '/reset-password'
     | '/signin'
     | '/signup'
+    | '/terms'
     | '/$company/admin'
     | '/$company/admin-dashboard'
     | '/$company/alerts'
@@ -563,6 +587,7 @@ export interface FileRouteTypes {
     | '/api/public/dispatch-alert-emails'
     | '/$company/maps/'
     | '/api/chainway-reader/$company/$key'
+    | '/api/public/jobs/retention-cleanup'
     | '/api/zebra-reader/$company/$key'
     | '/lovable/email/auth/preview'
     | '/lovable/email/auth/webhook'
@@ -580,6 +605,7 @@ export interface RootRouteChildren {
   ResetPasswordRoute: typeof ResetPasswordRoute
   SigninRoute: typeof SigninRoute
   SignupRoute: typeof SignupRoute
+  TermsRoute: typeof TermsRoute
   ApiChainwayReaderRoute: typeof ApiChainwayReaderRouteWithChildren
   ApiZebraReaderRoute: typeof ApiZebraReaderRouteWithChildren
   HandheldGoodsInRoute: typeof HandheldGoodsInRoute
@@ -588,6 +614,7 @@ export interface RootRouteChildren {
   HandheldStockMovementRoute: typeof HandheldStockMovementRoute
   HandheldIndexRoute: typeof HandheldIndexRoute
   ApiPublicDispatchAlertEmailsRoute: typeof ApiPublicDispatchAlertEmailsRoute
+  ApiPublicJobsRetentionCleanupRoute: typeof ApiPublicJobsRetentionCleanupRoute
   LovableEmailAuthPreviewRoute: typeof LovableEmailAuthPreviewRoute
   LovableEmailAuthWebhookRoute: typeof LovableEmailAuthWebhookRoute
   LovableEmailTransactionalPreviewRoute: typeof LovableEmailTransactionalPreviewRoute
@@ -663,6 +690,13 @@ declare module '@tanstack/react-router' {
       path: '/signup'
       fullPath: '/signup'
       preLoaderRoute: typeof SignupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/terms': {
+      id: '/terms'
+      path: '/terms'
+      fullPath: '/terms'
+      preLoaderRoute: typeof TermsRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/$company/': {
@@ -882,6 +916,13 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiChainwayReaderCompanyKeyRouteImport
       parentRoute: typeof ApiChainwayReaderRoute
     }
+    '/api/public/jobs/retention-cleanup': {
+      id: '/api/public/jobs/retention-cleanup'
+      path: '/api/public/jobs/retention-cleanup'
+      fullPath: '/api/public/jobs/retention-cleanup'
+      preLoaderRoute: typeof ApiPublicJobsRetentionCleanupRouteImport
+      parentRoute: typeof rootRouteImport
+    }
     '/api/zebra-reader/$company/$key': {
       id: '/api/zebra-reader/$company/$key'
       path: '/$company/$key'
@@ -1000,6 +1041,7 @@ const rootRouteChildren: RootRouteChildren = {
   ResetPasswordRoute: ResetPasswordRoute,
   SigninRoute: SigninRoute,
   SignupRoute: SignupRoute,
+  TermsRoute: TermsRoute,
   ApiChainwayReaderRoute: ApiChainwayReaderRouteWithChildren,
   ApiZebraReaderRoute: ApiZebraReaderRouteWithChildren,
   HandheldGoodsInRoute: HandheldGoodsInRoute,
@@ -1008,6 +1050,7 @@ const rootRouteChildren: RootRouteChildren = {
   HandheldStockMovementRoute: HandheldStockMovementRoute,
   HandheldIndexRoute: HandheldIndexRoute,
   ApiPublicDispatchAlertEmailsRoute: ApiPublicDispatchAlertEmailsRoute,
+  ApiPublicJobsRetentionCleanupRoute: ApiPublicJobsRetentionCleanupRoute,
   LovableEmailAuthPreviewRoute: LovableEmailAuthPreviewRoute,
   LovableEmailAuthWebhookRoute: LovableEmailAuthWebhookRoute,
   LovableEmailTransactionalPreviewRoute: LovableEmailTransactionalPreviewRoute,
