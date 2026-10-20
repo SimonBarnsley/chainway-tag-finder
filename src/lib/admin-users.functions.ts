@@ -190,6 +190,10 @@ export const updateUserCompany = createServerFn({ method: "POST" })
       .eq("user_id", data.userId);
 
     if (error) throw new Response(error.message, { status: 500 });
+    await writeAudit(data.companySlug, context.userId, "user.company_changed", {
+      target_user_id: data.userId,
+      company_slug: data.companySlug,
+    });
     return { ok: true };
   });
 
@@ -345,6 +349,10 @@ export const createUser = createServerFn({ method: "POST" })
       if (rErr) throw new Response(rErr.message, { status: 500 });
     }
 
+    await writeAudit(comp?.slug ?? companySlug, context.userId, "user.created", {
+      email: data.email,
+      role: data.role ?? "user",
+    });
     return { ok: true, userId: created.user.id };
    } catch (e) {
     const msg = e instanceof Response
@@ -375,9 +383,14 @@ export const deleteUserCompletely = createServerFn({ method: "POST" })
       .from("user_roles").select("id").eq("user_id", data.userId).eq("role", "super_admin").maybeSingle();
     if (targetSuper) throw new Response("Cannot delete a super admin", { status: 400 });
 
+    const { data: targetProfile } = await supabaseAdmin
+      .from("profiles").select("company_slug, email").eq("user_id", data.userId).maybeSingle();
     await supabaseAdmin.from("user_roles").delete().eq("user_id", data.userId);
     await supabaseAdmin.from("profiles").delete().eq("user_id", data.userId);
     const { error } = await supabaseAdmin.auth.admin.deleteUser(data.userId);
     if (error) throw new Response(error.message, { status: 500 });
+    await writeAudit(targetProfile?.company_slug, context.userId, "user.deleted", {
+      email: targetProfile?.email ?? null,
+    });
     return { ok: true };
   });
