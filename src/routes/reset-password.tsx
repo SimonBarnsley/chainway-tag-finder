@@ -64,8 +64,8 @@ function ResetPasswordPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (password.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (password.length < 10) {
+      toast.error("Password must be at least 10 characters");
       return;
     }
     if (password !== confirm) {
@@ -130,7 +130,7 @@ function ResetPasswordPage() {
                   onChange={(e) => setPassword(e.target.value)}
                   placeholder="••••••••"
                   required
-                  minLength={6}
+                  minLength={10}
                 />
                 <button
                   type="button"
@@ -150,7 +150,7 @@ function ResetPasswordPage() {
                 onChange={(e) => setConfirm(e.target.value)}
                 placeholder="••••••••"
                 required
-                minLength={6}
+                minLength={10}
               />
             </div>
             <Button type="submit" className="w-full" disabled={loading}>

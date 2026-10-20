@@ -225,8 +225,8 @@ function UsersContent() {
       toast.error("Email and password are required");
       return;
     }
-    if (newPassword.length < 6) {
-      toast.error("Password must be at least 6 characters");
+    if (newPassword.length < 10) {
+      toast.error("Password must be at least 10 characters");
       return;
     }
     if (companyMode === "existing" && !newCompanySlug) {
