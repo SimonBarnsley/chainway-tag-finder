@@ -5,7 +5,7 @@ import type { Database } from "@/integrations/supabase/types";
 
 const schema = z.object({
   email: z.string().trim().email().max(255),
-  password: z.string().min(6).max(128),
+  password: z.string().min(10).max(128),
   displayName: z.string().trim().max(100).optional(),
   companyName: z.string().trim().min(1).max(150),
   redirectTo: z.string().url().max(500),

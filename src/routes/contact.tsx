@@ -86,6 +86,10 @@ function ContactPage() {
               <Field label="Message *" error={errors["message"]}><textarea className={`${field} min-h-36`} value={form.message} onChange={set("message")} maxLength={2000} /></Field>
               <input type="text" tabIndex={-1} autoComplete="off" aria-hidden="true" className="hidden" value={form.website} onChange={set("website")} />
               {status === "error" && <p className="text-sm text-destructive">Sorry, your message couldn't be sent. Please try again shortly.</p>}
+              <p className="text-xs text-muted-foreground">
+                We'll only use your details to reply to your enquiry. See our{" "}
+                <Link to="/privacy" className="text-primary hover:underline">privacy policy</Link>.
+              </p>
               <Button type="submit" size="lg" disabled={status === "sending"} className="w-full sm:w-auto">
                 {status === "sending" ? <><Loader2 className="animate-spin" /> Sending…</> : <>Send message <Send /></>}
               </Button>

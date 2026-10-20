@@ -134,7 +134,7 @@ function AdminContent() {
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errors.email = "Invalid email format";
     else if (email.length > 255) errors.email = "Email must be under 255 characters";
     if (!createPassword) errors.password = "Password is required";
-    else if (createPassword.length < 6) errors.password = "Password must be at least 6 characters";
+    else if (createPassword.length < 10) errors.password = "Password must be at least 10 characters";
     else if (createPassword.length > 128) errors.password = "Password must be under 128 characters";
     if (createDisplayName.length > 100) errors.displayName = "Display name must be under 100 characters";
     if (createCompanyName.length > 150) errors.companyName = "Company name must be under 150 characters";
@@ -310,7 +310,7 @@ function AdminContent() {
                 <div className="space-y-1.5">
                   <Label htmlFor="create-password" className="text-xs">Password <span className="text-destructive">*</span></Label>
                   <div className="relative">
-                    <Input id="create-password" type={showPassword ? "text" : "password"} value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} placeholder="Min. 6 characters" required minLength={6} maxLength={128} className="pr-10" />
+                    <Input id="create-password" type={showPassword ? "text" : "password"} value={createPassword} onChange={(e) => setCreatePassword(e.target.value)} placeholder="Min. 10 characters" required minLength={10} maxLength={128} className="pr-10" />
                     <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-2 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground transition-colors">
                       {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                     </button>

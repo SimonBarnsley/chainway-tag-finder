@@ -351,6 +351,9 @@ function LandingPage() {
             <Link to="/contact" className="hover:text-foreground">
               Contact us
             </Link>
+            <Link to="/privacy" className="hover:text-foreground">
+              Privacy
+            </Link>
             <Link to="/signin" className="hover:text-foreground">
               Sign in
             </Link>

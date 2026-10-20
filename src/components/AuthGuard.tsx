@@ -1,6 +1,8 @@
+import { useEffect, useState } from "react";
 import { useNavigate } from "@tanstack/react-router";
 import { useAuth } from "@/hooks/use-auth";
 import { usePermissions, type PermissionKey } from "@/hooks/use-permissions";
+import { supabase } from "@/integrations/supabase/client";
 
 interface AuthGuardProps {
   children: React.ReactNode;
@@ -21,8 +23,23 @@ export function AuthGuard({
   const { isAuthenticated, isAdmin, isSuperAdmin, isLoading } = useAuth();
   const { loading: permLoading, has } = usePermissions();
   const navigate = useNavigate();
+  // Admin and super admin accounts must complete two-step sign-in (aal2).
+  const [mfaOk, setMfaOk] = useState<boolean | null>(null);
 
-  if (isLoading || (requirePermission && permLoading)) {
+  useEffect(() => {
+    if (isLoading || !isAuthenticated) return;
+    if (!isAdmin) { setMfaOk(true); return; }
+    let cancelled = false;
+    supabase.auth.mfa.getAuthenticatorAssuranceLevel().then(({ data }) => {
+      if (cancelled) return;
+      const ok = data?.currentLevel === "aal2";
+      setMfaOk(ok);
+      if (!ok) navigate({ to: "/mfa" });
+    });
+    return () => { cancelled = true; };
+  }, [isLoading, isAuthenticated, isAdmin, navigate]);
+
+  if (isLoading || (requirePermission && permLoading) || (isAuthenticated && !mfaOk)) {
     return (
       <div className="flex min-h-screen items-center justify-center bg-background">
         <div className="text-muted-foreground text-sm">Loading...</div>

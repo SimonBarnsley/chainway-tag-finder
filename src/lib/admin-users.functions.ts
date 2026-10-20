@@ -223,8 +223,8 @@ export const createUser = createServerFn({ method: "POST" })
       if (!input?.email || typeof input.email !== "string") {
         throw new Response("email required", { status: 400 });
       }
-      if (!input?.password || typeof input.password !== "string" || input.password.length < 6) {
-        throw new Response("password must be at least 6 characters", { status: 400 });
+      if (!input?.password || typeof input.password !== "string" || input.password.length < 10) {
+        throw new Response("password must be at least 10 characters", { status: 400 });
       }
       if (!input.companyName && !input.companySlug) {
         throw new Response("companyName or companySlug required", { status: 400 });
