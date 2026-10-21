@@ -138,6 +138,17 @@ function SignupPage() {
               </button>
             </div>
           </div>
+          <p className="rounded-xl border border-border bg-muted/50 px-3 py-2.5 text-[11px] leading-snug text-muted-foreground">
+            <span className="font-semibold text-foreground">Your details:</span>{" "}
+            we record your name, email and company to create and manage your
+            account. Your company administrator controls who has access, and you
+            can correct or delete your details at any time from the Admin page.
+            See our{" "}
+            <Link to="/privacy" className="text-primary hover:underline">
+              privacy policy
+            </Link>
+            .
+          </p>
           <Button type="submit" className="w-full" disabled={loading}>
             {loading ? "Creating account..." : "Sign Up"}
           </Button>
