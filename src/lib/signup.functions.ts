@@ -20,11 +20,10 @@ export const registerAccount = createServerFn({ method: "POST" })
   .handler(async ({ data }): Promise<{ ok: boolean; error?: string }> => {
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    const { data: company } = await supabaseAdmin
-      .from("companies")
-      .select("name, slug")
-      .ilike("name", data.companyName)
-      .maybeSingle();
+    const { data: companies, error: companyError } = await supabaseAdmin
+      .from("companies").select("name, slug");
+    if (companyError) return { ok: false, error: "Could not check registered companies. Please try again." };
+    const company = (companies ?? []).find((c) => c.name.trim().toLowerCase() === data.companyName.trim().toLowerCase());
     if (!company) {
       return {
         ok: false,
