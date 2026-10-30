@@ -36,7 +36,7 @@ function GoodsIn() {
   const [location, setLocation] = useState("");
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
-  const recoveryKey = user && companySlug ? draftKey(user.id, companySlug, "goods-in", location) : undefined;
+  const recoveryKey = user && companySlug ? draftKey(user.id, companySlug, "goods-in", "receiving") : undefined;
   const { tags, clear, storageError } = useHandheldScanner(companySlug, !saving, recoveryKey);
 
   useEffect(() => {

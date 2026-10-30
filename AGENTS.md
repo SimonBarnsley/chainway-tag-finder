@@ -8,3 +8,7 @@
 - Commercial readiness evidence and test protocols live in docs/readiness; distinguish source support, automated checks and field verification so support claims stay defensible.
 - RFID snapshot changes are recorded by a database trigger into tenant-scoped scan_events, with retention matching company scan periods — every write path gets history without trusting browser-inserted events; this is not raw RF telemetry.
 - Registered-company matching and assignable user-role validation use tested pure helpers shared by server actions — crafted requests must not bypass company registration or elevate newly created users.
+- Handheld drafts are versioned, expire after one day, and are scoped to account/company/task/location; Goods In retains its session across receiving-location selection — unsaved RFID work survives reload without adding trigger listeners or automatic replay.
+- Handheld submissions use an authenticated atomic SQL RPC with durable request receipts; identical retries reuse a receipt, movements verify source inside the transaction — avoids double booking and partial source moves when connections interrupt.
+- Client-originated audit messages are explicitly unverified; trusted settings/rule/handheld activity is generated inside database operations — users cannot forge authoritative audit records.
+- Ordinary scan/link server actions use the caller's RLS client; privileged reader keys, backfill and global diagnostics require verified admin guards — avoids service-role bypass of customer permissions.
