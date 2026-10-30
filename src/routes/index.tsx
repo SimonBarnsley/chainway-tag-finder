@@ -50,7 +50,7 @@ const features = [
     icon: ClipboardList,
     title: "Stock Check",
     description:
-      "Count a location in minutes. See what's present, what's missing, and jump straight to geiger search for anything unaccounted for.",
+      "Compare tags observed during a stock check with those previously recorded at a location, then search for tags not seen.",
   },
   {
     icon: Warehouse,
@@ -62,13 +62,13 @@ const features = [
     icon: Radar,
     title: "Geiger / Find Tag",
     description:
-      "Locate a specific tag with a live proximity meter and constant beep — just like Zebra's 123RFID locate, built into your workflow.",
+      "Search for a selected tag using real Zebra SDK proximity readings and a constant beep. The percentage is relative proximity, not a distance measurement.",
   },
   {
     icon: Wifi,
     title: "Fixed reader monitoring",
     description:
-      "Chainway UA4E and Zebra FX readers post reads over HTTP. The Readers page shows live connection status so you know when one drops off.",
+      "Chainway UA4E and Zebra FX readers post reads over HTTPS. See when each reader last contacted ScanLoc8; recent contact does not guarantee tag detection.",
   },
   {
     icon: Map,
@@ -161,7 +161,7 @@ function LandingPage() {
             UHF RFID Tracking
           </p>
           <h1 className="mx-auto max-w-3xl font-heading text-4xl font-bold leading-tight tracking-tight md:text-6xl">
-            Know exactly where every tagged item is.
+            ScanLoc8 RFID stock management
           </h1>
           <p className="mx-auto mt-5 max-w-2xl text-base text-muted-foreground md:text-lg">
             ScanLoc8 turns your Chainway and Zebra RFID readers into a complete
@@ -241,9 +241,10 @@ function LandingPage() {
             <div className="rounded-xl border border-border/60 bg-card p-6">
               <h3 className="font-heading text-lg font-semibold">Handhelds</h3>
               <p className="mt-2 text-sm text-muted-foreground">
-                Chainway C75 with the built-in UHF reader, and Zebra TC22R via
-                keyboard wedge or DataWedge. Goods In, Stock Check, Inventory
-                and geiger locating in a dedicated handheld interface.
+                Chainway C75 captures tags through keyboard wedge. Zebra TC22R
+                uses the native Android reader connection for scanning and
+                proximity search, with DataWedge available for browser scanning.
+                Hardware and tag configurations require on-site validation.
               </p>
             </div>
             <div className="rounded-xl border border-border/60 bg-card p-6">
@@ -310,8 +311,8 @@ function LandingPage() {
             Ready to start tracking?
           </h2>
           <p className="mx-auto mt-3 max-w-xl text-sm text-muted-foreground md:text-base">
-            Sign in to your workspace, or create an account to get your company
-            set up in minutes.
+            Sign in to your workspace, or create an account for a company
+            already registered by your administrator.
           </p>
           <div className="mt-7 flex flex-wrap items-center justify-center gap-3">
             {signedIn ? (

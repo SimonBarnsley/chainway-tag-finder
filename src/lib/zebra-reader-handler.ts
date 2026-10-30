@@ -2,6 +2,7 @@ import { extractTagsFromJson, extractTagsFromXml, extractTagsFromText, deduplica
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { autoLinkEpcsToItems } from "@/lib/auto-link-epcs";
 import { syncItemLocationsForEpcs } from "@/lib/sync-item-locations";
+import { redactReaderHeaders, redactReaderUrl } from "./reader-debug-redaction";
 
 export const ZEBRA_CORS_HEADERS = {
   "Access-Control-Allow-Origin": "*",
@@ -124,10 +125,7 @@ export async function handleZebraReaderPost(
     (contentType.includes("text/plain") && trimmed.startsWith("<")) ||
     (!contentType.includes("json") && trimmed.startsWith("<"));
 
-  const headersObj: Record<string, string> = {};
-  request.headers.forEach((v, k) => {
-    headersObj[k] = k.toLowerCase() === "authorization" ? "[redacted]" : v;
-  });
+  const headersObj = redactReaderHeaders(request.headers);
   const remoteIp =
     request.headers.get("cf-connecting-ip") ||
     request.headers.get("x-forwarded-for") ||
@@ -143,9 +141,9 @@ export async function handleZebraReaderPost(
         content_type: contentType || null,
         content_length: rawBody.length,
         user_agent: request.headers.get("user-agent"),
-        query_string: url.search || url.pathname,
+        query_string: redactReaderUrl(url),
         headers: headersObj,
-        raw_body: rawBody.slice(0, 16000),
+        raw_body: "[omitted: request bodies may contain credentials or private tag data]",
         parsed_tag_count: parsedCount,
         parse_error: parseError,
       });
@@ -163,12 +161,13 @@ export async function handleZebraReaderPost(
   }
 
   // Per-company key first; companies without one fall back to the shared key.
-  const { data: companyKeyRow } = await supabaseAdmin
+  const { data: companyKeyRow, error: companyKeyError } = await supabaseAdmin
     .from("company_reader_keys" as never)
     .select("api_key")
     .eq("company_slug", companySlug)
     .maybeSingle();
   const companyKey = (companyKeyRow as { api_key?: string } | null)?.api_key;
+  if (companyKeyError) return respond({ error: "Reader authentication unavailable" }, 503);
   const expectedKey = companyKey || process.env.ZEBRA_READER_API_KEY;
   if (!expectedKey || apiKey !== expectedKey) {
     await writeDebug(null, companyKey ? "invalid company api key" : "invalid api key");
@@ -273,7 +272,7 @@ export async function handleZebraReaderPost(
 
   const records = tags.map((t) => {
     let location = fallbackLocation;
-    if (t.antennaPort && antennaLocationMap[t.antennaPort]) {
+    if (t.antennaPort !== undefined && antennaLocationMap[t.antennaPort]) {
       location = antennaLocationMap[t.antennaPort];
     }
     return {
