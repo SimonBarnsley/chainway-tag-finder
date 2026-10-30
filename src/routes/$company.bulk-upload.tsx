@@ -1,4 +1,4 @@
-import { csvRow, csvCell, pgrstValue, wildcardTest } from "@/lib/csv-safe";
+import { csvCell, pgrstValue } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useState, useRef } from "react";
