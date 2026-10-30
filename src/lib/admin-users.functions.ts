@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireTenantAdmin, requireSuperAdmin } from "./tenant-access.server";
 import type { Json } from "@/integrations/supabase/types";
+import { findRegisteredCompany, isAssignableUserRole } from "./company-registration";
 
 export interface PendingUser {
   id: string;
@@ -252,7 +253,7 @@ export const createUser = createServerFn({ method: "POST" })
       if (!input.companyName && !input.companySlug) {
         throw new Response("companyName or companySlug required", { status: 400 });
       }
-      if (input.role !== undefined && !["admin", "supervisor", "user"].includes(input.role)) {
+      if (input.role !== undefined && !isAssignableUserRole(input.role)) {
         throw new Response("Invalid assignable role", { status: 400 });
       }
       return input;
@@ -265,7 +266,7 @@ export const createUser = createServerFn({ method: "POST" })
 
     const { data: registered, error: companyError } = await supabaseAdmin.from("companies").select("name, slug");
     if (companyError) throw new Error("Could not load registered companies");
-    const company = (registered ?? []).find((c) => data.companySlug ? c.slug === data.companySlug : c.name.trim().toLowerCase() === data.companyName?.trim().toLowerCase());
+    const company = findRegisteredCompany(registered ?? [], data);
     if (!company) throw new Response("Unknown registered company", { status: 400 });
     const companyName = company.name;
     const companySlug = company.slug;

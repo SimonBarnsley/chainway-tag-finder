@@ -2,6 +2,7 @@ import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
+import { findRegisteredCompany } from "./company-registration";
 
 const schema = z.object({
   email: z.string().trim().email().max(255),
@@ -23,7 +24,7 @@ export const registerAccount = createServerFn({ method: "POST" })
     const { data: companies, error: companyError } = await supabaseAdmin
       .from("companies").select("name, slug");
     if (companyError) return { ok: false, error: "Could not check registered companies. Please try again." };
-    const company = (companies ?? []).find((c) => c.name.trim().toLowerCase() === data.companyName.trim().toLowerCase());
+    const company = findRegisteredCompany(companies ?? [], data);
     if (!company) {
       return {
         ok: false,
