@@ -200,7 +200,7 @@ export const listCompanies = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ ok: boolean; companies: CompanyOption[]; error?: string }> => {
     try {
-      await requireSuperAdmin(context);
+      const access = await requireTenantAdmin(context);
     const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data, error } = await supabaseAdmin
         .from("profiles")
@@ -217,6 +217,7 @@ export const listCompanies = createServerFn({ method: "POST" })
         }
       }
       const companies = Array.from(map.entries())
+        .filter(([slug]) => access.isSuper || slug === access.companySlug)
         .map(([slug, name]) => ({ slug, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
       return { ok: true, companies };
