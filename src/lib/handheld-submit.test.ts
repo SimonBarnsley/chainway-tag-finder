@@ -1,5 +1,5 @@
 import { expect, it } from "vitest";
-import { retryId } from "./handheld-submit";
+import { retryId } from "./handheld-retry";
 it("reuses the same receipt for retrying an identical handheld submission", () => {
   const values = new Map<string, string>();
   const storage = { getItem: (k: string) => values.get(k) ?? null, setItem: (k: string, v: string) => { values.set(k, v); } };

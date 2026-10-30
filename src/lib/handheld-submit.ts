@@ -1,18 +1,5 @@
 import { supabase } from "@/integrations/supabase/client";
-
-/** Stable retry ID for identical submitted data, including after a browser reload. */
-export function retryId(storage: Pick<Storage, "getItem" | "setItem">, key: string, request: string, generate: () => string): string {
-  const saved = storage.getItem(`${key}:receipt`);
-  if (saved) {
-    try {
-      const value = JSON.parse(saved) as { id: string; request: string };
-      if (value.request === request && typeof value.id === "string") return value.id;
-    } catch { /* Replace malformed receipt. */ }
-  }
-  const id = generate();
-  storage.setItem(`${key}:receipt`, JSON.stringify({ id, request }));
-  return id;
-}
+import { retryId } from "./handheld-retry";
 
 export async function submitHandheld(key: string, operation: "goods-in" | "stock-check" | "stock-movement", location: string, tags: [string, number][], source: string | null = null) {
   if (!navigator.onLine) throw new Error("You are offline. Your scan remains on this device; reconnect and submit again.");
