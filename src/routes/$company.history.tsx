@@ -14,6 +14,10 @@ export const Route = createFileRoute("/$company/history")({
     meta: [
       { title: "Scan History — ScanLoc8" },
       { name: "description", content: "View and manage saved RFID tag scan history" },
+      { property: "og:title", content: "Scan History — ScanLoc8" },
+      { property: "og:description", content: "Review last-seen tag snapshots and recorded location changes." },
+      { property: "og:type", content: "website" },
+      { name: "twitter:card", content: "summary" },
     ],
   }),
 });
@@ -28,6 +32,7 @@ interface ScanRecord {
   device_name: string | null;
   notes: string | null;
   location: string | null;
+  previous_location?: string | null;
 }
 
 function HistoryPage() {
@@ -35,9 +40,19 @@ function HistoryPage() {
   const [records, setRecords] = useState<ScanRecord[]>([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState("");
+  const [mode, setMode] = useState<"latest" | "events">("latest");
 
   const fetchRecords = async () => {
     setLoading(true);
+    if (mode === "events") {
+      const { data, error } = await supabase.from("scan_events")
+        .select("id, epc, rssi, scan_count, observed_at, recorded_at, location, previous_location, device_name")
+        .eq("company_slug", company).order("recorded_at", { ascending: false }).limit(200);
+      if (error) toast.error("Failed to load location changes");
+      else setRecords((data ?? []).map((event) => ({ ...event, first_seen: event.recorded_at, last_seen: event.observed_at, notes: null })));
+      setLoading(false);
+      return;
+    }
     const { data, error } = await supabase
       .from("rfid_scans")
       .select("*")
@@ -55,7 +70,7 @@ function HistoryPage() {
 
   useEffect(() => {
     fetchRecords();
-  }, []);
+  }, [company, mode]);
 
   const filtered = records.filter((r) =>
     r.epc.toLowerCase().includes(search.toLowerCase())
@@ -74,7 +89,7 @@ function HistoryPage() {
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `rfid-scans-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.download = `rfid-${mode}-${new Date().toISOString().slice(0, 10)}.csv`;
     a.click();
     URL.revokeObjectURL(url);
     toast.success("CSV exported");
@@ -98,6 +113,10 @@ function HistoryPage() {
       <AppHeader />
 
       <div className="px-4 py-3 space-y-3 border-b border-border">
+        <div className="flex gap-2" role="group" aria-label="History view">
+          <Button size="sm" variant={mode === "latest" ? "default" : "outline"} onClick={() => setMode("latest")}>Last seen</Button>
+          <Button size="sm" variant={mode === "events" ? "default" : "outline"} onClick={() => setMode("events")}>Location changes</Button>
+        </div>
         <div className="relative">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search EPC..." className="pl-9 font-mono text-xs" />
@@ -109,7 +128,7 @@ function HistoryPage() {
           <Button onClick={handleExport} variant="outline" size="sm" className="gap-1 flex-1" disabled={filtered.length === 0}>
             <Download className="h-3 w-3" /> Export CSV
           </Button>
-          <Button onClick={handleDeleteAll} variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" disabled={records.length === 0}>
+          <Button onClick={handleDeleteAll} variant="outline" size="sm" className="gap-1 text-destructive hover:text-destructive" disabled={records.length === 0 || mode === "events"} aria-label="Delete last-seen records">
             <Trash2 className="h-3 w-3" />
           </Button>
         </div>
@@ -134,7 +153,7 @@ function HistoryPage() {
                   <span>{new Date(r.last_seen).toLocaleString()}</span>
                   {r.location && (
                     <span className="flex items-center gap-1 text-primary">
-                      <MapPin className="h-3 w-3" /> {r.location}
+                      <MapPin className="h-3 w-3" /> {mode === "events" && r.previous_location ? `${r.previous_location} → ` : "Last seen: "}{r.location}
                     </span>
                   )}
                   {r.device_name && <span>{r.device_name}</span>}
