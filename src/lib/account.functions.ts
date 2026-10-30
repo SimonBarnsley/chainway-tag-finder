@@ -1,12 +1,10 @@
 import { createServerFn } from "@tanstack/react-start";
 import { createClient } from "@supabase/supabase-js";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
-
-// Untyped handle for tables not yet in the generated types.
-const adminDb = supabaseAdmin as unknown as { from: (t: string) => any };
+import { requireTenantAdmin } from "./tenant-access.server";
 
 async function getCallerEmail(userId: string): Promise<string | null> {
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
   const { data } = await supabaseAdmin.auth.admin.getUserById(userId);
   return data.user?.email ?? null;
 }
@@ -29,6 +27,7 @@ export const logAudit = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ context, data }) => {
+    const { supabaseAdmin: adminDb } = await import("@/integrations/supabase/client.server");
     // Only log for the caller's own company.
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -67,9 +66,8 @@ export const listAuditLog = createServerFn({ method: "POST" })
   })
   .handler(async ({ context, data }): Promise<{ ok: boolean; entries: AuditEntry[]; error?: string }> => {
     try {
-      const { data: isAdmin } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "admin" });
-      const { data: isSuper } = await context.supabase.rpc("has_role", { _user_id: context.userId, _role: "super_admin" });
-      if (!isAdmin && !isSuper) throw new Response("Forbidden: admin only", { status: 403 });
+      await requireTenantAdmin(context, data.companySlug);
+      const { supabaseAdmin: adminDb } = await import("@/integrations/supabase/client.server");
 
       const { data: rows, error } = await adminDb
         .from("audit_log")
@@ -92,10 +90,12 @@ export const listAuditLog = createServerFn({ method: "POST" })
 export const exportMyData = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }) => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adminDb = supabaseAdmin;
     const userId = context.userId;
     const [profile, roles, alerts, rulesCreated, auditEntries] = await Promise.all([
       context.supabase.from("profiles").select("*").eq("user_id", userId).maybeSingle(),
-      context.supabase.from("user_roles").select("role, created_at").eq("user_id", userId),
+      context.supabase.from("user_roles").select("role").eq("user_id", userId),
       adminDb.from("alerts").select("location, epc, message, read_at, created_at").eq("recipient_user_id", userId),
       adminDb.from("alert_rules").select("name, location, target_type, enabled, created_at").eq("created_by", userId),
       adminDb.from("audit_log").select("action, details, created_at").eq("user_id", userId).order("created_at", { ascending: false }).limit(500),
@@ -125,6 +125,8 @@ export const deleteMyAccount = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ context, data }): Promise<{ ok: boolean; error?: string }> => {
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const adminDb = supabaseAdmin;
     const userId = context.userId;
 
     // Super admins hold the keys to the whole system — they must be removed

@@ -1,6 +1,8 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireTenantAdmin, requireSuperAdmin } from "./tenant-access.server";
+import type { Json } from "@/integrations/supabase/types";
+import { findRegisteredCompany, isAssignableUserRole } from "./company-registration";
 
 export interface PendingUser {
   id: string;
@@ -11,15 +13,15 @@ export interface PendingUser {
   last_sign_in_at: string | null;
 }
 
-const adminDb = supabaseAdmin as unknown as { from: (t: string) => any };
-
 async function writeAudit(
   companySlug: string | null | undefined,
   userId: string,
   action: string,
-  details?: Record<string, unknown>
+  details?: { [key: string]: Json | undefined }
 ) {
   if (!companySlug) return;
+  const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+  const adminDb = supabaseAdmin;
   try {
     const { data: u } = await supabaseAdmin.auth.admin.getUserById(userId);
     await adminDb.from("audit_log").insert({
@@ -34,17 +36,6 @@ async function writeAudit(
   }
 }
 
-async function assertAdmin(userId: string) {
-  const { data: roles } = await supabaseAdmin
-    .from("user_roles")
-    .select("role")
-    .eq("user_id", userId);
-  const roleSet = new Set((roles ?? []).map((r) => r.role));
-  if (!roleSet.has("admin") && !roleSet.has("super_admin")) {
-    throw new Response("Forbidden: admin only", { status: 403 });
-  }
-}
-
 export interface ListPendingResult {
   ok: boolean;
   users: PendingUser[];
@@ -55,7 +46,8 @@ export const listPendingUsers = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<ListPendingResult> => {
     try {
-      await assertAdmin(context.userId);
+      await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
       const pending: PendingUser[] = [];
       let page = 1;
@@ -109,7 +101,8 @@ export const approveUserSignup = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const { error } = await supabaseAdmin.auth.admin.updateUserById(
       data.userId,
       { email_confirm: true }
@@ -127,7 +120,8 @@ export const resendConfirmationEmail = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     // Generate a magic link the user can click to sign in & confirm their
     // email. Supabase will deliver it via the configured auth email hook.
     const { error } = await supabaseAdmin.auth.admin.generateLink({
@@ -157,7 +151,8 @@ export const updateUserCompany = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ context, data }) => {
-    await assertAdmin(context.userId);
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     let companyName: string | null = null;
     if (data.companySlug) {
@@ -206,7 +201,8 @@ export const listCompanies = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<{ ok: boolean; companies: CompanyOption[]; error?: string }> => {
     try {
-      await assertAdmin(context.userId);
+      const access = await requireTenantAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
       const { data, error } = await supabaseAdmin
         .from("profiles")
         .select("company_slug, company_name")
@@ -222,6 +218,7 @@ export const listCompanies = createServerFn({ method: "POST" })
         }
       }
       const companies = Array.from(map.entries())
+        .filter(([slug]) => access.isSuper || slug === access.companySlug)
         .map(([slug, name]) => ({ slug, name }))
         .sort((a, b) => a.name.localeCompare(b.name));
       return { ok: true, companies };
@@ -256,49 +253,24 @@ export const createUser = createServerFn({ method: "POST" })
       if (!input.companyName && !input.companySlug) {
         throw new Response("companyName or companySlug required", { status: 400 });
       }
+      if (input.role !== undefined && !isAssignableUserRole(input.role)) {
+        throw new Response("Invalid assignable role", { status: 400 });
+      }
       return input;
     }
   )
   .handler(async ({ context, data }): Promise<{ ok: boolean; userId?: string; error?: string }> => {
    try {
-    await assertAdmin(context.userId);
+    await requireTenantAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
-    let companyName = data.companyName?.trim() || null;
-    let companySlug = data.companySlug || null;
-
-    // If a slug was provided, resolve canonical name
-    if (companySlug && !companyName) {
-      const { data: existing } = await supabaseAdmin
-        .from("profiles")
-        .select("company_name")
-        .eq("company_slug", companySlug)
-        .not("company_name", "is", null)
-        .limit(1)
-        .maybeSingle();
-      companyName = existing?.company_name ?? null;
-      if (!companyName) {
-        const { data: reg } = await supabaseAdmin
-          .from("companies").select("name").eq("slug", companySlug).maybeSingle();
-        companyName = reg?.name ?? null;
-      }
-      if (!companyName) {
-        throw new Response("Unknown company", { status: 400 });
-      }
-    }
-
-    // Make sure the company is registered (signup trigger requires it).
-    if (companyName && !companySlug) {
-      const { data: found } = await supabaseAdmin
-        .from("companies").select("slug, name").ilike("name", companyName).maybeSingle();
-      if (found) {
-        companyName = found.name;
-      } else {
-        const { data: slug } = await supabaseAdmin.rpc("generate_slug", { input: companyName });
-        const { error: cErr } = await supabaseAdmin
-          .from("companies").insert({ name: companyName, slug: (slug as string) || companyName.toLowerCase().replace(/[^a-z0-9]+/g, "-") });
-        if (cErr) throw new Error(`Could not register company: ${cErr.message}`);
-      }
-    }
+    const { data: registered, error: companyError } = await supabaseAdmin.from("companies").select("name, slug");
+    if (companyError) throw new Error("Could not load registered companies");
+    const company = findRegisteredCompany(registered ?? [], data);
+    if (!company) throw new Response("Unknown registered company", { status: 400 });
+    const companyName = company.name;
+    const companySlug = company.slug;
+    await requireTenantAdmin(context, companySlug);
 
     // Create the user (auto-confirmed). The handle_new_user trigger will
     // create the profile + default 'user' role and resolve the company slug.
@@ -316,9 +288,7 @@ export const createUser = createServerFn({ method: "POST" })
     }
 
     // Ensure profile + base role exist (in case the signup trigger isn't attached).
-    const { data: comp } = companyName
-      ? await supabaseAdmin.from("companies").select("name, slug").ilike("name", companyName).maybeSingle()
-      : { data: null };
+    const comp = company;
     const { error: pErr } = await supabaseAdmin.from("profiles").upsert(
       {
         user_id: created.user.id,
@@ -372,11 +342,8 @@ export const deleteUserCompletely = createServerFn({ method: "POST" })
     return input;
   })
   .handler(async ({ context, data }) => {
-    const { data: isSuper } = await context.supabase.rpc("has_role", {
-      _user_id: context.userId,
-      _role: "super_admin",
-    });
-    if (!isSuper) throw new Response("Forbidden: super admin only", { status: 403 });
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     if (data.userId === context.userId) throw new Response("You cannot delete your own account", { status: 400 });
 
     const { data: targetSuper } = await supabaseAdmin

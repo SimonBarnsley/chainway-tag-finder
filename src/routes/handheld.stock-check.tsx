@@ -12,15 +12,16 @@ import { validLocateProximity } from "@/components/TagProximityMeter";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
+import { reconcileTagReads } from "@/lib/scan-reconciliation";
 
 export const Route = createFileRoute("/handheld/stock-check")({
   component: StockCheck,
   head: () => ({
     meta: [
       { title: "Stock Check — ScanLoc8 Handheld" },
-      { name: "description", content: "Count a location and see found, missing and unexpected items." },
+      { name: "description", content: "Count a location and compare observed, not seen and unexpected RFID tags." },
       { property: "og:title", content: "Stock Check — ScanLoc8 Handheld" },
-      { property: "og:description", content: "Count a location and see found, missing and unexpected items." },
+      { property: "og:description", content: "Count a location and compare observed, not seen and unexpected RFID tags." },
       { property: "og:type", content: "website" },
       { name: "twitter:card", content: "summary" },
     ],
@@ -101,12 +102,8 @@ function StockCheck() {
   }, [companySlug, location, clear]);
 
   const { found, missing, unexpected } = useMemo(() => {
-    const scanned = new Set(tags.keys());
-    return {
-      found: [...scanned].filter((e) => expected.has(e)),
-      missing: [...expected].filter((e) => !scanned.has(e)),
-      unexpected: [...scanned].filter((e) => !expected.has(e)),
-    };
+    const result = reconcileTagReads(expected, tags.keys());
+    return { found: result.found, missing: result.notSeen, unexpected: result.unexpected };
   }, [tags, expected]);
 
   useEffect(() => {
@@ -188,7 +185,7 @@ function StockCheck() {
                 className={`rounded-lg border-2 p-3 text-center ${tab === k ? "border-primary bg-primary/10" : "border-border bg-card"}`}
               >
                 <p className="text-2xl font-semibold text-foreground">{lists[k].length}</p>
-                <p className="text-xs capitalize text-muted-foreground">{k}</p>
+                <p className="text-xs capitalize text-muted-foreground">{k === "missing" ? "Not seen" : k}</p>
                    </Button>
             ))}
           </div>

@@ -11,16 +11,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$company/maps/")({
   component: MapsPage,
-  head: () => ({
-    meta: [
-      { title: "Floor Plan Map — RFID Zone Mapping" },
-      {
-        name: "description",
-        content:
-          "Upload your company floor plan and map every location as a zone to visualize live tag reads.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Floor Plan Map \u2014 RFID Zone Mapping \u2014 ScanLoc8" },{ name: "description", content: "Upload your company floor plan and map every location as a zone to visualize live tag reads." },{ property: "og:title", content: "Floor Plan Map \u2014 RFID Zone Mapping \u2014 ScanLoc8" },{ property: "og:description", content: "Upload your company floor plan and map every location as a zone to visualize live tag reads." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 function MapsPage() {

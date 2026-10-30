@@ -4,6 +4,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { isHandheldMode } from "@/lib/handheld-mode";
 
 export const Route = createFileRoute("/$company/")({
+  head: () => ({ meta: [{ title: "Company workspace \u2014 ScanLoc8" },{ name: "description", content: "Open your ScanLoc8 company workspace." },{ property: "og:title", content: "Company workspace \u2014 ScanLoc8" },{ property: "og:description", content: "Open your ScanLoc8 company workspace." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
   component: CompanyIndexRedirect,
 });
 

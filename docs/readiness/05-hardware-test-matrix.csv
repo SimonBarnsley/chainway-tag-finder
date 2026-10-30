@@ -1,0 +1,6 @@
+device,connection,firmware,apk_or_sdk,tag_model,rf_region,environment,expected_unique_tags,observed_unique_tags,false_cross_reads,retry_duplicates,result,evidence
+Zebra TC22R,native RFID3,TO RECORD,TO RECORD,TO RECORD,TO RECORD,warehouse count,,,,,NOT TESTED,User previously confirmed proximity only
+Zebra TC27R,native RFID3,TO RECORD,TO RECORD,TO RECORD,TO RECORD,warehouse count,,,,,NOT TESTED,Source target only
+Chainway C75,keyboard wedge,TO RECORD,N/A,TO RECORD,TO RECORD,rapid Enter-suffix burst,,,,,NOT TESTED,No native Chainway locate integration
+Chainway UA4E,HTTPS POST,TO RECORD,N/A,TO RECORD,TO RECORD,antenna crossover and retry,,,,,NOT TESTED,Parser fixtures pass; physical test required
+Zebra FX9600,HTTPS POST,TO RECORD,N/A,TO RECORD,TO RECORD,antenna crossover and retry,,,,,NOT TESTED,Parser fixtures pass; physical test required

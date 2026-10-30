@@ -9,12 +9,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$company/reader-debug")({
   component: ReaderDebugPage,
-  head: () => ({
-    meta: [
-      { title: "Reader Debug — Live POST capture" },
-      { name: "description", content: "Inspect raw payloads sent to /api/zebra-reader" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Reader Debug \u2014 Live POST capture \u2014 ScanLoc8" },{ name: "description", content: "Inspect raw payloads sent to /api/zebra-reader" },{ property: "og:title", content: "Reader Debug \u2014 Live POST capture \u2014 ScanLoc8" },{ property: "og:description", content: "Inspect raw payloads sent to /api/zebra-reader" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface DebugLog {

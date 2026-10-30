@@ -1,0 +1,13 @@
+{
+  "synthetic": true,
+  "loaded_into_database": false,
+  "locations": ["Demo Receiving", "Demo Shelf A", "Demo Dispatch"],
+  "items": [
+    { "name": "Demo carton", "sku": "DEMO-CARTON", "epc": "303900000000000000000001", "location": "Demo Shelf A" },
+    { "name": "Demo component", "sku": "DEMO-COMPONENT", "epc": "303900000000000000000002", "location": "Demo Shelf A" },
+    { "name": "Demo case", "sku": "DEMO-CASE", "epc": "303900000000000000000003", "location": "Demo Shelf A" },
+    { "name": "Demo spare", "sku": "DEMO-SPARE", "epc": "303900000000000000000004", "location": "Demo Receiving" }
+  ],
+  "expected": ["303900000000000000000001", "303900000000000000000002", "303900000000000000000003"],
+  "observed": ["303900000000000000000001", "303900000000000000000001", "303900000000000000000002", "303900000000000000000004"]
+}

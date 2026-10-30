@@ -50,14 +50,7 @@ import { ItemDetails } from "@/components/ItemDetails";
 
 export const Route = createFileRoute("/$company/dashboard")({
   component: DashboardPage,
-  head: () => ({
-    meta: [
-      { title: "Mobile Dashboard — RFID Tag Reads" },
-      { name: "description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },
-      { property: "og:title", content: "Mobile Dashboard — RFID Tag Reads" },
-      { property: "og:description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Mobile Dashboard \u2014 RFID Tag Reads \u2014 ScanLoc8" },{ name: "description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },{ property: "og:title", content: "Mobile Dashboard \u2014 RFID Tag Reads \u2014 ScanLoc8" },{ property: "og:description", content: "Real-time mobile dashboard for UHF RFID tag scan data" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface ScanRecord {

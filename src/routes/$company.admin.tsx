@@ -18,9 +18,7 @@ import { exportMyData, deleteMyAccount, listAuditLog, logAudit, type AuditEntry 
 
 export const Route = createFileRoute("/$company/admin")({
   component: AdminPage,
-  head: () => ({
-    meta: [{ title: "Admin — User Management" }],
-  }),
+  head: () => ({ meta: [{ title: "Administration \u2014 ScanLoc8" },{ name: "description", content: "Manage your ScanLoc8 company and account." },{ property: "og:title", content: "Administration \u2014 ScanLoc8" },{ property: "og:description", content: "Manage your ScanLoc8 company and account." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface UserRole {

@@ -20,15 +20,7 @@ import {
 
 export const Route = createFileRoute("/$company/maps/view")({
   component: ViewPage,
-  head: () => ({
-    meta: [
-      { title: "Company Floor Plan — Live RFID Map" },
-      {
-        name: "description",
-        content: "Live view of RFID tags plotted on the company-wide floor plan.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Company Floor Plan \u2014 Live RFID Map \u2014 ScanLoc8" },{ name: "description", content: "Live view of RFID tags plotted on the company-wide floor plan." },{ property: "og:title", content: "Company Floor Plan \u2014 Live RFID Map \u2014 ScanLoc8" },{ property: "og:description", content: "Live view of RFID tags plotted on the company-wide floor plan." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface ScanRow {

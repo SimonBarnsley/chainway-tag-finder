@@ -692,6 +692,48 @@ export type Database = {
         }
         Relationships: []
       }
+      scan_events: {
+        Row: {
+          change_kind: string
+          company_slug: string
+          device_name: string | null
+          epc: string
+          id: string
+          location: string | null
+          observed_at: string
+          previous_location: string | null
+          recorded_at: string
+          rssi: number | null
+          scan_count: number
+        }
+        Insert: {
+          change_kind: string
+          company_slug: string
+          device_name?: string | null
+          epc: string
+          id?: string
+          location?: string | null
+          observed_at: string
+          previous_location?: string | null
+          recorded_at?: string
+          rssi?: number | null
+          scan_count: number
+        }
+        Update: {
+          change_kind?: string
+          company_slug?: string
+          device_name?: string | null
+          epc?: string
+          id?: string
+          location?: string | null
+          observed_at?: string
+          previous_location?: string | null
+          recorded_at?: string
+          rssi?: number | null
+          scan_count?: number
+        }
+        Relationships: []
+      }
       suppressed_emails: {
         Row: {
           created_at: string
@@ -825,6 +867,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_company: { Args: { _company: string }; Returns: boolean }
       cleanup_zebra_debug_logs: { Args: never; Returns: undefined }
       company_exists: { Args: { _name: string }; Returns: boolean }
       generate_slug: { Args: { input: string }; Returns: string }

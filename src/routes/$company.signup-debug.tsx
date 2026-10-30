@@ -13,9 +13,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$company/signup-debug")({
   component: SignupDebugPage,
-  head: () => ({
-    meta: [{ title: "Admin — Signup Troubleshooting" }],
-  }),
+  head: () => ({ meta: [{ title: "Signup diagnostics \u2014 ScanLoc8" },{ name: "description", content: "Review ScanLoc8 account registration diagnostics." },{ property: "og:title", content: "Signup diagnostics \u2014 ScanLoc8" },{ property: "og:description", content: "Review ScanLoc8 account registration diagnostics." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface AuthLogEntry {

@@ -12,16 +12,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$company/locations")({
   component: LocationsPage,
-  head: () => ({
-    meta: [
-      { title: "Locations — Manage warehouse locations" },
-      {
-        name: "description",
-        content:
-          "Create and manage the list of warehouse locations available in the RFID scanner.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Locations \u2014 Manage warehouse locations \u2014 ScanLoc8" },{ name: "description", content: "Create and manage the list of warehouse locations available in the RFID scanner." },{ property: "og:title", content: "Locations \u2014 Manage warehouse locations \u2014 ScanLoc8" },{ property: "og:description", content: "Create and manage the list of warehouse locations available in the RFID scanner." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface LocationRow {

@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireTenantAdmin } from "./tenant-access.server";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 
 export interface DailyCost {
@@ -41,16 +41,8 @@ export const getCostMetrics = createServerFn({ method: "GET" })
     return { companySlug };
   })
   .handler(async ({ context, data }): Promise<CostMetrics> => {
-    // Verify admin
-    const { data: roles } = await context.supabase
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", context.userId);
-    const roleSet = new Set((roles ?? []).map((r) => r.role));
-    if (!roleSet.has("admin") && !roleSet.has("super_admin")) {
-      throw new Error("Forbidden");
-    }
-
+    const access = await requireTenantAdmin(context, data.companySlug || null);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
     const companySlug = data.companySlug;
 
     const now = new Date();
@@ -184,7 +176,7 @@ export const getCostMetrics = createServerFn({ method: "GET" })
       "antenna_zones",
       "location_maps",
     ];
-    const globalTables = ["email_send_log", "profiles"];
+    const globalTables = access.isSuper ? ["email_send_log", "profiles"] : [];
     const tableCounts = await Promise.all(
       [...tableNames, ...globalTables].map(async (name) => {
         let q = supabaseAdmin.from(name as never).select("*", { count: "exact", head: true });
