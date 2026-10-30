@@ -1,0 +1,11 @@
+CREATE TABLE public.scan_events (id uuid PRIMARY KEY DEFAULT gen_random_uuid(), company_slug text NOT NULL, epc text NOT NULL, recorded_at timestamptz NOT NULL DEFAULT now(), observed_at timestamptz NOT NULL, previous_location text, location text, device_name text, rssi numeric, scan_count integer NOT NULL, change_kind text NOT NULL CHECK (change_kind IN ('created','updated')));
+GRANT SELECT ON public.scan_events TO authenticated;
+GRANT ALL ON public.scan_events TO service_role;
+ALTER TABLE public.scan_events ENABLE ROW LEVEL SECURITY;
+CREATE POLICY "Company users read scan events" ON public.scan_events FOR SELECT TO authenticated USING (company_slug = public.get_user_company_slug(auth.uid()) OR (public.has_role(auth.uid(), 'super_admin') AND public.can_manage_company(company_slug)));
+CREATE INDEX scan_events_company_time_idx ON public.scan_events(company_slug, recorded_at DESC);
+CREATE INDEX scan_events_company_epc_idx ON public.scan_events(company_slug, epc, recorded_at DESC);
+CREATE OR REPLACE FUNCTION public.record_scan_event() RETURNS trigger LANGUAGE plpgsql SECURITY DEFINER SET search_path = public AS $$ BEGIN INSERT INTO public.scan_events(company_slug, epc, observed_at, previous_location, location, device_name, rssi, scan_count, change_kind) VALUES (NEW.company_slug, NEW.epc, NEW.last_seen, CASE WHEN TG_OP = 'UPDATE' THEN OLD.location ELSE NULL END, NEW.location, NEW.device_name, NEW.rssi, NEW.scan_count, CASE WHEN TG_OP = 'INSERT' THEN 'created' ELSE 'updated' END); RETURN NEW; END $$;
+REVOKE ALL ON FUNCTION public.record_scan_event() FROM PUBLIC, anon, authenticated;
+CREATE TRIGGER record_scan_event AFTER INSERT OR UPDATE ON public.rfid_scans FOR EACH ROW EXECUTE FUNCTION public.record_scan_event();
+COMMENT ON TABLE public.scan_events IS 'Immutable record of changes to last-seen RFID snapshots; not a raw RF observation stream. recorded_at is server time; observed_at currently comes from application timestamps. No retrospective history is reconstructed.';

@@ -36,6 +36,13 @@
       "when": 1793350355123,
       "tag": "0004_protect_company_membership_and_role_scope",
       "breakpoints": true
+    },
+    {
+      "idx": 5,
+      "version": "7",
+      "when": 1793350437657,
+      "tag": "0005_record_tenant_scan_event_history",
+      "breakpoints": true
     }
   ]
 }
