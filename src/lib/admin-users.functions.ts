@@ -252,6 +252,9 @@ export const createUser = createServerFn({ method: "POST" })
       if (!input.companyName && !input.companySlug) {
         throw new Response("companyName or companySlug required", { status: 400 });
       }
+      if (input.role !== undefined && !["admin", "supervisor", "user"].includes(input.role)) {
+        throw new Response("Invalid assignable role", { status: 400 });
+      }
       return input;
     }
   )
