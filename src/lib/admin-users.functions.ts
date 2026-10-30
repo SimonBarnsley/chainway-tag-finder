@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
 import { requireTenantAdmin, requireSuperAdmin } from "./tenant-access.server";
+import type { Json } from "@/integrations/supabase/types";
 
 export interface PendingUser {
   id: string;
@@ -15,7 +16,7 @@ async function writeAudit(
   companySlug: string | null | undefined,
   userId: string,
   action: string,
-  details?: Record<string, unknown>
+  details?: { [key: string]: Json | undefined }
 ) {
   if (!companySlug) return;
   const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
