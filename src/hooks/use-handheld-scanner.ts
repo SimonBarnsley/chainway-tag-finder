@@ -15,7 +15,7 @@ export function useHandheldScanner(companySlug: string | null, enabled = true, r
   const [tags, setTags] = useState<Map<string, number>>(new Map());
   const [readyKey, setReadyKey] = useState<string | undefined>();
   const [storageError, setStorageError] = useState(false);
-  const activeKey = useRef<string | undefined>();
+  const activeKey = useRef<string | undefined>(undefined);
   useEffect(() => {
     activeKey.current = recoveryKey;
     setTags(new Map(recoveryKey ? readDraft(localStorage, recoveryKey) : []));

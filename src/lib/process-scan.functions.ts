@@ -61,12 +61,13 @@ export const processScan = createServerFn({ method: "POST" })
       locationApplied: false,
     };
 
-    const { data: existingScan } = await supabaseAdmin
+    const { data: existingScan, error: existingError } = await supabaseAdmin
       .from("rfid_scans")
       .select("first_seen, scan_count, location")
       .eq("company_slug", companySlug)
       .eq("epc", epc)
       .maybeSingle();
+    if (existingError) throw new Error("Could not load saved scan");
 
     const effectiveLocation = location ?? existingScan?.location ?? null;
     const effectiveScanCount = Math.max(existingScan?.scan_count ?? 0, scanCount);
@@ -102,12 +103,13 @@ export const processScan = createServerFn({ method: "POST" })
 
     // ── 3. Find or create the item ───────────────────────────────────
     // First check if EPC is already linked
-    const { data: existingLink } = await supabaseAdmin
+    const { data: existingLink, error: linkLookupError } = await supabaseAdmin
       .from("tag_items")
       .select("item_id")
       .eq("company_slug", companySlug)
       .eq("epc", epc)
       .maybeSingle();
+    if (linkLookupError) throw new Error("Could not load tag item link");
 
     let itemId: string | null = existingLink?.item_id ?? null;
 
@@ -118,7 +120,7 @@ export const processScan = createServerFn({ method: "POST" })
         decoded.companyPrefix + decoded.itemReference,
         decoded.itemReference,
       ];
-      const { data: matched } = await supabaseAdmin
+      const { data: matched, error: matchedError } = await supabaseAdmin
         .from("items")
         .select("id, gtin, sku")
         .eq("company_slug", companySlug)
@@ -126,6 +128,7 @@ export const processScan = createServerFn({ method: "POST" })
           `gtin.in.(${candidates.map((c) => `"${c}"`).join(",")}),sku.in.(${candidates.map((c) => `"${c}"`).join(",")})`
         )
         .limit(1);
+      if (matchedError) throw new Error("Could not match scanned item");
 
       if (matched && matched.length > 0) {
         itemId = matched[0].id;

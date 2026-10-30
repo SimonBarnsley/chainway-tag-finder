@@ -43,6 +43,20 @@
       "when": 1793350437657,
       "tag": "0005_record_tenant_scan_event_history",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1793351609798,
+      "tag": "0006_trusted_settings_audit_and_atomic_handheld_submissions",
+      "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1793351712627,
+      "tag": "0007_validate_tenant_links_and_rule_recipients",
+      "breakpoints": true
     }
   ]
 }

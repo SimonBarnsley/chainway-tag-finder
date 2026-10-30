@@ -10,6 +10,7 @@ import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/us
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { draftKey } from "@/lib/handheld-draft";
+import { submitHandheld, completeHandheld } from "@/lib/handheld-submit";
 
 export const Route = createFileRoute("/handheld/goods-in")({
   component: GoodsIn,
@@ -35,7 +36,8 @@ function GoodsIn() {
   const [location, setLocation] = useState("");
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
-  const { tags, clear, storageError } = useHandheldScanner(companySlug, !saving, user && companySlug ? draftKey(user.id, companySlug, "goods-in", location) : undefined);
+  const recoveryKey = user && companySlug ? draftKey(user.id, companySlug, "goods-in", "receiving") : undefined;
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !saving, recoveryKey);
 
   useEffect(() => {
     if (!companySlug) return;
@@ -62,31 +64,13 @@ function GoodsIn() {
     if (!location) return toast.error("Pick a location first.");
     setSaving(true);
     try {
-      const now = new Date().toISOString();
       const epcs = Array.from(tags.keys());
-      const { data: existing } = await supabase
-        .from("rfid_scans")
-        .select("epc, first_seen, scan_count")
-        .eq("company_slug", companySlug)
-        .in("epc", epcs);
-      const ex = new Map((existing ?? []).map((r) => [r.epc, r]));
-      const rows = epcs.map((epc) => ({
-        epc,
-        company_slug: companySlug,
-        first_seen: ex.get(epc)?.first_seen ?? now,
-        last_seen: now,
-        scan_count: (ex.get(epc)?.scan_count ?? 0) + (tags.get(epc) ?? 1),
-        location,
-      }));
-      const { error } = await supabase.from("rfid_scans").upsert(rows, { onConflict: "company_slug,epc" });
-      if (error) throw new Error(error.message);
-      try {
-        await linkFn({ data: { epcs } });
-      } catch (e) {
-        console.error("[goods-in] link failed", e);
-      }
+      if (!recoveryKey) throw new Error("Sign in before submitting");
+      await submitHandheld(recoveryKey, "goods-in", location, [...tags]);
+      await linkFn({ data: { epcs } });
       toast.success(`${epcs.length} tag${epcs.length === 1 ? "" : "s"} booked into ${location}`);
       clear();
+      completeHandheld(recoveryKey);
       setNames(new Map());
       navigate({ to: "/handheld" });
     } catch (e) {

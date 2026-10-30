@@ -14,6 +14,7 @@ import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { reconcileTagReads } from "@/lib/scan-reconciliation";
 import { draftKey } from "@/lib/handheld-draft";
+import { submitHandheld, completeHandheld } from "@/lib/handheld-submit";
 
 export const Route = createFileRoute("/handheld/stock-check")({
   component: StockCheck,
@@ -44,7 +45,8 @@ function StockCheck() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   const geigerPanelRef = useRef<HTMLDivElement>(null);
-  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!location && !geigerEpc && !submitting, user && companySlug ? draftKey(user.id, companySlug, "stock-check", location) : undefined);
+  const recoveryKey = user && companySlug ? draftKey(user.id, companySlug, "stock-check", location) : undefined;
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!location && !geigerEpc && !submitting, recoveryKey);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
   // Geiger search for a missing tag: locks the reader to one EPC and shows a
@@ -121,19 +123,8 @@ function StockCheck() {
     setSubmitted(null);
     setSubmitError(null);
     try {
-      const now = new Date().toISOString();
-      const rows = [...tags.entries()].map(([epc, count]) => ({
-        epc,
-        first_seen: now,
-        last_seen: now,
-        scan_count: count,
-        location,
-        company_slug: companySlug,
-      }));
-      const { error } = await supabase
-        .from("rfid_scans")
-        .upsert(rows, { onConflict: "company_slug,epc", ignoreDuplicates: false });
-      if (error) throw new Error(error.message);
+      if (!recoveryKey) throw new Error("Sign in before submitting");
+      await submitHandheld(recoveryKey, "stock-check", location, [...tags]);
 
       // Link tags to items and move each linked item to this location.
       await runLinkSavedEpcs({ data: { epcs: [...tags.keys()] } });
@@ -147,6 +138,7 @@ function StockCheck() {
       setExpected(new Set((data ?? []).map((r) => r.epc.toUpperCase())));
       setSubmitted(`Saved ${tags.size} tag${tags.size === 1 ? "" : "s"} to ${location}`);
       clear();
+      completeHandheld(recoveryKey);
       navigate({ to: "/handheld" });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Save failed");

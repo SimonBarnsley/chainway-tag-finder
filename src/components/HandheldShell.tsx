@@ -1,6 +1,6 @@
 import { Link, useNavigate } from "@tanstack/react-router";
 import { ArrowLeft, LogOut, RadioTower } from "lucide-react";
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { Button } from "@/components/ui/button";
 import { useAuth } from "@/hooks/use-auth";
 import { useReaderConnection } from "@/hooks/use-zebra-sdk";
@@ -22,6 +22,14 @@ export function HandheldShell({
   };
   const navigate = useNavigate();
   const readerConnection = useReaderConnection();
+  const [online, setOnline] = useState(true);
+  useEffect(() => {
+    const update = () => setOnline(navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => { window.removeEventListener("online", update); window.removeEventListener("offline", update); };
+  }, []);
 
   useEffect(() => {
     setHandheldMode(true);
@@ -117,6 +125,7 @@ export function HandheldShell({
           </Button>
         )}
       </header>
+      {!online && <p role="status" className="border-b border-border px-4 py-2 text-sm text-destructive">Offline — reconnect before submitting. Unsaved tags remain on this device.</p>}
       <main className="flex-1 space-y-4 p-4">{children}</main>
     </div>
   );

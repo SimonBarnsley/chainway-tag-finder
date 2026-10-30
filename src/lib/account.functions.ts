@@ -27,7 +27,6 @@ export const logAudit = createServerFn({ method: "POST" })
     }
   )
   .handler(async ({ context, data }) => {
-    const { supabaseAdmin: adminDb } = await import("@/integrations/supabase/client.server");
     // Only log for the caller's own company.
     const { data: profile } = await context.supabase
       .from("profiles")
@@ -37,14 +36,16 @@ export const logAudit = createServerFn({ method: "POST" })
     if (!profile?.company_slug || profile.company_slug !== data.companySlug) {
       throw new Response("Forbidden", { status: 403 });
     }
+    const { supabaseAdmin: adminDb } = await import("@/integrations/supabase/client.server");
     const email = await getCallerEmail(context.userId);
-    await adminDb.from("audit_log").insert({
+    const { error } = await adminDb.from("audit_log").insert({
       company_slug: data.companySlug,
       user_id: context.userId,
       user_email: email,
-      action: data.action,
-      details: data.details ?? null,
+      action: "client.reported",
+      details: { reported_action: data.action, verified: false },
     });
+    if (error) throw new Error("Could not record client activity");
     return { ok: true };
   });
 
