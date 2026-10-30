@@ -395,8 +395,7 @@ function AdminDashboardContent() {
 
       const header = "SKU,Item Name,Description,EPC,GS1 Company Prefix,Serial Number,GTIN";
       const esc = (v: unknown) => {
-        const s = v === null || v === undefined ? "" : String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        return csvCell(v);
       };
       const rows: string[] = [];
       all.forEach((item) => {

@@ -1,3 +1,4 @@
+import { csvRow, csvCell, pgrstValue, wildcardTest } from "@/lib/csv-safe";
 import { createFileRoute, Link } from "@tanstack/react-router";
 import { useState, useEffect, useCallback, useMemo } from "react";
 import { Map as MapIcon, ArrowLeft, Pencil, RefreshCw, MapPin, Search, X } from "lucide-react";
@@ -55,13 +56,7 @@ function wildcardMatch(value: string | null | undefined, query: string): boolean
   const q = query.trim().toLowerCase();
   if (!q) return true;
   if (q.includes("*") || q.includes("?")) {
-    const escaped = q.replace(/[.+^${}()|[\]\\]/g, "\\$&");
-    const pattern = "^" + escaped.replace(/\*/g, ".*").replace(/\?/g, ".") + "$";
-    try {
-      return new RegExp(pattern).test(v);
-    } catch {
-      return v.includes(q);
-    }
+    return wildcardTest(v, q.slice(0, 200));
   }
   return v.includes(q);
 }
