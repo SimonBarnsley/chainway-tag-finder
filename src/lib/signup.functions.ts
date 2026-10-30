@@ -4,6 +4,18 @@ import { z } from "zod";
 import type { Database } from "@/integrations/supabase/types";
 import { findRegisteredCompany } from "./company-registration";
 
+const ALLOWED_HOSTS = new Set([
+  "www.scanloc8.com", "scanloc8.com", "chainway-tag-finder.lovable.app",
+  "id-preview--3166ab60-4181-4e1b-93bc-1bed4ac9e3de.lovable.app", "localhost",
+]);
+export function safeRedirect(url: string): string {
+  try {
+    const u = new URL(url);
+    if (ALLOWED_HOSTS.has(u.hostname) && (u.protocol === "https:" || u.hostname === "localhost")) return u.toString();
+  } catch { /* fall through */ }
+  return "https://www.scanloc8.com/signin";
+}
+
 const schema = z.object({
   email: z.string().trim().email().max(255),
   password: z.string().min(10).max(128),
@@ -51,7 +63,7 @@ export const registerAccount = createServerFn({ method: "POST" })
       password: data.password,
       options: {
         data: { display_name: displayName, company_name: company.name },
-        emailRedirectTo: data.redirectTo,
+        emailRedirectTo: safeRedirect(data.redirectTo),
       },
     });
     if (error) return { ok: false, error: error.message };
