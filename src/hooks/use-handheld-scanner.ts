@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase } from "@/integrations/supabase/client";
 import { useRfidScanner, type RfidTag } from "@/hooks/use-rfid-scanner";
 import { useZebraSdk } from "@/hooks/use-zebra-sdk";
+import { readDraft, writeDraft } from "@/lib/handheld-draft";
 
 /**
  * Shared tag capture for the handheld screens: native Zebra SDK when inside the
@@ -10,12 +11,24 @@ import { useZebraSdk } from "@/hooks/use-zebra-sdk";
  * de-dupe into a Map of EPC -> read count.
  */
 const HANDHELD_EPC_PREFIX = "3039";
-export function useHandheldScanner(companySlug: string | null, enabled = true) {
+export function useHandheldScanner(companySlug: string | null, enabled = true, recoveryKey?: string) {
   const [tags, setTags] = useState<Map<string, number>>(new Map());
+  const [readyKey, setReadyKey] = useState<string | undefined>();
+  const [storageError, setStorageError] = useState(false);
+  const activeKey = useRef<string | undefined>();
+  useEffect(() => {
+    activeKey.current = recoveryKey;
+    setTags(new Map(recoveryKey ? readDraft(localStorage, recoveryKey) : []));
+    setReadyKey(recoveryKey);
+  }, [recoveryKey, companySlug]);
+  useEffect(() => {
+    if (recoveryKey && readyKey === recoveryKey) setStorageError(!writeDraft(localStorage, recoveryKey, tags));
+  }, [tags, recoveryKey, readyKey]);
   const prefixRef = useRef("");
 
   useEffect(() => {
     if (!companySlug) return;
+    prefixRef.current = "";
     let cancelled = false;
     supabase
       .from("company_settings")
@@ -49,18 +62,21 @@ export function useHandheldScanner(companySlug: string | null, enabled = true) {
     window.Capacitor?.isNativePlatform?.() === true;
 
   useRfidScanner({
-    enabled: enabled && !isNativeZebra,
+    enabled: enabled && !isNativeZebra && (!recoveryKey || readyKey === recoveryKey),
     onTagScanned: onTag,
   });
 
   useZebraSdk({
-    enabled: enabled && isNativeZebra,
+    enabled: enabled && isNativeZebra && (!recoveryKey || readyKey === recoveryKey),
     onTagScanned: onTag,
     onProximity: useCallback(() => {}, []),
   });
 
-  const clear = useCallback(() => setTags(new Map()), []);
-  return { tags, clear };
+  const clear = useCallback(() => {
+    setTags(new Map());
+    if (activeKey.current) writeDraft(localStorage, activeKey.current, new Map());
+  }, []);
+  return { tags, clear, storageError };
 }
 
 /** Load locations list (names) for the company. */

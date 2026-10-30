@@ -4,12 +4,13 @@ import { createLovableAiGatewayRunIdFetch } from "@/lib/ai-gateway.server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
+import { requireTenantAdmin } from "./tenant-access.server";
 
 const Input = z.object({
   companySlug: z.string().min(1),
   mode: z.enum(["recent", "paste"]),
   hours: z.number().int().min(1).max(168),
-  pasted: z.string(),
+  pasted: z.string().max(200000),
   location: z.string(),
 });
 
@@ -42,6 +43,7 @@ export const analyzeScanSession = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .middleware([requireSupabaseAuth])
   .handler(async ({ data, context }): Promise<ScanAuditResult> => {
+    await requireTenantAdmin(context, data.companySlug);
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this workspace.");
 
@@ -122,13 +124,14 @@ export const analyzeScanSession = createServerFn({ method: "POST" })
 
     const duplicates = epcs
       .filter((e) => (byEpc.get(e)?.reads ?? 0) > 1)
-      .map((e) => ({ epc: e, reads: byEpc.get(e)!.reads }))
+      .map((e) => ({ epc: e, reads: byEpc.get(e)?.reads ?? 0 }))
       .sort((a, b) => b.reads - a.reads);
 
     const unusual: { epc: string; reason: string }[] = [];
     let malformed = 0, prefixMismatch = 0, multiLocation = 0, unlinkedCount = 0;
     for (const epc of epcs) {
-      const info = byEpc.get(epc)!;
+      const info = byEpc.get(epc);
+      if (!info) continue;
       const reasons: string[] = [];
       if (!HEX24.test(epc)) { reasons.push("not a standard 96-bit hex EPC"); malformed++; }
       if (prefix && !epc.startsWith(prefix)) { reasons.push(`does not start with company prefix ${prefix}`); prefixMismatch++; }

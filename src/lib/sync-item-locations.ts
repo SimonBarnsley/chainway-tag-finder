@@ -1,4 +1,6 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 /**
  * For the given EPCs, find their linked items and set each item's
@@ -7,42 +9,46 @@ import { supabaseAdmin } from "@/integrations/supabase/client.server";
  */
 export async function syncItemLocationsForEpcs(
   companySlug: string,
-  epcs: string[]
+  epcs: string[],
+  db: SupabaseClient<Database> = supabaseAdmin
 ): Promise<{ updated: number }> {
   const unique = Array.from(new Set(epcs.map((e) => e.toUpperCase())));
   if (unique.length === 0) return { updated: 0 };
 
   // Find items linked to these EPCs
-  const { data: links } = await supabaseAdmin
+  const { data: links, error: linksError } = await db
     .from("tag_items")
     .select("item_id")
     .eq("company_slug", companySlug)
     .in("epc", unique);
+  if (linksError) throw new Error("Could not load item links");
 
   const itemIds = Array.from(new Set((links || []).map((l) => l.item_id)));
   if (itemIds.length === 0) return { updated: 0 };
 
   // For each affected item, find ALL its linked EPCs, then most recent scan
-  const { data: allLinks } = await supabaseAdmin
+  const { data: allLinks, error: allLinksError } = await db
     .from("tag_items")
     .select("item_id, epc")
     .eq("company_slug", companySlug)
     .in("item_id", itemIds);
+  if (allLinksError) throw new Error("Could not load linked item tags");
 
   const itemEpcs = new Map<string, string[]>();
   for (const l of allLinks || []) {
     if (!itemEpcs.has(l.item_id)) itemEpcs.set(l.item_id, []);
-    itemEpcs.get(l.item_id)!.push(l.epc);
+    itemEpcs.get(l.item_id)?.push(l.epc);
   }
 
   const allEpcs = Array.from(new Set((allLinks || []).map((l) => l.epc)));
-  const { data: scans } = await supabaseAdmin
+  const { data: scans, error: scansError } = await db
     .from("rfid_scans")
     .select("epc, location, last_seen")
     .eq("company_slug", companySlug)
     .in("epc", allEpcs)
     .not("location", "is", null)
     .order("last_seen", { ascending: false });
+  if (scansError) throw new Error("Could not load item scan locations");
 
   // First scan we see for an EPC is its most recent (sorted desc)
   const epcLatest = new Map<string, { location: string; last_seen: string }>();
@@ -61,12 +67,13 @@ export async function syncItemLocationsForEpcs(
     }
     if (!best) continue;
 
-    const { error } = await supabaseAdmin
+    const { error } = await db
       .from("items")
       .update({ warehouse_location: best.location })
       .eq("id", itemId)
-      .neq("warehouse_location", best.location);
-    if (!error) updated++;
+      .eq("company_slug", companySlug);
+    if (error) throw new Error("Could not update item location");
+    updated++;
   }
 
   return { updated };

@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { autoLinkEpcsToItems } from "@/lib/auto-link-epcs";
 import { syncItemLocationsForEpcs } from "@/lib/sync-item-locations";
 
@@ -19,8 +18,9 @@ export const linkSavedEpcs = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .handler(async ({ data, context }) => {
     const { userId } = context;
+    const db = context.supabase;
 
-    const { data: profile, error: profileErr } = await supabaseAdmin
+    const { data: profile, error: profileErr } = await db
       .from("profiles")
       .select("company_slug")
       .eq("user_id", userId)
@@ -33,26 +33,31 @@ export const linkSavedEpcs = createServerFn({ method: "POST" })
     const companySlug = profile.company_slug;
     const epcs = data.epcs.map((e) => e.toUpperCase());
 
-    const result = await autoLinkEpcsToItems(companySlug, epcs);
+    const { data: saved, error: savedError } = await db.from("rfid_scans").select("epc").eq("company_slug", companySlug).in("epc", epcs);
+    if (savedError || new Set((saved ?? []).map((row) => row.epc)).size !== new Set(epcs).size) {
+      throw new Error("Only saved tags from your company can be linked");
+    }
+    const result = await autoLinkEpcsToItems(companySlug, epcs, db);
 
     try {
-      await syncItemLocationsForEpcs(companySlug, epcs);
+      await syncItemLocationsForEpcs(companySlug, epcs, db);
     } catch (e) {
-      console.error("[linkSavedEpcs] sync-item-locations failed:", e);
+      throw new Error("Tags saved, but item locations could not be updated. Retry submission.");
     }
 
     // Resolve per-EPC link details (item name + current scan location) for UI feedback
-    const { data: links } = await supabaseAdmin
+    const { data: links, error: linksError } = await db
       .from("tag_items")
       .select("epc, item_id, items:item_id (name)")
       .eq("company_slug", companySlug)
       .in("epc", epcs);
 
-    const { data: scans } = await supabaseAdmin
+    const { data: scans, error: scansError } = await db
       .from("rfid_scans")
       .select("epc, location")
       .eq("company_slug", companySlug)
       .in("epc", epcs);
+    if (linksError || scansError) throw new Error("Could not read back linked tags");
 
     const locByEpc = new Map((scans || []).map((s) => [s.epc, s.location]));
 

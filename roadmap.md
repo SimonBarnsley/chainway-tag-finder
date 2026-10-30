@@ -7,6 +7,7 @@
 - [x] Download my data / delete my account / audit log (implemented; production audit identifies hardening needed)
 
 ## Commercial readiness — ten-item checklist
+- [ ] Current continuation: review unprotected server actions, persistent handheld scan recovery, trusted audit records, commercial onboarding and verification
 - [x] 1. Document supported RFID readers and tag types
 - [x] 2. Map RFID scan flow to application and database
 - [ ] 3. Automated checks pass; physical duplicate/missed/cross-read results require readers and operator

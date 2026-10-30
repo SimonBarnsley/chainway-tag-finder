@@ -1,7 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decodeSgtin } from "@/lib/sgtin-decoder";
 
 const ProcessScanInput = z.object({
@@ -35,6 +34,7 @@ export const processScan = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => ProcessScanInput.parse(input))
   .handler(async ({ data, context }): Promise<ProcessScanResult> => {
     const { userId } = context;
+    const supabaseAdmin = context.supabase; // RLS applies as the authenticated caller.
     const epc = data.epc.toUpperCase();
 
     // Resolve the user's company_slug — RLS will block any other slug
@@ -174,13 +174,15 @@ export const processScan = createServerFn({ method: "POST" })
         .from("items")
         .select("warehouse_location")
         .eq("id", itemId)
+        .eq("company_slug", companySlug)
         .maybeSingle();
 
       if (!currentItemErr && currentItem?.warehouse_location !== effectiveLocation) {
         const { error: locErr } = await supabaseAdmin
           .from("items")
           .update({ warehouse_location: effectiveLocation })
-          .eq("id", itemId);
+          .eq("id", itemId)
+          .eq("company_slug", companySlug);
         if (!locErr) result.locationApplied = true;
       }
     }

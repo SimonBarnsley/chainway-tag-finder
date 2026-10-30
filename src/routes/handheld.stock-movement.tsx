@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/use-handheld-scanner";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+import { draftKey } from "@/lib/handheld-draft";
 
 export const Route = createFileRoute("/handheld/stock-movement")({
   component: StockMovement,
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/handheld/stock-movement")({
 });
 
 function StockMovement() {
-  const { companySlug } = useAuth();
+  const { companySlug, user } = useAuth();
   const navigate = useNavigate();
   const linkFn = useServerFn(linkSavedEpcs);
   const [locations, setLocations] = useState<string[]>([]);
@@ -34,14 +35,13 @@ function StockMovement() {
   const [atFrom, setAtFrom] = useState<Set<string>>(new Set());
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
-  const { tags, clear } = useHandheldScanner(companySlug, !!from);
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!from && !saving, user && companySlug ? draftKey(user.id, companySlug, "stock-movement", from) : undefined);
 
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations).catch(() => setLocations([]));
   }, [companySlug]);
 
   useEffect(() => {
-    clear();
     if (!companySlug || !from) return setAtFrom(new Set());
     supabase
       .from("rfid_scans")
@@ -80,6 +80,7 @@ function StockMovement() {
         console.error("[stock-movement] link failed", e);
       }
       toast.success(`Moved ${epcs.length} tag${epcs.length === 1 ? "" : "s"} from ${from} to ${to}`);
+      clear();
       navigate({ to: "/handheld" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Move failed");
@@ -139,6 +140,7 @@ function StockMovement() {
           </label>
 
           <div className="flex gap-2">
+            {storageError && <p role="alert" className="text-sm text-destructive">This device cannot save a recovery copy. Keep this screen open until submitted.</p>}
             <Button className="h-12 flex-1 text-base" onClick={save} disabled={saving || !to || moving.length === 0}>
               <ArrowRight className="mr-2 h-5 w-5" />
               {saving ? "Moving…" : `Move ${moving.length} tag${moving.length === 1 ? "" : "s"}`}
