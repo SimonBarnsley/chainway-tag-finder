@@ -1,6 +1,7 @@
 import { createServerFn } from "@tanstack/react-start";
 import { z } from "zod";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
+import { requireTenantAdmin } from "./tenant-access.server";
 import { autoLinkEpcsToItems } from "@/lib/auto-link-epcs";
 import { syncItemLocationsForEpcs } from "@/lib/sync-item-locations";
 
@@ -9,13 +10,16 @@ import { syncItemLocationsForEpcs } from "@/lib/sync-item-locations";
  * GS1 SGTIN decoding (company prefix + item reference matched against items.sku).
  */
 export const backfillTagItems = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
   .inputValidator(
     z.object({
       companySlug: z.string().min(1).max(100),
     }).parse
   )
-  .handler(async ({ data }) => {
+  .handler(async ({ data, context }) => {
     const { companySlug } = data;
+    await requireTenantAdmin(context, companySlug);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
 
     const { data: scans, error: scansErr } = await supabaseAdmin
       .from("rfid_scans")

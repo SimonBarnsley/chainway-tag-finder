@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { requireSupabaseAuth } from "@/integrations/supabase/auth-middleware";
-import { supabaseAdmin } from "@/integrations/supabase/client.server";
+import { requireSuperAdmin } from "./tenant-access.server";
 
 interface AuthLogEntry {
   id: string;
@@ -32,24 +32,16 @@ interface DiagnosticsResult {
   error: string | null;
 }
 
-const SUPABASE_URL = process.env.SUPABASE_URL ?? "";
-const SUPABASE_PROJECT_REF = SUPABASE_URL.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] ?? "";
 
 export const getAuthDiagnostics = createServerFn({ method: "POST" })
   .middleware([requireSupabaseAuth])
   .handler(async ({ context }): Promise<DiagnosticsResult> => {
-    const userId = context.userId;
+    await requireSuperAdmin(context);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const SUPABASE_URL = process.env['SUPABASE_URL'] ?? "";
+    const SUPABASE_PROJECT_REF = SUPABASE_URL.match(/https:\/\/([a-z0-9]+)\.supabase\.co/)?.[1] ?? "";
     const warnings: string[] = [];
 
-    // Verify caller is admin or super_admin
-    const { data: roles } = await supabaseAdmin
-      .from("user_roles")
-      .select("role")
-      .eq("user_id", userId);
-    const roleSet = new Set((roles ?? []).map((r) => r.role));
-    if (!roleSet.has("admin") && !roleSet.has("super_admin")) {
-      throw new Response("Forbidden: admin only", { status: 403 });
-    }
 
     // Recent profiles + role rows (last 10 signups)
     const { data: profiles } = await supabaseAdmin
