@@ -4,3 +4,5 @@
 - Reader connection indicators subscribe to a shared client-side status snapshot populated by SDK initialization, release and native status events; this captures connections that do not emit an initial event without giving headers ownership of the reader.
 - rfid_scans is unique per (company_slug, epc); every upsert must use onConflict "company_slug,epc" — keeps companies' tag records separate.
 - Admin/super_admin accounts must reach aal2 (TOTP via /mfa), enforced in AuthGuard — client-side gate only, not RLS.
+- RFID payload extraction and batch deduplication live in a browser-safe pure module shared with tests — tests exercise production parsing without database access.
+- Commercial readiness evidence and test protocols live in docs/readiness; distinguish source support, automated checks and field verification so support claims stay defensible.
