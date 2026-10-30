@@ -27,12 +27,7 @@ import { toast } from "sonner";
 
 export const Route = createFileRoute("/$company/readers")({
   component: ReadersPage,
-  head: () => ({
-    meta: [
-      { title: "Fixed Readers — Antenna Configuration" },
-      { name: "description", content: "Configure fixed RFID readers and map antennas to locations" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Fixed Readers \u2014 Antenna Configuration \u2014 ScanLoc8" },{ name: "description", content: "Configure fixed RFID readers and map antennas to locations" },{ property: "og:title", content: "Fixed Readers \u2014 Antenna Configuration \u2014 ScanLoc8" },{ property: "og:description", content: "Configure fixed RFID readers and map antennas to locations" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface ReaderAntenna {

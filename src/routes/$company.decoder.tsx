@@ -13,12 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 
 export const Route = createFileRoute("/$company/decoder")({
   component: DecoderPage,
-  head: () => ({
-    meta: [
-      { title: "SGTIN Decoder — GS1 EPC Tag Decoder" },
-      { name: "description", content: "Decode UHF RFID tags encoded to GS1 SGTIN-96 and SGTIN-198 standards" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "SGTIN Decoder \u2014 GS1 EPC Tag Decoder \u2014 ScanLoc8" },{ name: "description", content: "Decode UHF RFID tags encoded to GS1 SGTIN-96 and SGTIN-198 standards" },{ property: "og:title", content: "SGTIN Decoder \u2014 GS1 EPC Tag Decoder \u2014 ScanLoc8" },{ property: "og:description", content: "Decode UHF RFID tags encoded to GS1 SGTIN-96 and SGTIN-198 standards" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 function DecoderPage() {

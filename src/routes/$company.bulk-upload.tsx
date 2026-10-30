@@ -21,12 +21,7 @@ import { decodeSgtin } from "@/lib/sgtin-decoder";
 
 export const Route = createFileRoute("/$company/bulk-upload")({
   component: BulkUploadPage,
-  head: () => ({
-    meta: [
-      { title: "Bulk Upload — RFID Inventory" },
-      { name: "description", content: "Bulk upload items with auto-generated SGTIN-96 EPCs" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Bulk Upload \u2014 RFID Inventory \u2014 ScanLoc8" },{ name: "description", content: "Bulk upload items with auto-generated SGTIN-96 EPCs" },{ property: "og:title", content: "Bulk Upload \u2014 RFID Inventory \u2014 ScanLoc8" },{ property: "og:description", content: "Bulk upload items with auto-generated SGTIN-96 EPCs" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface BulkItem {

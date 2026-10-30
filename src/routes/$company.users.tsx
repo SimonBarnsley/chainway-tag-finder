@@ -25,9 +25,7 @@ import {
 
 export const Route = createFileRoute("/$company/users")({
   component: UsersPage,
-  head: () => ({
-    meta: [{ title: "Admin — Users" }],
-  }),
+  head: () => ({ meta: [{ title: "Users \u2014 ScanLoc8" },{ name: "description", content: "Manage registered ScanLoc8 company users." },{ property: "og:title", content: "Users \u2014 ScanLoc8" },{ property: "og:description", content: "Manage registered ScanLoc8 company users." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 type UiRole = "admin" | "supervisor" | "basic";

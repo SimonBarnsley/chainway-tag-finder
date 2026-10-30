@@ -25,12 +25,7 @@ export const Route = createFileRoute("/$company/cost-dashboard")({
       <CostDashboard />
     </AuthGuard>
   ),
-  head: () => ({
-    meta: [
-      { title: "Cloud Cost Dashboard" },
-      { name: "description", content: "Live monitoring of scan volume and database growth" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Cloud Cost Dashboard \u2014 ScanLoc8" },{ name: "description", content: "Live monitoring of scan volume and database growth" },{ property: "og:title", content: "Cloud Cost Dashboard \u2014 ScanLoc8" },{ property: "og:description", content: "Live monitoring of scan volume and database growth" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 function CostDashboard() {

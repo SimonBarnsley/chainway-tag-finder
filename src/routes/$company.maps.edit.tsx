@@ -40,15 +40,7 @@ import {
 
 export const Route = createFileRoute("/$company/maps/edit")({
   component: EditPage,
-  head: () => ({
-    meta: [
-      { title: "Edit Company Floor Plan — RFID Zone Editor" },
-      {
-        name: "description",
-        content: "Upload your company floor plan and draw a zone for each location.",
-      },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Edit Company Floor Plan \u2014 RFID Zone Editor \u2014 ScanLoc8" },{ name: "description", content: "Upload your company floor plan and draw a zone for each location." },{ property: "og:title", content: "Edit Company Floor Plan \u2014 RFID Zone Editor \u2014 ScanLoc8" },{ property: "og:description", content: "Upload your company floor plan and draw a zone for each location." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface LocationOption {

@@ -52,14 +52,7 @@ import { ItemDetails } from "@/components/ItemDetails";
 
 export const Route = createFileRoute("/$company/admin-dashboard")({
   component: AdminDashboardPage,
-  head: () => ({
-    meta: [
-      { title: "Admin Dashboard — RFID Tag Reads" },
-      { name: "description", content: "Admin-only dashboard for UHF RFID tag scan data" },
-      { property: "og:title", content: "Admin Dashboard — RFID Tag Reads" },
-      { property: "og:description", content: "Admin-only dashboard for UHF RFID tag scan data" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Admin Dashboard \u2014 RFID Tag Reads \u2014 ScanLoc8" },{ name: "description", content: "Admin-only dashboard for UHF RFID tag scan data" },{ property: "og:title", content: "Admin Dashboard \u2014 RFID Tag Reads \u2014 ScanLoc8" },{ property: "og:description", content: "Admin-only dashboard for UHF RFID tag scan data" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface ScanRecord {

@@ -12,9 +12,7 @@ import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/signup")({
   component: SignupPage,
-  head: () => ({
-    meta: [{ title: "Sign Up — ScanLoc8" }],
-  }),
+  head: () => ({ meta: [{ title: "Sign up \u2014 ScanLoc8" },{ name: "description", content: "Create an account for a registered ScanLoc8 company." },{ property: "og:title", content: "Sign up \u2014 ScanLoc8" },{ property: "og:description", content: "Create an account for a registered ScanLoc8 company." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 function SignupPage() {

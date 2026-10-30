@@ -10,9 +10,7 @@ import { useAuth } from "@/hooks/use-auth";
 
 export const Route = createFileRoute("/$company/roles")({
   component: RolesPage,
-  head: () => ({
-    meta: [{ title: "Admin — Roles & Permissions" }],
-  }),
+  head: () => ({ meta: [{ title: "Roles and permissions \u2014 ScanLoc8" },{ name: "description", content: "Manage ScanLoc8 access permissions." },{ property: "og:title", content: "Roles and permissions \u2014 ScanLoc8" },{ property: "og:description", content: "Manage ScanLoc8 access permissions." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 type UiRole = "admin" | "supervisor" | "basic";

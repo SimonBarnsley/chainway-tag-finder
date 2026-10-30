@@ -32,12 +32,7 @@ import { InlineItemForm } from "@/components/InlineItemForm";
 
 export const Route = createFileRoute("/$company/items")({
   component: ItemsPage,
-  head: () => ({
-    meta: [
-      { title: "Item Management — RFID Inventory" },
-      { name: "description", content: "Manage inventory items linked to UHF RFID tags" },
-    ],
-  }),
+  head: () => ({ meta: [{ title: "Item Management \u2014 RFID Inventory \u2014 ScanLoc8" },{ name: "description", content: "Manage inventory items linked to UHF RFID tags" },{ property: "og:title", content: "Item Management \u2014 RFID Inventory \u2014 ScanLoc8" },{ property: "og:description", content: "Manage inventory items linked to UHF RFID tags" },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 interface Item {

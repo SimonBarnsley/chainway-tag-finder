@@ -9,9 +9,7 @@ import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 
 export const Route = createFileRoute("/forgot-password")({
   component: ForgotPasswordPage,
-  head: () => ({
-    meta: [{ title: "Forgot Password — ScanLoc8" }],
-  }),
+  head: () => ({ meta: [{ title: "Forgot password \u2014 ScanLoc8" },{ name: "description", content: "Request a ScanLoc8 password reset email." },{ property: "og:title", content: "Forgot password \u2014 ScanLoc8" },{ property: "og:description", content: "Request a ScanLoc8 password reset email." },{ property: "og:type", content: "website" },{ name: "twitter:card", content: "summary" }] }),
 });
 
 function ForgotPasswordPage() {
