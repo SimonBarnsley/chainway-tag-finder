@@ -12,3 +12,4 @@
 - Handheld submissions use an authenticated atomic SQL RPC with durable request receipts; identical retries reuse a receipt, movements verify source inside the transaction — avoids double booking and partial source moves when connections interrupt.
 - Client-originated audit messages are explicitly unverified; trusted settings/rule/handheld activity is generated inside database operations — users cannot forge authoritative audit records.
 - Ordinary scan/link server actions use the caller's RLS client; privileged reader keys, backfill and global diagnostics require verified admin guards — avoids service-role bypass of customer permissions.
+- Self sign-ups store only pending company membership; a tenant admin approval sets company_slug — knowing a company name must never grant access.

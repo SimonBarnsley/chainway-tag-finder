@@ -71,10 +71,15 @@ function SignInPage() {
       const { data: { user } } = await supabase.auth.getUser();
       const { data: profile } = await supabase
         .from("profiles")
-        .select("company_slug, company_name")
+        .select("company_slug, company_name, pending_company_name")
         .eq("user_id", user?.id ?? "")
         .single();
 
+      if (profile && !profile.company_slug && profile.pending_company_name) {
+        await supabase.auth.signOut();
+        toast.error(`Your request to join "${profile.pending_company_name}" is waiting for an administrator to approve it.`);
+        return;
+      }
       if (!profile || normalize(profile.company_name) !== normalize(company)) {
         // Not registered under the entered company — reject and sign back out.
         await supabase.auth.signOut();

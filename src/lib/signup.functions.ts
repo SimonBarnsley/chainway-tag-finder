@@ -78,8 +78,8 @@ export const registerAccount = createServerFn({ method: "POST" })
         user_id: userId,
         email: data.email,
         display_name: displayName,
-        company_name: company.name,
-        company_slug: company.slug,
+        pending_company_name: company.name,
+        pending_company_slug: company.slug,
       },
       { onConflict: "user_id" }
     );

@@ -56,7 +56,7 @@ function SignupPage() {
         toast.error(res.error || "Sign up failed");
         return;
       }
-      toast.success("Account created! Check your email to confirm.");
+      toast.success("Account created! Confirm your email, then your company administrator must approve your access.");
       navigate({ to: "/login" });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : "Sign up failed";

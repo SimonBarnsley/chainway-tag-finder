@@ -587,6 +587,8 @@ export type Database = {
           display_name: string | null
           email: string | null
           id: string
+          pending_company_name: string | null
+          pending_company_slug: string | null
           updated_at: string
           user_id: string
         }
@@ -597,6 +599,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          pending_company_name?: string | null
+          pending_company_slug?: string | null
           updated_at?: string
           user_id: string
         }
@@ -607,6 +611,8 @@ export type Database = {
           display_name?: string | null
           email?: string | null
           id?: string
+          pending_company_name?: string | null
+          pending_company_slug?: string | null
           updated_at?: string
           user_id?: string
         }
