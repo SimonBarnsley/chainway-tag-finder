@@ -1,3 +1,4 @@
+import { csvRow, csvCell } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useState, useEffect, useMemo } from "react";
@@ -333,7 +334,7 @@ function AdminDashboardContent() {
       "EPC,Scan Count,First Seen,Last Seen,Location,Device,Notes",
       ...filtered.map(
         (r) =>
-          `${r.epc},${r.scan_count},${r.first_seen},${r.last_seen},${r.location || ""},${r.device_name || ""},${r.notes || ""}`
+          csvRow([r.epc, r.scan_count, r.first_seen, r.last_seen, r.location, r.device_name, r.notes])
       ),
     ].join("\n");
 
@@ -394,8 +395,7 @@ function AdminDashboardContent() {
 
       const header = "SKU,Item Name,Description,EPC,GS1 Company Prefix,Serial Number,GTIN";
       const esc = (v: unknown) => {
-        const s = v === null || v === undefined ? "" : String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        return csvCell(v);
       };
       const rows: string[] = [];
       all.forEach((item) => {

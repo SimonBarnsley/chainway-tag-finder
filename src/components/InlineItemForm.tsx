@@ -1,3 +1,4 @@
+import { pgrstValue } from "@/lib/csv-safe";
 import { useState, useRef } from "react";
 import { Save, X, ImagePlus, Loader2, Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -56,9 +57,9 @@ export function InlineItemForm({ epc, companySlug, onSaved, onCancel }: InlineIt
     setSaving(true);
     try {
       // 0. Duplicate check (name + SKU + GTIN within same company)
-      const orParts: string[] = [`name.eq.${name.trim()}`];
-      if (sku.trim()) orParts.push(`sku.eq.${sku.trim()}`);
-      if (gtin.trim()) orParts.push(`gtin.eq.${gtin.trim()}`);
+      const orParts: string[] = [`name.eq.${pgrstValue(name.trim())}`];
+      if (sku.trim()) orParts.push(`sku.eq.${pgrstValue(sku.trim())}`);
+      if (gtin.trim()) orParts.push(`gtin.eq.${pgrstValue(gtin.trim())}`);
       const { data: existing, error: dupErr } = await supabase
         .from("items")
         .select("id, name, sku, gtin")

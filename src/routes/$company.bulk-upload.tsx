@@ -1,3 +1,4 @@
+import { csvCell, pgrstValue } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { useState, useRef } from "react";
@@ -167,9 +168,9 @@ function BulkUploadPage() {
       const idx = items.indexOf(item);
       try {
         // DB duplicate check (name / sku / gtin within company)
-        const orParts: string[] = [`name.eq.${item.name.trim()}`];
-        if (item.sku.trim()) orParts.push(`sku.eq.${item.sku.trim()}`);
-        if (item.gtin.trim()) orParts.push(`gtin.eq.${item.gtin.trim()}`);
+        const orParts: string[] = [`name.eq.${pgrstValue(item.name.trim())}`];
+        if (item.sku.trim()) orParts.push(`sku.eq.${pgrstValue(item.sku.trim())}`);
+        if (item.gtin.trim()) orParts.push(`gtin.eq.${pgrstValue(item.gtin.trim())}`);
         const { data: existing, error: dupErr } = await supabase
           .from("items")
           .select("id, name, sku, gtin")
@@ -217,7 +218,7 @@ function BulkUploadPage() {
   };
 
   const exportItemsCSV = () => {
-    const escCSV = (v: string) => v.includes(",") || v.includes('"') ? `"${v.replace(/"/g, '""')}"` : v;
+    const escCSV = (v: unknown) => csvCell(v);
     const header = "name,description,category,sku,gtin,price,warehouse_location,status";
     const rows = items.map((i) =>
       [i.name, i.description, i.category, i.sku, i.gtin, i.price, i.warehouse_location, i.status]
@@ -284,8 +285,7 @@ function BulkUploadPage() {
         "filter", "gtin14", "pure_identity_uri",
       ];
       const esc = (v: unknown) => {
-        const s = v === null || v === undefined ? "" : String(v);
-        return /[",\n]/.test(s) ? `"${s.replace(/"/g, '""')}"` : s;
+        return csvCell(v);
       };
       const rows: string[] = [];
       all.forEach((r) => {
