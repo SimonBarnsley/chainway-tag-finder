@@ -6,7 +6,7 @@
 |---|---|---|
 | 1 Reader/tag documentation | Complete: source-backed support sheet | Certification needs step 5 field results |
 | 2 Scan data flow | Complete: fixed/handheld/database/alert paths mapped | Raw reader timestamps and replay semantics remain limitations |
-| 3 Read quality | 20 automated parser/dedup/access/reconciliation/redaction checks pass; Stock Check now says Not seen | Physical missed/cross-read testing; permissive parser and SGTIN identity validation remain |
+| 3 Read quality | 25 automated parser/dedup/access/reconciliation/redaction/registration checks pass; Stock Check now says Not seen | Physical missed/cross-read testing; permissive parser and SGTIN identity validation remain |
 | 4 Auth/customer separation | Live policy audit repeated; membership edits blocked by trigger; role/profile/company administration scoped; reviewed server actions require tenant scope and aal2; signup uses exact case-insensitive name | Two-company signed-in regression and successful aal2 admin workflows require test accounts/current authenticator; remaining admin/server/RLS paths and function privileges need review |
 | 5 Hardware matrix | Matrix and acceptance protocol created | Devices, firmware/APK versions, tags and site operator required |
 | 6 Event/reconciliation | Tenant read-only scan-change history recorded by database trigger; History has Location changes view; reconciliation tested; credential headers/path/body redacted for future diagnostics | Raw observation ledger, reader timestamps, stale-event rejection, atomic counts/movements, trusted admin audit and idempotency still needed |
@@ -17,7 +17,7 @@
 
 ## Verification performed
 
-- Latest automatic app checks passed after fixes; Vitest runs 20 tests across four files.
+- Latest automatic app checks passed after fixes; Vitest runs 25 tests across five files.
 - Database catalogue confirms protect_profile_membership and record_scan_event triggers plus tenant-scoped policies.
 - Browser: revised public heading visible; no page errors; signed-in account reached `/mfa`, not an unprotected admin screen. No MFA bypass attempted.
 - Browser offline then online status verified; this does NOT prove unsent RFID reads survive a restart.

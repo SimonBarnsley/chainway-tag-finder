@@ -7,3 +7,4 @@
 - RFID payload extraction and batch deduplication live in a browser-safe pure module shared with tests — tests exercise production parsing without database access.
 - Commercial readiness evidence and test protocols live in docs/readiness; distinguish source support, automated checks and field verification so support claims stay defensible.
 - RFID snapshot changes are recorded by a database trigger into tenant-scoped scan_events, with retention matching company scan periods — every write path gets history without trusting browser-inserted events; this is not raw RF telemetry.
+- Registered-company matching and assignable user-role validation use tested pure helpers shared by server actions — crafted requests must not bypass company registration or elevate newly created users.
