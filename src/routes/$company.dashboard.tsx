@@ -1,3 +1,4 @@
+import { csvRow, csvCell, pgrstValue, wildcardTest } from "@/lib/csv-safe";
 import { createFileRoute } from "@tanstack/react-router";
 import { AuthGuard } from "@/components/AuthGuard";
 import { Fragment, useState, useEffect, useMemo } from "react";
@@ -331,7 +332,7 @@ function DashboardPage() {
       "EPC,Scan Count,First Seen,Last Seen,Location,Device,Notes",
       ...filtered.map(
         (r) =>
-          `${r.epc},${r.scan_count},${r.first_seen},${r.last_seen},${r.location || ""},${r.device_name || ""},${r.notes || ""}`
+          csvRow([r.epc, r.scan_count, r.first_seen, r.last_seen, r.location, r.device_name, r.notes])
       ),
     ].join("\n");
 
