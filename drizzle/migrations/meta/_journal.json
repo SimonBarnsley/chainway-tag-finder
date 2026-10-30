@@ -57,6 +57,13 @@
       "when": 1793351712627,
       "tag": "0007_validate_tenant_links_and_rule_recipients",
       "breakpoints": true
+    },
+    {
+      "idx": 8,
+      "version": "7",
+      "when": 1793352176338,
+      "tag": "0008_signup_requires_company_admin_approval",
+      "breakpoints": true
     }
   ]
 }
