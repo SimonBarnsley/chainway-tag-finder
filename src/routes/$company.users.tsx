@@ -15,6 +15,7 @@ import { useServerFn } from "@tanstack/react-start";
 import { useAuth } from "@/hooks/use-auth";
 import { CompaniesManager } from "@/components/CompaniesManager";
 import { DataTransfer } from "@/components/DataTransfer";
+import { JoinRequests } from "@/components/JoinRequests";
 import {
   listCompanies,
   updateUserCompany,
@@ -274,6 +275,7 @@ function UsersContent() {
       <main className="flex-1 px-4 py-4 space-y-4 max-w-3xl mx-auto w-full">
         {isSuperAdmin && <CompaniesManager />}
         {isSuperAdmin && <DataTransfer company={routeCompany} />}
+        <JoinRequests company={routeCompany} />
         <div className="flex items-center gap-2">
           <UsersIcon className="h-5 w-5 text-primary" />
           <h1 className="text-lg font-bold text-foreground">Users</h1>
