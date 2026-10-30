@@ -13,6 +13,7 @@ import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { useServerFn } from "@tanstack/react-start";
 import { reconcileTagReads } from "@/lib/scan-reconciliation";
+import { draftKey } from "@/lib/handheld-draft";
 
 export const Route = createFileRoute("/handheld/stock-check")({
   component: StockCheck,
@@ -31,7 +32,7 @@ export const Route = createFileRoute("/handheld/stock-check")({
 type Tab = "found" | "missing" | "unexpected";
 
 function StockCheck() {
-  const { companySlug } = useAuth();
+  const { companySlug, user } = useAuth();
   const navigate = useNavigate();
   const [locations, setLocations] = useState<string[]>([]);
   const [location, setLocation] = useState("");
@@ -43,7 +44,7 @@ function StockCheck() {
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [geigerEpc, setGeigerEpc] = useState<string | null>(null);
   const geigerPanelRef = useRef<HTMLDivElement>(null);
-  const { tags, clear } = useHandheldScanner(companySlug, !!location && !geigerEpc);
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!location && !geigerEpc && !submitting, user && companySlug ? draftKey(user.id, companySlug, "stock-check", location) : undefined);
   const runLinkSavedEpcs = useServerFn(linkSavedEpcs);
 
   // Geiger search for a missing tag: locks the reader to one EPC and shows a
@@ -89,7 +90,6 @@ function StockCheck() {
   }, [companySlug]);
 
   useEffect(() => {
-    clear();
     setSubmitted(null);
     setSubmitError(null);
     if (!companySlug || !location) return setExpected(new Set());
@@ -146,6 +146,7 @@ function StockCheck() {
         .eq("location", location);
       setExpected(new Set((data ?? []).map((r) => r.epc.toUpperCase())));
       setSubmitted(`Saved ${tags.size} tag${tags.size === 1 ? "" : "s"} to ${location}`);
+      clear();
       navigate({ to: "/handheld" });
     } catch (e) {
       setSubmitError(e instanceof Error ? e.message : "Save failed");
@@ -242,6 +243,7 @@ function StockCheck() {
           )}
           {submitted && <p className="text-center text-sm font-medium text-green-600">{submitted}</p>}
           {submitError && <p className="text-center text-sm font-medium text-destructive">{submitError}</p>}
+          {storageError && <p role="alert" className="text-sm text-destructive">This device cannot save a recovery copy. Keep this screen open until submitted.</p>}
           <Button
             className="h-12 w-full"
             disabled={submitting || tags.size === 0}

@@ -9,6 +9,7 @@ import { useAuth } from "@/hooks/use-auth";
 import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/use-handheld-scanner";
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
+import { draftKey } from "@/lib/handheld-draft";
 
 export const Route = createFileRoute("/handheld/goods-in")({
   component: GoodsIn,
@@ -25,7 +26,7 @@ export const Route = createFileRoute("/handheld/goods-in")({
 });
 
 function GoodsIn() {
-  const { companySlug, isLoading: authLoading } = useAuth();
+  const { companySlug, user, isLoading: authLoading } = useAuth();
   const navigate = useNavigate();
   const linkFn = useServerFn(linkSavedEpcs);
   const [locations, setLocations] = useState<string[]>([]);
@@ -34,7 +35,7 @@ function GoodsIn() {
   const [location, setLocation] = useState("");
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
-  const { tags, clear } = useHandheldScanner(companySlug, true);
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !saving, user && companySlug ? draftKey(user.id, companySlug, "goods-in", location) : undefined);
 
   useEffect(() => {
     if (!companySlug) return;
@@ -136,6 +137,7 @@ function GoodsIn() {
       </div>
 
       <div className="flex gap-2">
+        {storageError && <p role="alert" className="text-sm text-destructive">This device cannot save a recovery copy. Keep this screen open until submitted.</p>}
         <Button className="h-12 flex-1 text-base" onClick={save} disabled={saving || tags.size === 0 || !location}>
           <Save className="mr-2 h-5 w-5" />
           {saving ? "Saving…" : "Book in"}
