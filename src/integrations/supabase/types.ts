@@ -825,6 +825,7 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      can_manage_company: { Args: { _company: string }; Returns: boolean }
       cleanup_zebra_debug_logs: { Args: never; Returns: undefined }
       company_exists: { Args: { _name: string }; Returns: boolean }
       generate_slug: { Args: { input: string }; Returns: string }
