@@ -40,7 +40,7 @@ export const getZebraApiKey = createServerFn({ method: "POST" })
       const { error: upErr } = await supabaseAdmin
         .from("company_reader_keys")
         .upsert({ company_slug: data.company, api_key: key }, { onConflict: "company_slug" });
-      if (upErr) return { configured: false as const, apiKey: "", error: "save_failed" };
+      if (upErr) return { configured: false as const, apiKey: "", error: "save_failed" as string };
     }
     return { apiKey: key, configured: true, error: null as string | null };
   });

@@ -4,6 +4,7 @@ import { createLovableAiGatewayRunIdFetch } from "@/lib/ai-gateway.server";
 import { createOpenAI } from "@ai-sdk/openai";
 import { streamText, Output, NoObjectGeneratedError } from "ai";
 import { z } from "zod";
+import { requireTenantAdmin } from "./tenant-access.server";
 
 const Input = z.object({
   companySlug: z.string().min(1),
@@ -44,7 +45,8 @@ function redact(text: string) {
 export const diagnoseReaderLog = createServerFn({ method: "POST" })
   .inputValidator((input: unknown) => Input.parse(input))
   .middleware([requireSupabaseAuth])
-  .handler(async ({ data }): Promise<LogDoctorResult> => {
+  .handler(async ({ data, context }): Promise<LogDoctorResult> => {
+    await requireTenantAdmin(context, data.companySlug);
     const apiKey = process.env["LOVABLE_API_KEY"];
     if (!apiKey) throw new Error("AI is not configured for this workspace.");
 
