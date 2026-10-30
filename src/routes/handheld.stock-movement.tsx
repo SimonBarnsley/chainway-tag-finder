@@ -10,6 +10,7 @@ import { useHandheldScanner, loadLocationNames, loadItemNames } from "@/hooks/us
 import { supabase } from "@/integrations/supabase/client";
 import { linkSavedEpcs } from "@/lib/link-epcs.functions";
 import { draftKey } from "@/lib/handheld-draft";
+import { submitHandheld, completeHandheld } from "@/lib/handheld-submit";
 
 export const Route = createFileRoute("/handheld/stock-movement")({
   component: StockMovement,
@@ -35,7 +36,8 @@ function StockMovement() {
   const [atFrom, setAtFrom] = useState<Set<string>>(new Set());
   const [names, setNames] = useState<Map<string, string>>(new Map());
   const [saving, setSaving] = useState(false);
-  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!from && !saving, user && companySlug ? draftKey(user.id, companySlug, "stock-movement", from) : undefined);
+  const recoveryKey = user && companySlug ? draftKey(user.id, companySlug, "stock-movement", from) : undefined;
+  const { tags, clear, storageError } = useHandheldScanner(companySlug, !!from && !saving, recoveryKey);
 
   useEffect(() => {
     if (companySlug) loadLocationNames(companySlug).then(setLocations).catch(() => setLocations([]));
@@ -66,21 +68,13 @@ function StockMovement() {
     if (from === to) return toast.error("Pick a different destination.");
     setSaving(true);
     try {
-      const now = new Date().toISOString();
       const epcs = moving.map(([e]) => e);
-      const { error } = await supabase
-        .from("rfid_scans")
-        .update({ location: to, last_seen: now })
-        .eq("company_slug", companySlug)
-        .in("epc", epcs);
-      if (error) throw new Error(error.message);
-      try {
-        await linkFn({ data: { epcs } });
-      } catch (e) {
-        console.error("[stock-movement] link failed", e);
-      }
+      if (!recoveryKey) throw new Error("Sign in before submitting");
+      await submitHandheld(recoveryKey, "stock-movement", to, moving, from);
+      await linkFn({ data: { epcs } });
       toast.success(`Moved ${epcs.length} tag${epcs.length === 1 ? "" : "s"} from ${from} to ${to}`);
       clear();
+      completeHandheld(recoveryKey);
       navigate({ to: "/handheld" });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "Move failed");
