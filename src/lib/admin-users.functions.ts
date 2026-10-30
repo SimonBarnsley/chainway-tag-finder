@@ -361,3 +361,46 @@ export const deleteUserCompletely = createServerFn({ method: "POST" })
     });
     return { ok: true };
   });
+
+
+export interface JoinRequest { user_id: string; email: string | null; display_name: string | null; created_at: string }
+
+/** Self sign-ups awaiting a company admin's approval. */
+export const listJoinRequests = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { companySlug: string }) => {
+    if (!input?.companySlug || typeof input.companySlug !== "string") throw new Response("companySlug required", { status: 400 });
+    return input;
+  })
+  .handler(async ({ context, data }): Promise<JoinRequest[]> => {
+    await requireTenantAdmin(context, data.companySlug);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: rows, error } = await supabaseAdmin.from("profiles")
+      .select("user_id, email, display_name, created_at")
+      .eq("pending_company_slug", data.companySlug).is("company_slug", null)
+      .order("created_at", { ascending: false });
+    if (error) throw new Error("Could not load sign-up requests");
+    return rows ?? [];
+  });
+
+export const decideJoinRequest = createServerFn({ method: "POST" })
+  .middleware([requireSupabaseAuth])
+  .inputValidator((input: { companySlug: string; userId: string; approve: boolean }) => {
+    if (!input?.companySlug || !input?.userId || typeof input.approve !== "boolean") throw new Response("Invalid request", { status: 400 });
+    return input;
+  })
+  .handler(async ({ context, data }) => {
+    await requireTenantAdmin(context, data.companySlug);
+    const { supabaseAdmin } = await import("@/integrations/supabase/client.server");
+    const { data: p } = await supabaseAdmin.from("profiles")
+      .select("pending_company_slug, pending_company_name, company_slug").eq("user_id", data.userId).maybeSingle();
+    if (!p || p.company_slug || p.pending_company_slug !== data.companySlug) throw new Response("No such request", { status: 404 });
+    const { error } = await supabaseAdmin.from("profiles").update(
+      data.approve
+        ? { company_slug: p.pending_company_slug, company_name: p.pending_company_name, pending_company_slug: null, pending_company_name: null }
+        : { pending_company_slug: null, pending_company_name: null }
+    ).eq("user_id", data.userId);
+    if (error) throw new Error("Could not update request");
+    await writeAudit(data.companySlug, context.userId, data.approve ? "user.signup_approved" : "user.signup_rejected", { target_user_id: data.userId });
+    return { ok: true };
+  });
