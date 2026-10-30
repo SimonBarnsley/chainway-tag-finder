@@ -420,6 +420,33 @@ export type Database = {
         }
         Relationships: []
       }
+      handheld_submissions: {
+        Row: {
+          accepted: number
+          company_slug: string
+          created_at: string
+          id: string
+          request_data: Json
+          user_id: string
+        }
+        Insert: {
+          accepted: number
+          company_slug: string
+          created_at?: string
+          id: string
+          request_data: Json
+          user_id: string
+        }
+        Update: {
+          accepted?: number
+          company_slug?: string
+          created_at?: string
+          id?: string
+          request_data?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
       items: {
         Row: {
           category: string | null
@@ -878,6 +905,16 @@ export type Database = {
           _user_id: string
         }
         Returns: boolean
+      }
+      submit_handheld_scan: {
+        Args: {
+          _id: string
+          _location: string
+          _operation: string
+          _source: string
+          _tags: Json
+        }
+        Returns: number
       }
     }
     Enums: {
