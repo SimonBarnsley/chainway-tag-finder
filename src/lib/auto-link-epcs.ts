@@ -1,5 +1,7 @@
 import { supabaseAdmin } from "@/integrations/supabase/client.server";
 import { decodeSgtin } from "@/lib/sgtin-decoder";
+import type { SupabaseClient } from "@supabase/supabase-js";
+import type { Database } from "@/integrations/supabase/types";
 
 export interface AutoLinkResult {
   linked: number;
@@ -25,7 +27,8 @@ export interface AutoLinkResult {
  */
 export async function autoLinkEpcsToItems(
   companySlug: string,
-  epcs: string[]
+  epcs: string[],
+  db: SupabaseClient<Database> = supabaseAdmin
 ): Promise<AutoLinkResult> {
   const result: AutoLinkResult = {
     linked: 0,
@@ -38,11 +41,12 @@ export async function autoLinkEpcsToItems(
   if (unique.length === 0) return result;
 
   // Skip EPCs already linked for this company
-  const { data: existing } = await supabaseAdmin
+  const { data: existing, error: existingError } = await db
     .from("tag_items")
     .select("epc")
     .eq("company_slug", companySlug)
     .in("epc", unique);
+  if (existingError) throw new Error("Could not load existing tag links");
 
   const alreadyLinked = new Set((existing || []).map((t) => t.epc));
   result.skipped = alreadyLinked.size;
@@ -72,13 +76,13 @@ export async function autoLinkEpcsToItems(
   if (candidates.size > 0) {
     const candidateList = Array.from(candidates);
     const orFilter = `sku.in.(${candidateList.map((c) => `"${c}"`).join(",")}),gtin.in.(${candidateList.map((c) => `"${c}"`).join(",")})`;
-    const { data: items, error: itemsErr } = await supabaseAdmin
+    const { data: items, error: itemsErr } = await db
       .from("items")
       .select("id, sku, gtin")
       .eq("company_slug", companySlug)
       .or(orFilter);
     if (itemsErr) {
-      console.error("[autoLinkEpcsToItems] items lookup error:", itemsErr.message);
+      throw new Error("Could not match items to tags");
     }
     for (const it of items || []) {
       if (it.sku) lookupMap.set(it.sku, it.id);
@@ -118,10 +122,9 @@ export async function autoLinkEpcsToItems(
 
   if (inserts.length === 0) return result;
 
-  const { error } = await supabaseAdmin.from("tag_items").insert(inserts);
+  const { error } = await db.from("tag_items").insert(inserts);
   if (error) {
-    console.error("[autoLinkEpcsToItems] tag_items insert error:", error.message);
-    return result;
+    throw new Error("Could not save item tag links");
   }
   result.linked = inserts.length;
   return result;
