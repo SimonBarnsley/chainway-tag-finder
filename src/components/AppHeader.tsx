@@ -1,6 +1,6 @@
 import { useState, useRef, useEffect } from "react";
 import { Link, useParams, useNavigate } from "@tanstack/react-router";
-import { Menu, X, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone, Bell, Workflow } from "lucide-react";
+import { Menu, X, BarChart3, Package, History, Barcode, Upload, LogOut, Shield, Router, MapPin, Map as MapIcon, ChevronDown, Users, ShieldCheck, Bug, DollarSign, Sparkles, Activity, Smartphone, Bell, Workflow, LayoutDashboard } from "lucide-react";
 import scanLoc8Logo from "@/assets/scanloc8-logo.jpg.asset.json";
 import { supabase } from "@/integrations/supabase/client";
 import { useAuth } from "@/hooks/use-auth";
@@ -90,6 +90,22 @@ export function AppHeader({ actions }: AppHeaderProps) {
     ? allNavItems
     : allNavItems.filter((item) => !item.perm || has(item.perm) || isSuperAdmin);
 
+  // Left-hand quick links: admins go to the Admin Dashboard, basic users to
+  // their Dashboard (only if they have permission). Items follows items.view.
+  const allowed = (perm: PermissionKey | null) =>
+    permLoading || !perm || has(perm) || isSuperAdmin;
+  const quickLinks: { label: string; to: "/$company/admin-dashboard" | "/$company/dashboard" | "/$company/items" | "/$company/maps/view"; icon: typeof BarChart3 }[] = [
+    ...(isAdmin
+      ? [{ label: "Admin Dashboard", to: "/$company/admin-dashboard" as const, icon: LayoutDashboard }]
+      : allowed("dashboard.admin")
+        ? [{ label: "Dashboard", to: "/$company/dashboard" as const, icon: LayoutDashboard }]
+        : []),
+    ...(isAdmin || allowed("items.view")
+      ? [{ label: "Items", to: "/$company/items" as const, icon: Package }]
+      : []),
+    { label: "Map", to: "/$company/maps/view" as const, icon: MapIcon },
+  ];
+
   const showHandheldItem = handheldDevice && isAuthenticated;
   useEffect(() => {
     if (!open) return;
@@ -114,9 +130,26 @@ export function AppHeader({ actions }: AppHeaderProps) {
                 className="h-10 w-20 rounded-md object-cover"
               />
             </Link>
+            {isAuthenticated && quickLinks.length > 0 && (
+              <nav aria-label="Quick links" className="hidden md:flex items-center gap-1">
+                {quickLinks.map((item) => (
+                  <Link
+                    key={item.label}
+                    to={item.to}
+                    params={{ company }}
+                    title={item.label}
+                    aria-label={item.label}
+                    className="rounded-md p-2 text-muted-foreground hover:bg-accent hover:text-foreground transition-colors"
+                    activeProps={{ className: "text-primary bg-primary/10" }}
+                  >
+                    <item.icon className="h-5 w-5" />
+                  </Link>
+                ))}
+              </nav>
+            )}
           </div>
 
-          <h1 className="absolute left-1/2 -translate-x-1/2 max-w-[46%] truncate text-lg sm:text-2xl font-extrabold tracking-tight text-foreground pointer-events-none">
+          <h1 className="absolute left-1/2 -translate-x-1/2 max-w-[46%] md:max-w-[40%] lg:max-w-[46%] truncate text-lg sm:text-2xl font-extrabold tracking-tight text-foreground pointer-events-none">
             {headerTitle}
           </h1>
 
